@@ -8,6 +8,7 @@ import '../modules/auth/views/forgot_password_screen.dart';
 import '../modules/auth/views/permission_request_screen.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/home/views/home_screen.dart';
+import '../modules/home/views/main_screen.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/medications/views/add_medication_screen.dart';
 import '../modules/medications/views/medication_detail_screen.dart';
@@ -56,7 +57,7 @@ class AppRoutes {
     GetPage(name: permissionRequest, page: () => const PermissionRequestScreen()),
 
     // Home routes
-    GetPage(name: home, page: () => const HomeScreen(), binding: HomeBinding()),
+    GetPage(name: home, page: () => const MainScreen(), binding: HomeBinding()),
 
     // Medication routes
     GetPage(

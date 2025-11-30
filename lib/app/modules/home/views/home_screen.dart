@@ -82,6 +82,10 @@ class HomeScreen extends GetView<HomeController> {
                     _buildStatsCard(context),
                     const SizedBox(height: AppTheme.spacingL),
 
+                    // Next Up Section
+                    _buildNextUpSection(context),
+                    const SizedBox(height: AppTheme.spacingL),
+
                     // Time Groups
                     ...TimeGroup.values.map((group) {
                       final medications = groupedMedications[group] ?? [];
@@ -176,6 +180,122 @@ class HomeScreen extends GetView<HomeController> {
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextUpSection(BuildContext context) {
+    // Find the next upcoming medication
+    final allMedications = controller.dailyMedications;
+    final now = DateTime.now();
+
+    // Flatten all scheduled times for today
+    final List<Map<String, dynamic>> upcomingDoses = [];
+
+    for (var med in allMedications) {
+      for (var time in med.times) {
+        final scheduledTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+        if (scheduledTime.isAfter(now)) {
+          upcomingDoses.add({'medication': med, 'time': scheduledTime});
+        }
+      }
+    }
+
+    // Sort by time
+    upcomingDoses.sort((a, b) => (a['time'] as DateTime).compareTo(b['time'] as DateTime));
+
+    if (upcomingDoses.isEmpty) return const SizedBox.shrink();
+
+    final nextDose = upcomingDoses.first;
+    final med = nextDose['medication'] as MedicationModel;
+    final time = nextDose['time'] as DateTime;
+    final timeUntil = time.difference(now);
+
+    String timeString;
+    if (timeUntil.inHours > 0) {
+      timeString = 'in ${timeUntil.inHours}h ${timeUntil.inMinutes % 60}m';
+    } else {
+      timeString = 'in ${timeUntil.inMinutes}m';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingM),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Next Up',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  timeString,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: med.colorTag != null
+                      ? Color(int.parse(med.colorTag!, radix: 16)).withValues(alpha: 0.2)
+                      : AppTheme.primaryColor.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.medication,
+                  color: med.colorTag != null
+                      ? Color(int.parse(med.colorTag!, radix: 16))
+                      : AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(med.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      '${med.dosage} ${med.unit} • ${DateTimeUtils.formatTime12Hour(time)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.check_circle_outline, color: AppTheme.successColor),
+                onPressed: () {
+                  Get.find<MedicationController>().markAsTaken(med.id, time);
+                },
               ),
             ],
           ),
