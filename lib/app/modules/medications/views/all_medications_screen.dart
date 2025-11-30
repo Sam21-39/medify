@@ -124,6 +124,7 @@ class _AllMedicationsScreenState extends State<AllMedicationsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'all_meds_fab',
         onPressed: () => Get.toNamed(AppRoutes.addMedication),
         child: const Icon(Icons.add),
       ),

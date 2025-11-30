@@ -70,7 +70,7 @@ class AuthController extends GetxController {
       // await credential.user!.sendEmailVerification();
 
       // Get.offAllNamed(AppRoutes.emailVerification);
-      Get.offAllNamed(AppRoutes.home);
+      Get.offAllNamed(AppRoutes.permissionRequest);
     } on FirebaseAuthException catch (e) {
       Get.snackbar('Error', e.message ?? 'Registration failed');
     } catch (e) {
@@ -96,6 +96,5 @@ class AuthController extends GetxController {
   Future<void> completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConstants.keyOnboardingComplete, true);
-    Get.offAllNamed(AppRoutes.login);
   }
 }

@@ -117,8 +117,8 @@ class MedicationModel {
       unit: map['unit'],
       colorTag: map['color_tag'],
       startDate: DateTime.fromMillisecondsSinceEpoch(map['start_date']),
-      endDate: map['end_date'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['end_date']) 
+      endDate: map['end_date'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['end_date'])
           : null,
       frequency: MedicationFrequency.fromJsonString(map['frequency']),
       times: MedicationTime.listFromJsonString(map['times']),
@@ -177,11 +177,7 @@ class MedicationModel {
 }
 
 // Medication Status Enum
-enum MedicationStatus {
-  active,
-  paused,
-  completed,
-}
+enum MedicationStatus { active, paused, completed }
 
 // Medication Frequency Class
 class MedicationFrequency {
@@ -189,11 +185,7 @@ class MedicationFrequency {
   final List<int>? specificDays; // 1-7 for Mon-Sun
   final int? intervalDays; // For custom interval
 
-  MedicationFrequency({
-    required this.type,
-    this.specificDays,
-    this.intervalDays,
-  });
+  MedicationFrequency({required this.type, this.specificDays, this.intervalDays});
 
   Map<String, dynamic> toJson() {
     return {
@@ -205,75 +197,55 @@ class MedicationFrequency {
 
   factory MedicationFrequency.fromJson(Map<String, dynamic> json) {
     return MedicationFrequency(
-      type: FrequencyType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
-      ),
-      specificDays: json['specificDays'] != null 
-          ? List<int>.from(json['specificDays']) 
-          : null,
+      type: FrequencyType.values.firstWhere((e) => e.toString().split('.').last == json['type']),
+      specificDays: json['specificDays'] != null ? List<int>.from(json['specificDays']) : null,
       intervalDays: json['intervalDays'],
     );
   }
 
   String toJsonString() {
-    return '${type.toString().split('.').last}|${specificDays?.join(',')}|$intervalDays';
+    return '${type.toString().split('.').last}|${specificDays?.join(',') ?? ''}|$intervalDays';
   }
 
   factory MedicationFrequency.fromJsonString(String str) {
     final parts = str.split('|');
     return MedicationFrequency(
-      type: FrequencyType.values.firstWhere(
-        (e) => e.toString().split('.').last == parts[0],
-      ),
-      specificDays: parts[1].isNotEmpty 
-          ? parts[1].split(',').map((e) => int.parse(e)).toList() 
+      type: FrequencyType.values.firstWhere((e) => e.toString().split('.').last == parts[0]),
+      specificDays: parts.length > 1 && parts[1].isNotEmpty && parts[1] != 'null'
+          ? parts[1].split(',').map((e) => int.parse(e)).toList()
           : null,
-      intervalDays: parts[2] != 'null' ? int.parse(parts[2]) : null,
+      intervalDays: parts.length > 2 && parts[2] != 'null' ? int.parse(parts[2]) : null,
     );
   }
 }
 
-enum FrequencyType {
-  daily,
-  specificDays,
-  customInterval,
-}
+enum FrequencyType { daily, specificDays, customInterval }
 
 // Medication Time Class
 class MedicationTime {
   final int hour; // 0-23
   final int minute; // 0-59
 
-  MedicationTime({
-    required this.hour,
-    required this.minute,
-  });
+  MedicationTime({required this.hour, required this.minute});
 
   Map<String, dynamic> toJson() {
-    return {
-      'hour': hour,
-      'minute': minute,
-    };
+    return {'hour': hour, 'minute': minute};
   }
 
   factory MedicationTime.fromJson(Map<String, dynamic> json) {
-    return MedicationTime(
-      hour: json['hour'],
-      minute: json['minute'],
-    );
+    return MedicationTime(hour: json['hour'], minute: json['minute']);
   }
 
   static String listToJsonString(List<MedicationTime> times) {
+    if (times.isEmpty) return '';
     return times.map((t) => '${t.hour}:${t.minute}').join(',');
   }
 
   static List<MedicationTime> listFromJsonString(String str) {
+    if (str.isEmpty) return [];
     return str.split(',').map((timeStr) {
       final parts = timeStr.split(':');
-      return MedicationTime(
-        hour: int.parse(parts[0]),
-        minute: int.parse(parts[1]),
-      );
+      return MedicationTime(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
     }).toList();
   }
 

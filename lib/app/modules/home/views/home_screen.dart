@@ -109,6 +109,7 @@ class HomeScreen extends GetView<HomeController> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'home_fab',
         onPressed: () => Get.toNamed(AppRoutes.addMedication),
         child: const Icon(Icons.add),
       ),
