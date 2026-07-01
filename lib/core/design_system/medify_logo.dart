@@ -67,7 +67,11 @@ class _ShieldCapsulePainter extends CustomPainter {
     );
     canvas.drawRRect(rrect, capsulePaint);
 
-    final halfPaint = Paint()..color = AppColors.primary;
+    // Clip the teal half to the pill's rounded shape so it doesn't bleed
+    // past the capsule's rounded caps.
+    canvas.save();
+    canvas.clipRRect(rrect);
+    final halfPaint = Paint()..color = AppColors.primaryLight;
     canvas.drawRect(
       Rect.fromLTWH(
         capsuleRect.left,
@@ -77,6 +81,15 @@ class _ShieldCapsulePainter extends CustomPainter {
       ),
       halfPaint,
     );
+    canvas.restore();
+
+    // White border around the whole pill for contrast against the shield.
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = capsuleRect.height * 0.08;
+    canvas.drawRRect(rrect, borderPaint);
+
     canvas.restore();
   }
 

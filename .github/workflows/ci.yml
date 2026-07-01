@@ -36,10 +36,10 @@ jobs:
       - name: Run tests
         run: fvm flutter test --coverage
 
-      # TODO(Phase 1.1): once the `medify` Firebase project exists, generate
-      # lib/firebase_options.dart via `flutterfire configure` and commit it
-      # (it holds public client identifiers, not secrets - see docs/DPDP_NOTES.md
-      # for what actually needs to stay out of git).
+      - name: Write Firebase Android config
+        run: echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
 
       - name: Smoke build (debug APK)
         run: fvm flutter build apk --debug
@@ -60,6 +60,11 @@ jobs:
 
       - name: Generate code (drift/injectable/flutter_gen)
         run: fvm dart run build_runner build --delete-conflicting-outputs
+
+      - name: Write Firebase iOS config
+        run: echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_B64 }}
 
       - name: Smoke build (iOS, no codesign)
         run: fvm flutter build ios --debug --no-codesign
