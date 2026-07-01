@@ -1,8 +1,8 @@
 name: medify
-description: "Medicine Reminder & Tracker App"
+description: "Medify - Precision Health Adherence"
 publish_to: "none"
 
-version: 1.1.0+2
+version: 2.0.0+1
 
 environment:
   sdk: ^3.9.2
@@ -20,54 +20,67 @@ dependencies:
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
 
-  # Local Database
-  objectbox: ^5.0.0
-  objectbox_flutter_libs: ^5.0.0
-
   # Dependency Injection
   get_it: ^8.0.3
+  injectable: ^2.5.0
 
-  # Local Notifications
+  # Routing
+  go_router: ^15.1.2
+
+  # Local Database
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.0
+
+  # Firebase
+  firebase_core: ^3.10.0
+  firebase_auth: ^5.4.0
+  cloud_firestore: ^5.6.1
+  firebase_messaging: ^15.2.0
+  firebase_crashlytics: ^4.3.0
+  firebase_remote_config: ^5.3.0
+  firebase_storage: ^12.4.0
+
+  # Connectivity (offline-first sync trigger)
+  connectivity_plus: ^6.1.0
+
+  # Local Notifications / Alarms
   flutter_local_notifications: ^19.4.2
   timezone: ^0.10.0
   permission_handler: ^12.0.1
 
   # Utilities
   intl: ^0.20.1
-  path_provider: ^2.1.5
-  path: ^1.9.0
   shared_preferences: ^2.3.3
   package_info_plus: ^9.0.0
 
-  # Charts & Visualizations (Phase 2)
+  # Charts & Calendar (Insights / History screens)
   fl_chart: ^0.69.0
-  showcaseview: ^5.0.1
-  flutter_intro: ^3.4.0
-
-  # Calendar & History (Phase 2)
   table_calendar: ^3.1.2
-  csv: ^6.0.0
   share_plus: ^10.1.2
-
-  # UI Enhancements (Phase 2)
-  shimmer: ^3.0.0
-  flutter_staggered_animations: ^1.1.1
-  confetti: ^0.7.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  golden_toolkit: ^0.15.0
 
   flutter_lints: ^6.0.0
+  custom_lint: ^0.8.0
+  medify_lints:
+    path: tool/lints/medify_lints
 
-  # ObjectBox code generation
+  # Codegen
   build_runner: ^2.4.14
-  objectbox_generator: ^5.0.0
+  drift_dev: ^2.22.1
+  injectable_generator: ^2.6.2
 
-  # Native splash screen generation
+  # Native splash / launcher icon generation
   flutter_native_splash: ^2.4.3
-
-  # Launcher icon generation
   flutter_launcher_icons: ^0.14.1
 
   # Asset code generation
@@ -104,35 +117,20 @@ flutter:
 
 # Flutter Native Splash Configuration
 flutter_native_splash:
-  # Logo image (using main logo)
   image: assets/images/Medify.png
-
-  # Background color (using Medify's light background color)
-  color: "#FAFAFA"
-
-  # Dark mode configuration
-  color_dark: "#111827"
+  color: "#F3F6FA"
+  color_dark: "#0B1F1F"
   image_dark: assets/images/Medify.png
-
-  # Android 12+ specific settings
   android_12:
     image: assets/images/Medify.png
-    color: "#FAFAFA"
+    color: "#F3F6FA"
     image_dark: assets/images/Medify.png
-    color_dark: "#111827"
-
-  # Web configuration (optional)
+    color_dark: "#0B1F1F"
   web: false
-
-  # iOS configuration
   ios: true
   android: true
-
-  # Branding mode (keeps splash visible until app is ready)
   android_gravity: center
   ios_content_mode: center
-
-  # Full screen (recommended for splash screens)
   fullscreen: true
 
 # Flutter Launcher Icons Configuration
@@ -140,9 +138,8 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/Medify.png"
-  adaptive_icon_background: "#FAFAFA"
+  adaptive_icon_background: "#F3F6FA"
   adaptive_icon_foreground: "assets/images/Medify.png"
-  # Remove default Flutter icon
   remove_alpha_ios: true
 
 # Flutter Gen Configuration for type-safe asset access

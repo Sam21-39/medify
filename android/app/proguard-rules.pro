@@ -17,7 +17,7 @@
 -keep class **_Cursor { *; }
 
 ## Keep notification service classes
--keep class com.sumit.medify.** { *; }
+-keep class app.medify.** { *; }
 -keep class androidx.core.app.NotificationCompat** { *; }
 -keep class androidx.work.** { *; }
 
@@ -101,7 +101,7 @@
 
 ## Prevent obfuscation of model classes (if using reflection/JSON)
 # Add your model classes here if needed
-# -keep class com.sumit.medify.models.** { *; }
+# -keep class app.medify.models.** { *; }
 
 ## Remove debug and verbose logs
 -assumenosideeffects class android.util.Log {
