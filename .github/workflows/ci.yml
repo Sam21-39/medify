@@ -25,7 +25,7 @@ jobs:
         run: fvm dart run build_runner build --delete-conflicting-outputs
 
       - name: Format check
-        run: fvm dart format --set-exit-if-changed .
+        run: fvm dart format --set-exit-if-changed lib test tool
 
       - name: Analyze
         run: fvm flutter analyze
@@ -36,10 +36,30 @@ jobs:
       - name: Run tests
         run: fvm flutter test --coverage
 
-      - name: Write dev env file
-        run: echo "$ENV_DEV_JSON" > env/dev.json
-        env:
-          ENV_DEV_JSON: ${{ secrets.ENV_DEV_JSON }}
+      # TODO(Phase 1.1): once the `medify` Firebase project exists, generate
+      # lib/firebase_options.dart via `flutterfire configure` and commit it
+      # (it holds public client identifiers, not secrets - see docs/DPDP_NOTES.md
+      # for what actually needs to stay out of git).
 
-      - name: Smoke build (dev flavor, debug APK)
-        run: fvm flutter build apk --flavor dev --debug --dart-define-from-file=env/dev.json
+      - name: Smoke build (debug APK)
+        run: fvm flutter build apk --debug
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install FVM
+        run: dart pub global activate fvm
+
+      - name: Install pinned Flutter SDK
+        run: fvm install
+
+      - name: Resolve dependencies
+        run: fvm flutter pub get
+
+      - name: Generate code (drift/injectable/flutter_gen)
+        run: fvm dart run build_runner build --delete-conflicting-outputs
+
+      - name: Smoke build (iOS, no codesign)
+        run: fvm flutter build ios --debug --no-codesign

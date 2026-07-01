@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <application
         android:label="@string/app_name"
@@ -52,9 +53,14 @@
         </receiver>
 
         <!-- Receiver for handling notification actions -->
-        <receiver 
+        <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
+
+        <!-- Phase 1.5 (Reminders/Alarms) will add a full-screen alarm Activity here
+             (android:showWhenLocked="true" android:turnScreenOn="true", plus
+             Window.addFlags(FLAG_TURN_SCREEN_ON | FLAG_SHOW_WHEN_LOCKED) at runtime)
+             once the native alarm-scheduling activity class exists. -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -54,11 +54,10 @@ app.*.map.json
 *.freezed.dart
 injection.config.dart
 
-# Environment / secrets - never commit real values
+# Environment / secrets - never commit real values (single Firebase project, no per-flavor env files)
 .env
-env/dev.json
-env/staging.json
-env/prod.json
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
 
 # Keystore files - NEVER commit these!
 *.jks
