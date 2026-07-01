@@ -3,6 +3,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 
 import 'core/design_system/app_theme.dart';
 import 'core/di/injection.dart';
@@ -21,11 +22,13 @@ Future<void> main() async {
   };
 
   await configureDependencies();
-  runApp(const MedifyApp());
+  runApp(MedifyApp(router: buildAppRouter()));
 }
 
 class MedifyApp extends StatelessWidget {
-  const MedifyApp({super.key});
+  const MedifyApp({super.key, required this.router});
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,7 @@ class MedifyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      routerConfig: appRouter,
+      routerConfig: router,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
