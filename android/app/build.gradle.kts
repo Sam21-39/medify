@@ -18,9 +18,9 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.sumit.medify"
+    namespace = "app.medify"
     compileSdk = 36
-    ndkVersion = "28.0.12433566"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -33,11 +33,29 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.sumit.medify"
+        applicationId = "app.medify"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "Medify Dev")
+        }
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            resValue("string", "app_name", "Medify Staging")
+        }
+        create("prod") {
+            dimension = "environment"
+            resValue("string", "app_name", "Medify")
+        }
     }
 
     signingConfigs {

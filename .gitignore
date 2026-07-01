@@ -46,17 +46,19 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# FVM Version Cache
+# FVM Version Cache (.fvmrc itself IS committed to pin the SDK version)
 .fvm/
-.fvmrc
 
-# ObjectBox generated files
+# Generated code (drift/injectable/flutter_gen)
 *.g.dart
-objectbox-model.json
-objectbox/
+*.freezed.dart
+injection.config.dart
 
-# Environment
+# Environment / secrets - never commit real values
 .env
+env/dev.json
+env/staging.json
+env/prod.json
 
 # Keystore files - NEVER commit these!
 *.jks
