@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
@@ -14,6 +15,10 @@ abstract final class AppTheme {
       surface: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
     );
 
+    final textTheme = GoogleFonts.nunitoTextTheme(
+      isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -21,7 +26,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      fontFamily: 'Nunito',
+      textTheme: textTheme,
       cardTheme: CardThemeData(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         elevation: 0,

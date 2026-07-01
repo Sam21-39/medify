@@ -54,6 +54,7 @@ dependencies:
   intl: ^0.20.1
   shared_preferences: ^2.3.3
   package_info_plus: ^9.0.0
+  google_fonts: ^6.2.1
 
   # Charts & Calendar (Insights / History screens)
   fl_chart: ^0.69.0
@@ -100,47 +101,30 @@ flutter:
     - assets/icons/
     - assets/songs/
 
-  # Fonts
-  fonts:
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Nunito-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Nunito-ExtraBold.ttf
-          weight: 800
+  # Fonts: no bundled font binaries - typefaces come from the google_fonts
+  # package instead (see lib/core/design_system/app_theme.dart).
 
-# Flutter Native Splash Configuration
-flutter_native_splash:
-  image: assets/images/Medify.png
-  color: "#F3F6FA"
-  color_dark: "#0B1F1F"
-  image_dark: assets/images/Medify.png
-  android_12:
-    image: assets/images/Medify.png
-    color: "#F3F6FA"
-    image_dark: assets/images/Medify.png
-    color_dark: "#0B1F1F"
-  web: false
-  ios: true
-  android: true
-  android_gravity: center
-  ios_content_mode: center
-  fullscreen: true
-
-# Flutter Launcher Icons Configuration
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/Medify.png"
-  adaptive_icon_background: "#F3F6FA"
-  adaptive_icon_foreground: "assets/images/Medify.png"
-  remove_alpha_ios: true
+# Flutter Native Splash / Launcher Icons: disabled until the Medify v2 logo
+# (teal shield + capsule mark from the Figma file) is exported as a PNG.
+# Re-enable both blocks below once assets/images/medify_logo.png exists.
+# flutter_native_splash:
+#   image: assets/images/medify_logo.png
+#   color: "#F3F6FA"
+#   color_dark: "#0B1F1F"
+#   android_12:
+#     image: assets/images/medify_logo.png
+#     color: "#F3F6FA"
+#     color_dark: "#0B1F1F"
+#   ios: true
+#   android: true
+#
+# flutter_launcher_icons:
+#   android: true
+#   ios: true
+#   image_path: "assets/images/medify_logo.png"
+#   adaptive_icon_background: "#F3F6FA"
+#   adaptive_icon_foreground: "assets/images/medify_logo.png"
+#   remove_alpha_ios: true
 
 # Flutter Gen Configuration for type-safe asset access
 flutter_gen:
