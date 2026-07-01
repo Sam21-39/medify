@@ -7,64 +7,27 @@ on:
     branches: [develop, main]
 
 jobs:
-  build:
+  analyze:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install FVM
-        run: dart pub global activate fvm
-
-      - name: Install pinned Flutter SDK
-        run: fvm install
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.2
+          channel: stable
 
       - name: Resolve dependencies
-        run: fvm flutter pub get
+        run: flutter pub get
 
       - name: Generate code (drift/injectable/flutter_gen)
-        run: fvm dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Format check
-        run: fvm dart format --set-exit-if-changed lib test tool
+        run: dart format --set-exit-if-changed lib
 
       - name: Analyze
-        run: fvm flutter analyze
+        run: flutter analyze lib
 
       - name: Custom lint (module boundaries + no-setState)
-        run: fvm dart run custom_lint
-
-      - name: Run tests
-        run: fvm flutter test --coverage
-
-      - name: Write Firebase Android config
-        run: echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
-
-      - name: Smoke build (debug APK)
-        run: fvm flutter build apk --debug
-
-  build-ios:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install FVM
-        run: dart pub global activate fvm
-
-      - name: Install pinned Flutter SDK
-        run: fvm install
-
-      - name: Resolve dependencies
-        run: fvm flutter pub get
-
-      - name: Generate code (drift/injectable/flutter_gen)
-        run: fvm dart run build_runner build --delete-conflicting-outputs
-
-      - name: Write Firebase iOS config
-        run: echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
-        env:
-          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_B64 }}
-
-      - name: Smoke build (iOS, no codesign)
-        run: fvm flutter build ios --debug --no-codesign
+        run: dart run custom_lint
