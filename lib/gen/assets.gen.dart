@@ -22,6 +22,16 @@ class $AssetsIconsGen {
   List<AssetGenImage> get values => [medifyIcon];
 }
 
+class $AssetsImagesGen {
+  const $AssetsImagesGen();
+
+  /// File path: assets/images/.gitkeep
+  String get aGitkeep => 'assets/images/.gitkeep';
+
+  /// List of all assets
+  List<String> get values => [aGitkeep];
+}
+
 class $AssetsSongsGen {
   const $AssetsSongsGen();
 
@@ -37,6 +47,7 @@ class Assets {
   const Assets._();
 
   static const $AssetsIconsGen icons = $AssetsIconsGen();
+  static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsSongsGen songs = $AssetsSongsGen();
 }
 
