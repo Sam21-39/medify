@@ -30,6 +30,15 @@
 				<string>app.medify</string>
 			</array>
 		</dict>
+		<dict>
+			<!-- Required by FirebaseAuth's phone-auth reCAPTCHA fallback:
+			     derived from GoogleService-Info.plist's GOOGLE_APP_ID as
+			     app-{project_number}-ios-{app_id_suffix}. -->
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-349726579250-ios-7dc297dc18b071cd90ba2b</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
