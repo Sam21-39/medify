@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
@@ -38,12 +39,19 @@ class ProfileGateCubit extends Cubit<ProfileGateState> {
 
   Future<void> checkProfile(String uid) async {
     emit(const ProfileGateChecking());
-    final profile = await _repository.getProfile(uid);
-    emit(
-      profile == null
-          ? const ProfileGateRequired()
-          : const ProfileGateComplete(),
-    );
+    try {
+      final profile = await _repository.getProfile(uid);
+      emit(
+        profile == null
+            ? const ProfileGateRequired()
+            : const ProfileGateComplete(),
+      );
+    } catch (e, st) {
+      // Non-fatal: fall back to ProfileGateRequired instead of hanging in
+      // ProfileGateChecking forever or letting this surface as unhandled.
+      await FirebaseCrashlytics.instance.recordError(e, st, fatal: false);
+      emit(const ProfileGateRequired());
+    }
   }
 
   /// Called after the wizard successfully saves a profile, so the router

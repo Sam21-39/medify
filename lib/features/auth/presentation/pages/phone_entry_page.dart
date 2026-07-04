@@ -38,7 +38,7 @@ class _PhoneEntryPageState extends State<PhoneEntryPage> {
           child: BlocConsumer<AuthCubit, AuthState>(
             listener: (context, state) {
               if (state is AuthOtpSent) {
-                context.go('/auth/otp', extra: state);
+                context.go('/auth/otp');
               } else if (state is AuthError) {
                 ScaffoldMessenger.of(
                   context,

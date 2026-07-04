@@ -17,12 +17,13 @@ migrate_working_dir/
 *.ipr
 *.iws
 .idea/
-.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Ignore workspace-specific VS Code files, but keep settings.json committed -
+# it pins dart.flutterSdkPath to the FVM-managed SDK (.fvm/flutter_sdk) so
+# every contributor's editor uses the same Flutter version as the CLI,
+# instead of silently falling back to whatever global Flutter is on PATH.
+.vscode/*
+!.vscode/settings.json
 
 # Flutter/Dart/Pub related
 **/doc/api/

@@ -21,16 +21,24 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
   late final StreamSubscription _authSub;
 
+  // Kept outside AuthState: GoRouter's `redirect` re-runs on every merged
+  // cubit-stream tick (not just navigation), which re-derives the route
+  // match from the URI alone and drops any `extra` payload. The OTP route
+  // reads this instead of `state.extra` so it survives those rebuilds
+  // across AuthOtpSent -> AuthVerifying -> AuthError transitions too.
+  AuthOtpSent? _lastOtpSent;
+  AuthOtpSent? get lastOtpSent => _lastOtpSent;
+
   Future<void> sendOtp(String phoneNumber) async {
     emit(AuthOtpSending(phoneNumber));
     try {
       final request = await _repository.sendOtp(phoneNumber);
-      emit(
-        AuthOtpSent(
-          phoneNumber: phoneNumber,
-          verificationId: request.verificationId,
-        ),
+      final otpSent = AuthOtpSent(
+        phoneNumber: phoneNumber,
+        verificationId: request.verificationId,
       );
+      _lastOtpSent = otpSent;
+      emit(otpSent);
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -52,7 +60,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> signOut() => _repository.signOut();
+  Future<void> signOut() {
+    _lastOtpSent = null;
+    return _repository.signOut();
+  }
 
   @override
   Future<void> close() {

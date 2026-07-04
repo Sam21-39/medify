@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
@@ -36,15 +37,28 @@ class ConsentCubit extends Cubit<ConsentState> {
 
   Future<void> checkConsent(String uid) async {
     emit(const ConsentChecking());
-    final accepted = await _repository.hasAcceptedConsent(uid);
-    emit(accepted ? const ConsentGranted() : const ConsentRequired());
+    try {
+      final accepted = await _repository.hasAcceptedConsent(uid);
+      emit(accepted ? const ConsentGranted() : const ConsentRequired());
+    } catch (e, st) {
+      // Non-fatal: e.g. Firestore rules not yet deployed. Fall back to
+      // ConsentRequired instead of hanging in ConsentChecking forever or
+      // letting this surface as an unhandled (and misleadingly "fatal")
+      // async error via PlatformDispatcher.onError.
+      await FirebaseCrashlytics.instance.recordError(e, st, fatal: false);
+      emit(const ConsentRequired());
+    }
   }
 
   Future<void> acceptConsent(String uid) async {
-    await _repository.acceptConsent(
-      uid,
-      ConsentRecord(acceptedAt: DateTime.now(), version: consentVersion),
-    );
-    emit(const ConsentGranted());
+    try {
+      await _repository.acceptConsent(
+        uid,
+        ConsentRecord(acceptedAt: DateTime.now(), version: consentVersion),
+      );
+      emit(const ConsentGranted());
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance.recordError(e, st, fatal: false);
+    }
   }
 }

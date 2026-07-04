@@ -94,8 +94,13 @@ GoRouter buildAppRouter() {
       ),
       GoRoute(
         path: '/auth/otp',
-        builder: (context, state) =>
-            OtpVerifyPage(otpSent: state.extra! as AuthOtpSent),
+        builder: (context, state) {
+          final otpSent = authCubit.lastOtpSent;
+          // Defensive fallback: shouldn't happen since redirect only keeps
+          // unauthenticated users on this path, but never crash the build.
+          if (otpSent == null) return const PhoneEntryPage();
+          return OtpVerifyPage(otpSent: otpSent);
+        },
       ),
       GoRoute(
         path: '/health-profile/setup',
