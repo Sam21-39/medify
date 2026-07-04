@@ -56,7 +56,6 @@ class DefaultFirebaseOptions {
     projectId: 'medify-67e12',
     storageBucket: 'medify-67e12.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBwpKXC3XygqUQg6xk0ch8S1JuIVewD6xY',
     appId: '1:349726579250:ios:7dc297dc18b071cd90ba2b',
