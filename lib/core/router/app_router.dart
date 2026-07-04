@@ -6,6 +6,8 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/phone_entry_page.dart';
+import '../../features/health_profile/presentation/cubit/profile_gate_cubit.dart';
+import '../../features/health_profile/presentation/pages/health_profile_wizard_page.dart';
 import '../../features/home/presentation/pages/home_placeholder_page.dart';
 import '../../features/onboarding/presentation/cubit/consent_cubit.dart';
 import '../../features/onboarding/presentation/pages/consent_page.dart';
@@ -16,12 +18,14 @@ import 'go_router_refresh_stream.dart';
 GoRouter buildAppRouter() {
   final authCubit = getIt<AuthCubit>();
   final consentCubit = getIt<ConsentCubit>();
+  final profileGateCubit = getIt<ProfileGateCubit>();
 
   return GoRouter(
     initialLocation: '/',
     refreshListenable: Listenable.merge([
       GoRouterRefreshStream(authCubit.stream),
       GoRouterRefreshStream(consentCubit.stream),
+      GoRouterRefreshStream(profileGateCubit.stream),
     ]),
     redirect: (context, state) {
       final path = state.matchedLocation;
@@ -53,7 +57,20 @@ GoRouter buildAppRouter() {
         return path == '/onboarding/consent' ? null : '/onboarding/consent';
       }
 
-      // ConsentGranted.
+      // ConsentGranted from here on - check whether a health profile exists.
+      final profileState = profileGateCubit.state;
+      if (profileState is ProfileGateInitial) {
+        profileGateCubit.checkProfile(authState.user.uid);
+        return path == '/' ? null : '/';
+      }
+      if (profileState is ProfileGateChecking) {
+        return path == '/' ? null : '/';
+      }
+      if (profileState is ProfileGateRequired) {
+        return path == '/health-profile/setup' ? null : '/health-profile/setup';
+      }
+
+      // ProfileGateComplete.
       if (path == '/home') return null;
       return '/home';
     },
@@ -79,6 +96,14 @@ GoRouter buildAppRouter() {
         path: '/auth/otp',
         builder: (context, state) =>
             OtpVerifyPage(otpSent: state.extra! as AuthOtpSent),
+      ),
+      GoRoute(
+        path: '/health-profile/setup',
+        builder: (context, state) {
+          final authState = authCubit.state;
+          final uid = authState is AuthAuthenticated ? authState.user.uid : '';
+          return HealthProfileWizardPage(uid: uid);
+        },
       ),
       GoRoute(
         path: '/home',

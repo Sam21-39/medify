@@ -4,6 +4,8 @@ import 'package:medify/core/di/injection.dart';
 import 'package:medify/core/router/app_router.dart';
 import 'package:medify/features/auth/domain/repositories/auth_repository.dart';
 import 'package:medify/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:medify/features/health_profile/domain/repositories/health_profile_repository.dart';
+import 'package:medify/features/health_profile/presentation/cubit/profile_gate_cubit.dart';
 import 'package:medify/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:medify/features/onboarding/presentation/cubit/consent_cubit.dart';
 import 'package:mocktail/mocktail.dart';
@@ -11,6 +13,9 @@ import 'package:mocktail/mocktail.dart';
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockOnboardingRepository extends Mock implements OnboardingRepository {}
+
+class MockHealthProfileRepository extends Mock
+    implements HealthProfileRepository {}
 
 void main() {
   setUp(() async {
@@ -22,10 +27,14 @@ void main() {
     ).thenAnswer((_) => Stream.value(null));
 
     final onboardingRepository = MockOnboardingRepository();
+    final healthProfileRepository = MockHealthProfileRepository();
 
     getIt.registerLazySingleton<AuthCubit>(() => AuthCubit(authRepository));
     getIt.registerLazySingleton<ConsentCubit>(
       () => ConsentCubit(onboardingRepository),
+    );
+    getIt.registerLazySingleton<ProfileGateCubit>(
+      () => ProfileGateCubit(healthProfileRepository),
     );
   });
 
