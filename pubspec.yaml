@@ -1,155 +1,123 @@
 name: medify
-description: "Medicine Reminder & Tracker App"
-publish_to: "none"
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.1.0+2
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.12.2
 
+# Enables sqlite3mc (SQLite3MultipleCiphers) native build hook so `package:sqlite3`
+# bundles an encryption-capable SQLite build. Replaces the deprecated
+# sqlcipher_flutter_libs package — see core/database/encryption/.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
 
-  # UI & Icons
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
-  # State Management
   flutter_bloc: ^9.1.1
-  equatable: ^2.0.7
-
-  # Local Database
-  objectbox: ^5.0.0
-  objectbox_flutter_libs: ^5.0.0
-
-  # Dependency Injection
-  get_it: ^8.0.3
-
-  # Local Notifications
-  flutter_local_notifications: ^19.4.2
-  timezone: ^0.10.0
-  permission_handler: ^12.0.1
-
-  # Utilities
-  intl: ^0.20.1
-  path_provider: ^2.1.5
-  path: ^1.9.0
-  shared_preferences: ^2.3.3
-  package_info_plus: ^9.0.0
-
-  # Charts & Visualizations (Phase 2)
-  fl_chart: ^0.69.0
-  showcaseview: ^5.0.1
-  flutter_intro: ^3.4.0
-
-  # Calendar & History (Phase 2)
-  table_calendar: ^3.1.2
-  csv: ^6.0.0
-  share_plus: ^10.1.2
-
-  # UI Enhancements (Phase 2)
-  shimmer: ^3.0.0
-  flutter_staggered_animations: ^1.1.1
-  confetti: ^0.7.0
-
+  equatable: ^2.1.0
+  get_it: ^9.2.1
+  injectable: ^3.0.0
+  go_router: ^17.4.0
+  drift: ^2.34.3
+  path_provider: ^2.1.6
+  path: ^1.9.1
+  flutter_secure_storage: ^11.0.0
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
+  cloud_firestore: ^6.8.0
+  cloud_functions: ^6.3.6
+  firebase_storage: ^13.4.6
+  firebase_messaging: ^16.5.0
+  firebase_remote_config: ^6.5.6
+  firebase_crashlytics: ^5.2.7
+  firebase_app_check: ^0.4.6
+  flutter_local_notifications: ^22.2.0
+  dio: ^5.11.0
+  connectivity_plus: ^7.3.1
+  cryptography: ^2.9.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
   flutter_lints: ^6.0.0
-
-  # ObjectBox code generation
-  build_runner: ^2.4.14
-  objectbox_generator: ^5.0.0
-
-  # Native splash screen generation
-  flutter_native_splash: ^2.4.3
-
-  # Launcher icon generation
-  flutter_launcher_icons: ^0.14.1
-
-  # Asset code generation
-  flutter_gen_runner: ^5.7.0
+  injectable_generator: ^3.0.2
+  build_runner: ^2.15.1
+  drift_dev: ^2.34.0
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.5
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
   uses-material-design: true
-  generate: true
 
-  # Assets
-  assets:
-    - assets/images/
-    - assets/icons/
-    - assets/songs/
+  # To add assets to your application, add an assets section, like this:
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
 
-  # Fonts
-  fonts:
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Nunito-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Nunito-ExtraBold.ttf
-          weight: 800
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
 
-# Flutter Native Splash Configuration
-flutter_native_splash:
-  # Logo image (using main logo)
-  image: assets/images/Medify.png
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
 
-  # Background color (using Medify's light background color)
-  color: "#FAFAFA"
-
-  # Dark mode configuration
-  color_dark: "#111827"
-  image_dark: assets/images/Medify.png
-
-  # Android 12+ specific settings
-  android_12:
-    image: assets/images/Medify.png
-    color: "#FAFAFA"
-    image_dark: assets/images/Medify.png
-    color_dark: "#111827"
-
-  # Web configuration (optional)
-  web: false
-
-  # iOS configuration
-  ios: true
-  android: true
-
-  # Branding mode (keeps splash visible until app is ready)
-  android_gravity: center
-  ios_content_mode: center
-
-  # Full screen (recommended for splash screens)
-  fullscreen: true
-
-# Flutter Launcher Icons Configuration
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/Medify.png"
-  adaptive_icon_background: "#FAFAFA"
-  adaptive_icon_foreground: "assets/images/Medify.png"
-  # Remove default Flutter icon
-  remove_alpha_ios: true
-
-# Flutter Gen Configuration for type-safe asset access
-flutter_gen:
-  output: lib/gen/
-  line_length: 80
-  integrations:
-    flutter_svg: false
-  assets:
-    enabled: true
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
