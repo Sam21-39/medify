@@ -87,7 +87,7 @@ lib/
 
 ## 🛠️ Tech Stack
 
-- **Flutter SDK**: 3.35.5
+- **Flutter SDK**: 3.47.9 (Dart 3.13.7)
 - **State Management**: BLoC/Cubit pattern
 - **Local Database**: ObjectBox
 - **Dependency Injection**: GetIt
@@ -132,9 +132,9 @@ lib/
 
 ### Prerequisites
 
-- Flutter SDK 3.9.2 or higher
+- Flutter SDK 3.47.9 (Dart 3.13.7)
 - FVM (Flutter Version Manager) - recommended
-- Xcode (for iOS development)
+- Xcode (for iOS development; Swift Package Manager, no CocoaPods)
 - Android Studio (for Android development)
 
 ### Installation
@@ -149,7 +149,7 @@ lib/
 2. **Use FVM (if installed)**
 
    ```bash
-   fvm use 3.35.5
+   fvm use 3.47.9
    ```
 
 3. **Install dependencies**
