@@ -38,31 +38,19 @@ class _MedicineListPageState extends State<MedicineListPage>
   @override
   void initState() {
     super.initState();
-    // Load medicines and today's logs when page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadMedicines();
-      _loadTodaysLogs();
+      _refresh();
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Reload data when page becomes visible (e.g., after adding medicine)
-    if (ModalRoute.of(context)?.isCurrent == true) {
-      _loadMedicines();
-      _loadTodaysLogs();
-    }
-  }
+  Future<void> _loadMedicines() => getIt<MedicineCubit>().loadMedicines();
 
-  void _loadMedicines() {
-    getIt<MedicineCubit>().loadMedicines();
-  }
-
-  void _loadTodaysLogs() {
+  Future<void> _loadTodaysLogs() {
     final today = DateTime.now();
-    getIt<MedicineLogCubit>().loadLogsByDate(today);
+    return getIt<MedicineLogCubit>().loadLogsByDate(today);
   }
+
+  Future<void> _refresh() => Future.wait([_loadMedicines(), _loadTodaysLogs()]);
 
   @override
   Widget build(BuildContext context) {
@@ -76,10 +64,7 @@ class _MedicineListPageState extends State<MedicineListPage>
             iosSymbol: 'arrow.clockwise',
             icon: Icons.refresh,
             label: 'Refresh',
-            onPressed: () {
-              _loadMedicines();
-              _loadTodaysLogs();
-            },
+            onPressed: _refresh,
           ),
           MedifyAdaptive.action(
             iosSymbol: 'gearshape',
@@ -96,16 +81,14 @@ class _MedicineListPageState extends State<MedicineListPage>
       body: BlocConsumer<MedicineCubit, MedicineState>(
         bloc: getIt<MedicineCubit>(),
         listenWhen: (previous, current) {
-          // Prevent duplicate listeners from IndexedStack
           return (current is MedicineOperationSuccess ||
                   current is MedicineError) &&
               previous != current;
         },
         listener: (context, state) {
-          // Clear any existing snackbars first
+          // Cubit already reloads after success — snackbar only
           ScaffoldMessenger.of(context).clearSnackBars();
 
-          // Show snackbar on operations
           if (state is MedicineOperationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -114,8 +97,6 @@ class _MedicineListPageState extends State<MedicineListPage>
                 behavior: SnackBarBehavior.floating,
               ),
             );
-            // Reload medicines after successful operation
-            _loadMedicines();
           }
 
           if (state is MedicineError) {
@@ -135,170 +116,189 @@ class _MedicineListPageState extends State<MedicineListPage>
         },
         builder: (context, state) {
           if (state is MedicineLoading) {
-            // Use shimmer loading instead of circular progress
-            return const ShimmerLoadingList(
-              itemCount: 4,
-              shimmerWidget: ShimmerMedicineCard(),
+            return MedifyAdaptive.body(
+              tabShell: true,
+              child: const ShimmerLoadingList(
+                itemCount: 4,
+                shimmerWidget: ShimmerMedicineCard(),
+              ),
             );
           }
 
           if (state is MedicineLoaded) {
             if (state.medicines.isEmpty) {
-              return EmptyState(
-                icon: Icons.medication,
-                title: AppLocalizations.of(context)!.noMedicines,
-                message: AppLocalizations.of(context)!.addYourFirstMedicine,
-                actionText: AppLocalizations.of(context)!.addMedicine,
-                onAction: () => _navigateToAddMedicine(),
+              return MedifyAdaptive.body(
+                tabShell: true,
+                child: EmptyState(
+                  icon: Icons.medication,
+                  title: AppLocalizations.of(context)!.noMedicines,
+                  message: AppLocalizations.of(context)!.addYourFirstMedicine,
+                  actionText: AppLocalizations.of(context)!.addMedicine,
+                  onAction: () => _navigateToAddMedicine(),
+                ),
               );
             }
 
             return RefreshIndicator(
-              onRefresh: () async {
-                _loadMedicines();
-                _loadTodaysLogs();
-              },
+              onRefresh: _refresh,
               child: CustomScrollView(
                 slivers: [
-                  // Today's Summary Card at top
-                  SliverToBoxAdapter(
-                    child: BlocBuilder<MedicineLogCubit, MedicineLogState>(
-                      bloc:
-                          getIt<
-                            MedicineLogCubit
-                          >(), // Explicitly use singleton instance
-                      builder: (context, logState) {
-                        final logs = logState is MedicineLogLoaded
-                            ? logState.logs
-                            : <MedicineLog>[];
-                        return TodaysSummaryCard(
-                          todaysLogs: logs,
-                          onTap: () {
-                            // Tapping takes user to Schedule page (index 0)
-                            // This is handled by the main navigation page
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Medicines header
-                  const SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      AppSizes.spacing16,
-                      AppSizes.spacing8,
-                      AppSizes.spacing16,
-                      AppSizes.spacing8,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Text(
-                        'My Medicines',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
+                  SliverSafeArea(
+                    bottom: false,
+                    sliver: SliverMainAxisGroup(
+                      slivers: [
+                        // Today's Summary Card at top
+                        SliverToBoxAdapter(
+                          child: BlocBuilder<MedicineLogCubit, MedicineLogState>(
+                            bloc:
+                                getIt<
+                                  MedicineLogCubit
+                                >(), // Explicitly use singleton instance
+                            builder: (context, logState) {
+                              final logs = logState is MedicineLogLoaded
+                                  ? logState.logs
+                                  : <MedicineLog>[];
+                              return TodaysSummaryCard(
+                                todaysLogs: logs,
+                                onTap: () {
+                                  // Tapping takes user to Schedule page (index 0)
+                                  // This is handled by the main navigation page
+                                },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
 
-                  // Medicine List with Staggered Animation
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.spacing16,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final medicine = state.medicines[index];
-                        return AnimationConfiguration.staggeredList(
-                          position: index,
-                          duration: const Duration(milliseconds: 375),
-                          child: SlideAnimation(
-                            verticalOffset: 50.0,
-                            child: FadeInAnimation(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSizes.spacing8,
-                                ),
-                                child: Dismissible(
-                                  key: Key(medicine.id.toString()),
-                                  direction: DismissDirection.endToStart,
-                                  confirmDismiss: (direction) async {
-                                    return await _showDeleteConfirmation(
-                                      context,
-                                      medicine.name,
-                                    );
-                                  },
-                                  onDismissed: (direction) {
-                                    getIt<MedicineCubit>().deleteMedicine(
-                                      medicine.id!,
-                                    );
-                                  },
-                                  background: Container(
-                                    alignment: Alignment.centerRight,
-                                    padding: const EdgeInsets.only(
-                                      right: AppSizes.paddingL,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.error,
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusCard,
-                                      ),
-                                    ),
-                                    child: const Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.delete,
-                                          color: Colors.white,
-                                          size: AppSizes.iconL,
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          'Delete',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  child: MedicineCard(
-                                    medicine: medicine,
-                                    onTap: () =>
-                                        _navigateToEditMedicine(medicine.id!),
-                                    onToggleActive: () {
-                                      context
-                                          .read<MedicineCubit>()
-                                          .toggleMedicineStatus(medicine.id!);
-                                    },
-                                  ),
-                                ),
+                        // Medicines header
+                        const SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSizes.spacing16,
+                            AppSizes.spacing8,
+                            AppSizes.spacing16,
+                            AppSizes.spacing8,
+                          ),
+                          sliver: SliverToBoxAdapter(
+                            child: Text(
+                              'My Medicines',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                        );
-                      }, childCount: state.medicines.length),
+                        ),
+
+                        // Medicine List with Staggered Animation
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.spacing16,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final medicine = state.medicines[index];
+                              return AnimationConfiguration.staggeredList(
+                                position: index,
+                                duration: const Duration(milliseconds: 375),
+                                child: SlideAnimation(
+                                  verticalOffset: 50.0,
+                                  child: FadeInAnimation(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: AppSizes.spacing8,
+                                      ),
+                                      child: Dismissible(
+                                        key: Key(medicine.id.toString()),
+                                        direction: DismissDirection.endToStart,
+                                        confirmDismiss: (direction) async {
+                                          return await _showDeleteConfirmation(
+                                            context,
+                                            medicine.name,
+                                          );
+                                        },
+                                        onDismissed: (direction) {
+                                          getIt<MedicineCubit>().deleteMedicine(
+                                            medicine.id!,
+                                          );
+                                        },
+                                        background: Container(
+                                          alignment: Alignment.centerRight,
+                                          padding: const EdgeInsets.only(
+                                            right: AppSizes.paddingL,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.error,
+                                            borderRadius: BorderRadius.circular(
+                                              AppSizes.radiusCard,
+                                            ),
+                                          ),
+                                          child: const Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.delete,
+                                                color: Colors.white,
+                                                size: AppSizes.iconL,
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        child: MedicineCard(
+                                          medicine: medicine,
+                                          onTap: () => _navigateToEditMedicine(
+                                            medicine.id!,
+                                          ),
+                                          onToggleActive: () {
+                                            context
+                                                .read<MedicineCubit>()
+                                                .toggleMedicineStatus(
+                                                  medicine.id!,
+                                                );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }, childCount: state.medicines.length),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
-                  // Bottom padding
+                  // Tab overlay clearance (shell bottom bar)
                   const SliverPadding(
-                    padding: EdgeInsets.only(bottom: AppSizes.spacing16),
+                    padding: EdgeInsets.only(
+                      bottom: MedifyAdaptive.tabOverlayClearance,
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          // Show empty state for initial/error states
-          return EmptyState(
-            icon: Icons.medication,
-            title: AppLocalizations.of(context)!.noMedicines,
-            message: AppLocalizations.of(context)!.addYourFirstMedicine,
-            actionText: AppLocalizations.of(context)!.addMedicine,
-            onAction: () => _navigateToAddMedicine(),
+          return MedifyAdaptive.body(
+            tabShell: true,
+            child: EmptyState(
+              icon: Icons.medication,
+              title: AppLocalizations.of(context)!.noMedicines,
+              message: AppLocalizations.of(context)!.addYourFirstMedicine,
+              actionText: AppLocalizations.of(context)!.addMedicine,
+              onAction: () => _navigateToAddMedicine(),
+            ),
           );
         },
       ),

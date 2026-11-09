@@ -20,7 +20,10 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Load all medicines
   Future<void> loadMedicines() async {
     try {
-      emit(MedicineLoading());
+      // Soft refresh — avoid Loading flicker / cross-tab races when already loaded
+      if (state is! MedicineLoaded) {
+        emit(MedicineLoading());
+      }
       final medicines = await _medicineRepository.getAllMedicines();
       emit(MedicineLoaded(medicines));
     } catch (e) {
@@ -31,7 +34,9 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Load active medicines only
   Future<void> loadActiveMedicines() async {
     try {
-      emit(MedicineLoading());
+      if (state is! MedicineLoaded) {
+        emit(MedicineLoading());
+      }
       final medicines = await _medicineRepository.getActiveMedicines();
       emit(MedicineLoaded(medicines));
     } catch (e) {

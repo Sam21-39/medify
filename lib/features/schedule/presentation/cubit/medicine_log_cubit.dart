@@ -18,10 +18,17 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
     this._achievementService,
   ]) : super(MedicineLogInitial());
 
+  /// Soft refresh — skip Loading when already loaded (IndexedStack tab races).
+  void _emitLoadingIfNeeded() {
+    if (state is! MedicineLogLoaded) {
+      emit(MedicineLogLoading());
+    }
+  }
+
   /// Load today's logs
   Future<void> loadTodayLogs() async {
     try {
-      emit(MedicineLogLoading());
+      _emitLoadingIfNeeded();
       final logs = await _medicineLogRepository.getTodayLogs();
       emit(MedicineLogLoaded(logs));
     } catch (e) {
@@ -32,7 +39,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Load logs by medicine ID
   Future<void> loadLogsByMedicineId(int medicineId) async {
     try {
-      emit(MedicineLogLoading());
+      _emitLoadingIfNeeded();
       final logs = await _medicineLogRepository.getLogsByMedicineId(medicineId);
       emit(MedicineLogLoaded(logs));
     } catch (e) {
@@ -43,7 +50,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Load logs by date
   Future<void> loadLogsByDate(DateTime date) async {
     try {
-      emit(MedicineLogLoading());
+      _emitLoadingIfNeeded();
       final logs = await _medicineLogRepository.getLogsByDate(date);
       emit(MedicineLogLoaded(logs));
     } catch (e) {
@@ -113,7 +120,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Load overdue logs
   Future<void> loadOverdueLogs() async {
     try {
-      emit(MedicineLogLoading());
+      _emitLoadingIfNeeded();
       final logs = await _medicineLogRepository.getOverdueLogs();
       emit(MedicineLogLoaded(logs));
     } catch (e) {
@@ -124,7 +131,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Load pending logs
   Future<void> loadPendingLogs() async {
     try {
-      emit(MedicineLogLoading());
+      _emitLoadingIfNeeded();
       final logs = await _medicineLogRepository.getPendingLogs();
       emit(MedicineLogLoaded(logs));
     } catch (e) {

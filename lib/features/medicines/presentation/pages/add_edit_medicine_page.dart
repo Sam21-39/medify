@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 // COMMENTED OUT FOR UPCOMING RELEASE
@@ -100,475 +101,478 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
             : AppLocalizations.of(context)!.addMedicine,
         useNativeToolbar: true,
       ),
-      body: BlocListener<MedicineCubit, MedicineState>(
-        listenWhen: (previous, current) {
-          // Only listen to relevant state changes
-          return (current is MedicineOperationSuccess ||
-                  current is MedicineError) &&
-              previous != current;
-        },
-        listener: (context, state) async {
-          if (state is MedicineOperationSuccess) {
-            // Schedule notifications for the medicine if it was successfully saved
-            try {
-              final notificationService = getIt<NotificationService>();
+      body: MedifyAdaptive.body(
+        child: BlocListener<MedicineCubit, MedicineState>(
+          listenWhen: (previous, current) {
+            // Only listen to relevant state changes
+            return (current is MedicineOperationSuccess ||
+                    current is MedicineError) &&
+                previous != current;
+          },
+          listener: (context, state) async {
+            if (state is MedicineOperationSuccess) {
+              // Schedule notifications for the medicine if it was successfully saved
+              try {
+                final notificationService = getIt<NotificationService>();
 
-              // Check permission first
-              final hasPermission = await notificationService
-                  .areNotificationsEnabled();
-              if (!hasPermission) {
-                final granted = await notificationService.requestPermissions();
-                if (!granted && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Notification permission required for reminders',
+                // Check permission first
+                final hasPermission = await notificationService
+                    .areNotificationsEnabled();
+                if (!hasPermission) {
+                  final granted = await notificationService
+                      .requestPermissions();
+                  if (!granted && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Notification permission required for reminders',
+                        ),
+                        backgroundColor: Colors.orange,
+                        behavior: SnackBarBehavior.floating,
                       ),
-                      backgroundColor: Colors.orange,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                    );
+                  }
+                }
+              } catch (e) {
+                // Silently handle permission errors
+              }
+
+              // Show success message
+              if (context.mounted) {
+                // Clear any existing snackbars first
+                ScaffoldMessenger.of(context).clearSnackBars();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+
+                // Wait a bit before navigating to ensure snackbar is visible
+                await Future.delayed(const Duration(milliseconds: 500));
+
+                // Navigate back with success result
+                if (context.mounted) {
+                  Navigator.of(context).pop(true);
                 }
               }
-            } catch (e) {
-              // Silently handle permission errors
             }
 
-            // Show success message
-            if (context.mounted) {
-              // Clear any existing snackbars first
-              ScaffoldMessenger.of(context).clearSnackBars();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.green,
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-
-              // Wait a bit before navigating to ensure snackbar is visible
-              await Future.delayed(const Duration(milliseconds: 500));
-
-              // Navigate back with success result
+            if (state is MedicineError) {
+              // Clear any existing snackbars
               if (context.mounted) {
-                Navigator.of(context).pop(true);
+                ScaffoldMessenger.of(context).clearSnackBars();
+              }
+
+              // Show error message
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               }
             }
-          }
-
-          if (state is MedicineError) {
-            // Clear any existing snackbars
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).clearSnackBars();
-            }
-
-            // Show error message
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          }
-        },
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(AppSizes.paddingM),
-            children: [
-              // Instructions
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.paddingM),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: AppSizes.paddingM),
-                      Expanded(
-                        child: Text(
-                          _isEditMode
-                              ? 'Update your medicine details'
-                              : 'Add a new medicine and set reminder times',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingL),
-
-              // Medicine Name
-              CustomTextField(
-                label: AppLocalizations.of(context)!.medicineName,
-                hint: 'e.g., Aspirin',
-                controller: _nameController,
-                validator: Validators.medicineName,
-                prefixIcon: const Icon(Icons.medication),
-                keyboardType: TextInputType.text,
-                autofocus: !_isEditMode, // Auto-focus for new medicines
-                maxLength: 50, // Standard max length
-                textCapitalization: TextCapitalization.words,
-                semanticLabel: 'Medicine name input field',
-              ),
-              const SizedBox(height: AppSizes.paddingM),
-
-              // Medicine Type
-              Text(
-                'Medicine Type',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: AppSizes.paddingS),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingM,
-                    vertical: AppSizes.paddingS,
-                  ),
-                  child: DropdownButtonFormField<MedicineType>(
-                    initialValue: _selectedMedicineType,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      prefixIcon: Icon(
-                        _getMedicineTypeIcon(_selectedMedicineType),
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    items: MedicineType.values.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(type.label),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedMedicineType = value;
-                          // Clear dosage amount when type changes
-                          if (!_isEditMode) {
-                            _dosageAmountController.clear();
-                          }
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingM),
-
-              // Dosage Amount
-              CustomTextField(
-                label: 'Dosage Amount',
-                hint: _getDosageHint(),
-                controller: _dosageAmountController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter dosage amount';
-                  }
-                  final amount = double.tryParse(value);
-                  if (amount == null || amount <= 0) {
-                    return 'Please enter a valid amount';
-                  }
-                  return null;
-                },
-                prefixIcon: const Icon(Icons.medical_information),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                suffixText: _selectedMedicineType.unit,
-                semanticLabel: 'Dosage amount input field',
-              ),
-              const SizedBox(height: AppSizes.paddingM),
-
-              // Intake Timing
-              Text(
-                'When to take',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: AppSizes.paddingS),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.paddingM,
-                    vertical: AppSizes.paddingS,
-                  ),
-                  child: DropdownButtonFormField<MedicineIntakeTiming>(
-                    initialValue: _selectedIntakeTiming,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      prefixIcon: Icon(
-                        _getIntakeTimingIcon(_selectedIntakeTiming),
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    items: MedicineIntakeTiming.values.map((timing) {
-                      return DropdownMenuItem(
-                        value: timing,
-                        child: Text(timing.label),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedIntakeTiming = value;
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingM),
-
-              // Notes (Optional)
-              CustomTextField(
-                label: '${AppLocalizations.of(context)!.notes} (Optional)',
-                hint: 'e.g., Take with food',
-                controller: _notesController,
-                prefixIcon: const Icon(Icons.note),
-                maxLines: 3,
-                maxLength: 200, // Standard max length for notes
-                keyboardType: TextInputType.multiline,
-                textCapitalization: TextCapitalization.sentences,
-                showValidationIndicator:
-                    false, // Optional field, no validation indicator
-                semanticLabel: 'Additional notes input field, optional',
-              ),
-              const SizedBox(height: AppSizes.paddingL),
-
-              // Refill Tracking Section
-              // Row(
-              //   children: [
-              //     Expanded(
-              //       child: Text(
-              //         'Refill Tracking',
-              //         style: Theme.of(context).textTheme.titleLarge,
-              //       ),
-              //     ),
-              //     Switch(
-              //       value: _enableRefillTracking,
-              //       onChanged: (value) {
-              //         setState(() {
-              //           _enableRefillTracking = value;
-              //           if (!value) {
-              //             _totalQuantityController.clear();
-              //             _refillRemindDaysController.clear();
-              //           } else {
-              //             // Set default values
-              //             _refillRemindDaysController.text = '7';
-              //           }
-              //         });
-              //       },
-              //     ),
-              //   ],
-              // ),
-              // const SizedBox(height: AppSizes.paddingS),
-              // Text(
-              //   'Track medicine stock and get refill reminders',
-              //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              //     color: Theme.of(
-              //       context,
-              //     ).colorScheme.onSurface.withValues(alpha: 0.7),
-              //   ),
-              // ),
-              // if (_enableRefillTracking) ...[
-              //   const SizedBox(height: AppSizes.paddingM),
-              //   Card(
-              //     child: Padding(
-              //       padding: const EdgeInsets.all(AppSizes.paddingM),
-              //       child: Column(
-              //         children: [
-              //           CustomTextField(
-              //             label: 'Total Quantity',
-              //             hint: _getQuantityHint(),
-              //             controller: _totalQuantityController,
-              //             prefixIcon: const Icon(Icons.inventory_2),
-              //             keyboardType: const TextInputType.numberWithOptions(
-              //               decimal: true,
-              //             ),
-              //             suffixText: _selectedMedicineType.unit,
-              //             validator: (value) {
-              //               if (_enableRefillTracking) {
-              //                 if (value == null || value.isEmpty) {
-              //                   return 'Please enter total quantity';
-              //                 }
-              //                 final quantity = double.tryParse(value);
-              //                 if (quantity == null || quantity <= 0) {
-              //                   return 'Please enter a valid quantity';
-              //                 }
-              //               }
-              //               return null;
-              //             },
-              //             semanticLabel: 'Total medicine quantity',
-              //           ),
-              //           const SizedBox(height: AppSizes.paddingM),
-              //           CustomTextField(
-              //             label: 'Refill Reminder (days before)',
-              //             hint: 'e.g., 7 days',
-              //             controller: _refillRemindDaysController,
-              //             prefixIcon: const Icon(Icons.notifications_active),
-              //             keyboardType: TextInputType.number,
-              //             validator: (value) {
-              //               if (_enableRefillTracking) {
-              //                 if (value == null || value.isEmpty) {
-              //                   return 'Please enter refill reminder days';
-              //                 }
-              //                 final days = int.tryParse(value);
-              //                 if (days == null || days < 1 || days > 90) {
-              //                   return 'Enter between 1-90 days';
-              //                 }
-              //               }
-              //               return null;
-              //             },
-              //             semanticLabel: 'Refill reminder days',
-              //           ),
-              //           const SizedBox(height: AppSizes.paddingS),
-              //           Container(
-              //             padding: const EdgeInsets.all(AppSizes.paddingM),
-              //             decoration: BoxDecoration(
-              //               color: Theme.of(
-              //                 context,
-              //               ).colorScheme.primary.withValues(alpha: 0.1),
-              //               borderRadius: BorderRadius.circular(
-              //                 AppSizes.radiusM,
-              //               ),
-              //             ),
-              //             child: Row(
-              //               children: [
-              //                 Icon(
-              //                   Icons.info_outline,
-              //                   size: 20,
-              //                   color: Theme.of(context).colorScheme.primary,
-              //                 ),
-              //                 const SizedBox(width: AppSizes.paddingS),
-              //                 Expanded(
-              //                   child: Text(
-              //                     'You\'ll be notified when you have this many days of medicine left',
-              //                     style: Theme.of(context).textTheme.bodySmall
-              //                         ?.copyWith(
-              //                           color: Theme.of(
-              //                             context,
-              //                           ).colorScheme.primary,
-              //                         ),
-              //                   ),
-              //                 ),
-              //               ],
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              // ],
-              // const SizedBox(height: AppSizes.paddingL),
-
-              // Reminder Times Section
-              Text(
-                'Reminder Times',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppSizes.paddingS),
-              Text(
-                'Set times when you need to take this medicine',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface
-                      .withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingM),
-
-              // Display reminder times
-              if (_reminderTimes.isEmpty)
+          },
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              children: [
+                // Instructions
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingL),
-                    child: Column(
+                    padding: const EdgeInsets.all(AppSizes.paddingM),
+                    child: Row(
                       children: [
                         Icon(
-                          Icons.access_time,
-                          size: AppSizes.iconXL,
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withValues(alpha: 0.3),
+                          Icons.info_outline,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
-                        const SizedBox(height: AppSizes.paddingS),
-                        Text(
-                          'No reminder times set',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Tap the button below to add',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface
-                                    .withValues(alpha: 0.6),
-                              ),
+                        const SizedBox(width: AppSizes.paddingM),
+                        Expanded(
+                          child: Text(
+                            _isEditMode
+                                ? 'Update your medicine details'
+                                : 'Add a new medicine and set reminder times',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                )
-              else
-                Wrap(
-                  spacing: AppSizes.paddingS,
-                  runSpacing: AppSizes.paddingS,
-                  children: _reminderTimes.map((seconds) {
-                    final time = DateTimeUtils.secondsToDateTime(seconds);
-                    final timeString = DateTimeUtils.formatTime(time);
-                    final timeOfDay = DateTimeUtils.getTimeOfDayString(time);
-
-                    return Chip(
-                      avatar: Icon(_getTimeOfDayIcon(timeOfDay), size: 18),
-                      label: Text(
-                        timeString,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      deleteIcon: const Icon(Icons.close, size: 18),
-                      onDeleted: () {
-                        setState(() {
-                          _reminderTimes.remove(seconds);
-                        });
-                      },
-                    );
-                  }).toList(),
                 ),
-              const SizedBox(height: AppSizes.paddingM),
+                const SizedBox(height: AppSizes.paddingL),
 
-              // Add reminder time button
-              OutlinedButton.icon(
-                onPressed: _addReminderTime,
-                icon: const Icon(Icons.add_alarm),
-                label: const Text('Add Reminder Time'),
-              ),
-              const SizedBox(height: AppSizes.paddingXL),
+                // Medicine Name
+                CustomTextField(
+                  label: AppLocalizations.of(context)!.medicineName,
+                  hint: 'e.g., Aspirin',
+                  controller: _nameController,
+                  validator: Validators.medicineName,
+                  prefixIcon: const Icon(Icons.medication),
+                  keyboardType: TextInputType.text,
+                  autofocus: !_isEditMode, // Auto-focus for new medicines
+                  maxLength: 50, // Standard max length
+                  textCapitalization: TextCapitalization.words,
+                  semanticLabel: 'Medicine name input field',
+                ),
+                const SizedBox(height: AppSizes.paddingM),
 
-              // Save button
-              BlocBuilder<MedicineCubit, MedicineState>(
-                builder: (context, state) {
-                  final isLoading = state is MedicineLoading;
-                  return CustomButton(
-                    text: _isEditMode ? 'Update Medicine' : 'Save Medicine',
-                    icon: Icons.check,
-                    isLoading: isLoading,
-                    onPressed: isLoading ? null : _saveMedicine,
-                  );
-                },
-              ),
-              const SizedBox(height: AppSizes.paddingM),
+                // Medicine Type
+                Text(
+                  'Medicine Type',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSizes.paddingS),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingM,
+                      vertical: AppSizes.paddingS,
+                    ),
+                    child: DropdownButtonFormField<MedicineType>(
+                      initialValue: _selectedMedicineType,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          _getMedicineTypeIcon(_selectedMedicineType),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      items: MedicineType.values.map((type) {
+                        return DropdownMenuItem(
+                          value: type,
+                          child: Text(type.label),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedMedicineType = value;
+                            // Clear dosage amount when type changes
+                            if (!_isEditMode) {
+                              _dosageAmountController.clear();
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSizes.paddingM),
 
-              // Cancel button
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(AppLocalizations.of(context)!.cancel),
-              ),
-            ],
+                // Dosage Amount
+                CustomTextField(
+                  label: 'Dosage Amount',
+                  hint: _getDosageHint(),
+                  controller: _dosageAmountController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter dosage amount';
+                    }
+                    final amount = double.tryParse(value);
+                    if (amount == null || amount <= 0) {
+                      return 'Please enter a valid amount';
+                    }
+                    return null;
+                  },
+                  prefixIcon: const Icon(Icons.medical_information),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  suffixText: _selectedMedicineType.unit,
+                  semanticLabel: 'Dosage amount input field',
+                ),
+                const SizedBox(height: AppSizes.paddingM),
+
+                // Intake Timing
+                Text(
+                  'When to take',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSizes.paddingS),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingM,
+                      vertical: AppSizes.paddingS,
+                    ),
+                    child: DropdownButtonFormField<MedicineIntakeTiming>(
+                      initialValue: _selectedIntakeTiming,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          _getIntakeTimingIcon(_selectedIntakeTiming),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      items: MedicineIntakeTiming.values.map((timing) {
+                        return DropdownMenuItem(
+                          value: timing,
+                          child: Text(timing.label),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedIntakeTiming = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSizes.paddingM),
+
+                // Notes (Optional)
+                CustomTextField(
+                  label: '${AppLocalizations.of(context)!.notes} (Optional)',
+                  hint: 'e.g., Take with food',
+                  controller: _notesController,
+                  prefixIcon: const Icon(Icons.note),
+                  maxLines: 3,
+                  maxLength: 200, // Standard max length for notes
+                  keyboardType: TextInputType.multiline,
+                  textCapitalization: TextCapitalization.sentences,
+                  showValidationIndicator:
+                      false, // Optional field, no validation indicator
+                  semanticLabel: 'Additional notes input field, optional',
+                ),
+                const SizedBox(height: AppSizes.paddingL),
+
+                // Refill Tracking Section
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: Text(
+                //         'Refill Tracking',
+                //         style: Theme.of(context).textTheme.titleLarge,
+                //       ),
+                //     ),
+                //     Switch(
+                //       value: _enableRefillTracking,
+                //       onChanged: (value) {
+                //         setState(() {
+                //           _enableRefillTracking = value;
+                //           if (!value) {
+                //             _totalQuantityController.clear();
+                //             _refillRemindDaysController.clear();
+                //           } else {
+                //             // Set default values
+                //             _refillRemindDaysController.text = '7';
+                //           }
+                //         });
+                //       },
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: AppSizes.paddingS),
+                // Text(
+                //   'Track medicine stock and get refill reminders',
+                //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                //     color: Theme.of(
+                //       context,
+                //     ).colorScheme.onSurface.withValues(alpha: 0.7),
+                //   ),
+                // ),
+                // if (_enableRefillTracking) ...[
+                //   const SizedBox(height: AppSizes.paddingM),
+                //   Card(
+                //     child: Padding(
+                //       padding: const EdgeInsets.all(AppSizes.paddingM),
+                //       child: Column(
+                //         children: [
+                //           CustomTextField(
+                //             label: 'Total Quantity',
+                //             hint: _getQuantityHint(),
+                //             controller: _totalQuantityController,
+                //             prefixIcon: const Icon(Icons.inventory_2),
+                //             keyboardType: const TextInputType.numberWithOptions(
+                //               decimal: true,
+                //             ),
+                //             suffixText: _selectedMedicineType.unit,
+                //             validator: (value) {
+                //               if (_enableRefillTracking) {
+                //                 if (value == null || value.isEmpty) {
+                //                   return 'Please enter total quantity';
+                //                 }
+                //                 final quantity = double.tryParse(value);
+                //                 if (quantity == null || quantity <= 0) {
+                //                   return 'Please enter a valid quantity';
+                //                 }
+                //               }
+                //               return null;
+                //             },
+                //             semanticLabel: 'Total medicine quantity',
+                //           ),
+                //           const SizedBox(height: AppSizes.paddingM),
+                //           CustomTextField(
+                //             label: 'Refill Reminder (days before)',
+                //             hint: 'e.g., 7 days',
+                //             controller: _refillRemindDaysController,
+                //             prefixIcon: const Icon(Icons.notifications_active),
+                //             keyboardType: TextInputType.number,
+                //             validator: (value) {
+                //               if (_enableRefillTracking) {
+                //                 if (value == null || value.isEmpty) {
+                //                   return 'Please enter refill reminder days';
+                //                 }
+                //                 final days = int.tryParse(value);
+                //                 if (days == null || days < 1 || days > 90) {
+                //                   return 'Enter between 1-90 days';
+                //                 }
+                //               }
+                //               return null;
+                //             },
+                //             semanticLabel: 'Refill reminder days',
+                //           ),
+                //           const SizedBox(height: AppSizes.paddingS),
+                //           Container(
+                //             padding: const EdgeInsets.all(AppSizes.paddingM),
+                //             decoration: BoxDecoration(
+                //               color: Theme.of(
+                //                 context,
+                //               ).colorScheme.primary.withValues(alpha: 0.1),
+                //               borderRadius: BorderRadius.circular(
+                //                 AppSizes.radiusM,
+                //               ),
+                //             ),
+                //             child: Row(
+                //               children: [
+                //                 Icon(
+                //                   Icons.info_outline,
+                //                   size: 20,
+                //                   color: Theme.of(context).colorScheme.primary,
+                //                 ),
+                //                 const SizedBox(width: AppSizes.paddingS),
+                //                 Expanded(
+                //                   child: Text(
+                //                     'You\'ll be notified when you have this many days of medicine left',
+                //                     style: Theme.of(context).textTheme.bodySmall
+                //                         ?.copyWith(
+                //                           color: Theme.of(
+                //                             context,
+                //                           ).colorScheme.primary,
+                //                         ),
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ],
+                // const SizedBox(height: AppSizes.paddingL),
+
+                // Reminder Times Section
+                Text(
+                  'Reminder Times',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSizes.paddingS),
+                Text(
+                  'Set times when you need to take this medicine',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: AppSizes.paddingM),
+
+                // Display reminder times
+                if (_reminderTimes.isEmpty)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.paddingL),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: AppSizes.iconXL,
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: AppSizes.paddingS),
+                          Text(
+                            'No reminder times set',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tap the button below to add',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.6),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: AppSizes.paddingS,
+                    runSpacing: AppSizes.paddingS,
+                    children: _reminderTimes.map((seconds) {
+                      final time = DateTimeUtils.secondsToDateTime(seconds);
+                      final timeString = DateTimeUtils.formatTime(time);
+                      final timeOfDay = DateTimeUtils.getTimeOfDayString(time);
+
+                      return Chip(
+                        avatar: Icon(_getTimeOfDayIcon(timeOfDay), size: 18),
+                        label: Text(
+                          timeString,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        deleteIcon: const Icon(Icons.close, size: 18),
+                        onDeleted: () {
+                          setState(() {
+                            _reminderTimes.remove(seconds);
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                const SizedBox(height: AppSizes.paddingM),
+
+                // Add reminder time button
+                OutlinedButton.icon(
+                  onPressed: _addReminderTime,
+                  icon: const Icon(Icons.add_alarm),
+                  label: const Text('Add Reminder Time'),
+                ),
+                const SizedBox(height: AppSizes.paddingXL),
+
+                // Save button
+                BlocBuilder<MedicineCubit, MedicineState>(
+                  builder: (context, state) {
+                    final isLoading = state is MedicineLoading;
+                    return CustomButton(
+                      text: _isEditMode ? 'Update Medicine' : 'Save Medicine',
+                      icon: Icons.check,
+                      isLoading: isLoading,
+                      onPressed: isLoading ? null : _saveMedicine,
+                    );
+                  },
+                ),
+                const SizedBox(height: AppSizes.paddingM),
+
+                // Cancel button
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(AppLocalizations.of(context)!.cancel),
+                ),
+              ],
+            ),
           ),
         ),
       ),

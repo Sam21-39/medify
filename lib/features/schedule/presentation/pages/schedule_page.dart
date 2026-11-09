@@ -46,22 +46,14 @@ class _SchedulePageState extends State<SchedulePage>
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Reload data when page becomes visible (e.g., after adding medicine)
-    if (ModalRoute.of(context)?.isCurrent == true) {
-      _loadData();
-    }
-  }
-
-  void _loadData() {
-    getIt<MedicineCubit>().loadActiveMedicines();
-    if (_isToday()) {
-      getIt<MedicineLogCubit>().loadTodayLogs();
-    } else {
-      getIt<MedicineLogCubit>().loadLogsByDate(_selectedDate);
-    }
+  Future<void> _loadData() async {
+    await Future.wait([
+      getIt<MedicineCubit>().loadActiveMedicines(),
+      if (_isToday())
+        getIt<MedicineLogCubit>().loadTodayLogs()
+      else
+        getIt<MedicineLogCubit>().loadLogsByDate(_selectedDate),
+    ]);
   }
 
   bool _isToday() {
@@ -153,129 +145,129 @@ class _SchedulePageState extends State<SchedulePage>
           ),
         ],
       ),
-      body: MultiBlocListener(
-        listeners: [
-          BlocListener<MedicineLogCubit, MedicineLogState>(
-            listenWhen: (previous, current) {
-              // Only listen when this page is visible (prevent duplicate toasts)
-              return current is MedicineLogOperationSuccess &&
-                  previous != current;
-            },
-            listener: (context, state) {
-              if (state is MedicineLogOperationSuccess) {
-                // Clear any existing snackbars first
-                ScaffoldMessenger.of(context).clearSnackBars();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-                _loadData();
-              }
-            },
-          ),
-        ],
-        child: RefreshIndicator(
-          onRefresh: () async {
-            _loadData();
-          },
-          child: BlocBuilder<MedicineCubit, MedicineState>(
-            bloc: getIt<MedicineCubit>(), // Explicitly use singleton instance
-            builder: (context, medicineState) {
-              if (medicineState is MedicineLoaded) {
-                _medicines = medicineState.medicines;
-              }
+      body: MedifyAdaptive.body(
+        tabShell: true,
+        child: MultiBlocListener(
+          listeners: [
+            BlocListener<MedicineLogCubit, MedicineLogState>(
+              listenWhen: (previous, current) {
+                // Only listen when this page is visible (prevent duplicate toasts)
+                return current is MedicineLogOperationSuccess &&
+                    previous != current;
+              },
+              listener: (context, state) {
+                if (state is MedicineLogOperationSuccess) {
+                  // Cubit already reloads — snackbar only
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: AppColors.success,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+          child: RefreshIndicator(
+            onRefresh: _loadData,
+            child: BlocBuilder<MedicineCubit, MedicineState>(
+              bloc: getIt<MedicineCubit>(), // Explicitly use singleton instance
+              builder: (context, medicineState) {
+                if (medicineState is MedicineLoaded) {
+                  _medicines = medicineState.medicines;
+                }
 
-              return BlocBuilder<MedicineLogCubit, MedicineLogState>(
-                bloc:
-                    getIt<
-                      MedicineLogCubit
-                    >(), // Explicitly use singleton instance
-                builder: (context, logState) {
-                  if (logState is MedicineLogLoading ||
-                      medicineState is MedicineLoading) {
-                    // Use shimmer loading instead of circular progress
-                    return const ShimmerLoadingList(
-                      itemCount: 5,
-                      shimmerWidget: ShimmerMedicineLogCard(),
-                    );
-                  }
-
-                  if (logState is MedicineLogLoaded) {
-                    _logs = logState.logs;
-
-                    if (_logs.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.calendar_today,
-                        title: AppLocalizations.of(context)!.noReminders,
-                        message: AppLocalizations.of(context)!.allCaughtUp,
+                return BlocBuilder<MedicineLogCubit, MedicineLogState>(
+                  bloc:
+                      getIt<
+                        MedicineLogCubit
+                      >(), // Explicitly use singleton instance
+                  builder: (context, logState) {
+                    if (logState is MedicineLogLoading ||
+                        medicineState is MedicineLoading) {
+                      // Use shimmer loading instead of circular progress
+                      return const ShimmerLoadingList(
+                        itemCount: 5,
+                        shimmerWidget: ShimmerMedicineLogCard(),
                       );
                     }
 
-                    // Calculate stats
-                    final takenCount = _logs
-                        .where((log) => log.status == MedicineLogStatus.taken)
-                        .length;
-                    final totalCount = _logs.length;
-                    final adherencePercent = totalCount > 0
-                        ? (takenCount / totalCount * 100).round()
-                        : 0;
+                    if (logState is MedicineLogLoaded) {
+                      _logs = logState.logs;
 
-                    // Group logs by time of day
-                    final groupedLogs = DateTimeUtils.groupByTimeOfDay(
-                      _logs,
-                      (log) => log.scheduledTime,
+                      if (_logs.isEmpty) {
+                        return EmptyState(
+                          icon: Icons.calendar_today,
+                          title: AppLocalizations.of(context)!.noReminders,
+                          message: AppLocalizations.of(context)!.allCaughtUp,
+                        );
+                      }
+
+                      // Calculate stats
+                      final takenCount = _logs
+                          .where((log) => log.status == MedicineLogStatus.taken)
+                          .length;
+                      final totalCount = _logs.length;
+                      final adherencePercent = totalCount > 0
+                          ? (takenCount / totalCount * 100).round()
+                          : 0;
+
+                      // Group logs by time of day
+                      final groupedLogs = DateTimeUtils.groupByTimeOfDay(
+                        _logs,
+                        (log) => log.scheduledTime,
+                      );
+
+                      // Sort periods in chronological order
+                      final sortedPeriods = [
+                        TimeOfDayPeriod.morning,
+                        TimeOfDayPeriod.afternoon,
+                        TimeOfDayPeriod.evening,
+                        TimeOfDayPeriod.night,
+                      ];
+
+                      return ListView(
+                        padding: const EdgeInsets.all(AppSizes.paddingM),
+                        children: [
+                          // Progress Card
+                          _buildProgressCard(
+                            context,
+                            takenCount,
+                            totalCount,
+                            adherencePercent,
+                          ),
+                          const SizedBox(height: AppSizes.paddingL),
+
+                          // Time-based sections
+                          ...sortedPeriods.expand((period) {
+                            final logsForPeriod = groupedLogs[period] ?? [];
+                            if (logsForPeriod.isEmpty) return <Widget>[];
+
+                            return [
+                              _buildTimeBasedSection(
+                                context,
+                                period,
+                                logsForPeriod,
+                              ),
+                              const SizedBox(height: AppSizes.paddingM),
+                            ];
+                          }),
+                        ],
+                      );
+                    }
+
+                    return EmptyState(
+                      icon: Icons.calendar_today,
+                      title: AppLocalizations.of(context)!.noReminders,
+                      message: 'Add some medicines to see your schedule',
                     );
-
-                    // Sort periods in chronological order
-                    final sortedPeriods = [
-                      TimeOfDayPeriod.morning,
-                      TimeOfDayPeriod.afternoon,
-                      TimeOfDayPeriod.evening,
-                      TimeOfDayPeriod.night,
-                    ];
-
-                    return ListView(
-                      padding: const EdgeInsets.all(AppSizes.paddingM),
-                      children: [
-                        // Progress Card
-                        _buildProgressCard(
-                          context,
-                          takenCount,
-                          totalCount,
-                          adherencePercent,
-                        ),
-                        const SizedBox(height: AppSizes.paddingL),
-
-                        // Time-based sections
-                        ...sortedPeriods.expand((period) {
-                          final logsForPeriod = groupedLogs[period] ?? [];
-                          if (logsForPeriod.isEmpty) return <Widget>[];
-
-                          return [
-                            _buildTimeBasedSection(
-                              context,
-                              period,
-                              logsForPeriod,
-                            ),
-                            const SizedBox(height: AppSizes.paddingM),
-                          ];
-                        }),
-                      ],
-                    );
-                  }
-
-                  return EmptyState(
-                    icon: Icons.calendar_today,
-                    title: AppLocalizations.of(context)!.noReminders,
-                    message: 'Add some medicines to see your schedule',
-                  );
-                },
-              );
-            },
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),

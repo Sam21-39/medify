@@ -39,14 +39,6 @@ class _StatisticsPageState extends State<StatisticsPage>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (ModalRoute.of(context)?.isCurrent == true) {
-      getIt<StatisticsCubit>().loadStatistics();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
     final theme = Theme.of(context);
@@ -66,99 +58,102 @@ class _StatisticsPageState extends State<StatisticsPage>
           ),
         ],
       ),
-      body: BlocBuilder<StatisticsCubit, StatisticsState>(
-        bloc: getIt<StatisticsCubit>(), // Explicitly use singleton instance
-        builder: (context, state) {
-          if (state is StatisticsLoading) {
-            // Use shimmer loading for statistics
-            return ListView(
-              padding: const EdgeInsets.all(AppSizes.spacing16),
-              children: const [
-                ShimmerStatisticsCard(),
-                SizedBox(height: AppSizes.spacing16),
-                ShimmerStatisticsCard(),
-                SizedBox(height: AppSizes.spacing16),
-                ShimmerStatisticsCard(),
-              ],
-            );
-          }
-
-          if (state is StatisticsError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                  const SizedBox(height: AppSizes.spacing16),
-                  Text(
-                    'Error loading statistics',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppSizes.spacing8),
-                  Text(
-                    state.message,
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSizes.spacing24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      getIt<StatisticsCubit>().refresh();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
+      body: MedifyAdaptive.body(
+        tabShell: true,
+        child: BlocBuilder<StatisticsCubit, StatisticsState>(
+          bloc: getIt<StatisticsCubit>(), // Explicitly use singleton instance
+          builder: (context, state) {
+            if (state is StatisticsLoading) {
+              // Use shimmer loading for statistics
+              return ListView(
+                padding: const EdgeInsets.all(AppSizes.spacing16),
+                children: const [
+                  ShimmerStatisticsCard(),
+                  SizedBox(height: AppSizes.spacing16),
+                  ShimmerStatisticsCard(),
+                  SizedBox(height: AppSizes.spacing16),
+                  ShimmerStatisticsCard(),
                 ],
-              ),
-            );
-          }
-
-          if (state is StatisticsLoaded) {
-            if (!state.statistics.hasData) {
-              return EmptyState(
-                icon: Icons.bar_chart,
-                title: 'No Statistics Yet',
-                message: 'Start tracking your medicines to see your adherence statistics and progress!',
               );
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                await getIt<StatisticsCubit>().refresh();
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(AppSizes.spacing16),
-                children: [
-                  // Period Selector
-                  _buildPeriodSelector(context, state.period),
-                  const SizedBox(height: AppSizes.spacing16),
+            if (state is StatisticsError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                    const SizedBox(height: AppSizes.spacing16),
+                    Text(
+                      'Error loading statistics',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: AppSizes.spacing8),
+                    Text(
+                      state.message,
+                      style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSizes.spacing24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        getIt<StatisticsCubit>().refresh();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-                  // Overview Cards
-                  _buildOverviewCards(context, state.statistics),
-                  const SizedBox(height: AppSizes.spacing24),
+            if (state is StatisticsLoaded) {
+              if (!state.statistics.hasData) {
+                return EmptyState(
+                  icon: Icons.bar_chart,
+                  title: 'No Statistics Yet',
+                  message: 'Start tracking your medicines to see your adherence statistics and progress!',
+                );
+              }
 
-                  // Streak Card
-                  _buildStreakCard(context, state.statistics),
-                  const SizedBox(height: AppSizes.spacing24),
+              return RefreshIndicator(
+                onRefresh: () async {
+                  await getIt<StatisticsCubit>().refresh();
+                },
+                child: ListView(
+                  padding: const EdgeInsets.all(AppSizes.spacing16),
+                  children: [
+                    // Period Selector
+                    _buildPeriodSelector(context, state.period),
+                    const SizedBox(height: AppSizes.spacing16),
 
-                  // Adherence Trend Chart
-                  _buildAdherenceTrendCard(context, state),
-                  const SizedBox(height: AppSizes.spacing24),
+                    // Overview Cards
+                    _buildOverviewCards(context, state.statistics),
+                    const SizedBox(height: AppSizes.spacing24),
 
-                  // Daily Completion Chart
-                  _buildDailyCompletionCard(context, state),
-                  const SizedBox(height: AppSizes.spacing24),
+                    // Streak Card
+                    _buildStreakCard(context, state.statistics),
+                    const SizedBox(height: AppSizes.spacing24),
 
-                  // Medicine Breakdown
-                  if (state.medicineDetails.isNotEmpty)
-                    _buildMedicineBreakdownCard(context, state),
-                ],
-              ),
-            );
-          }
+                    // Adherence Trend Chart
+                    _buildAdherenceTrendCard(context, state),
+                    const SizedBox(height: AppSizes.spacing24),
 
-          return const SizedBox.shrink();
-        },
+                    // Daily Completion Chart
+                    _buildDailyCompletionCard(context, state),
+                    const SizedBox(height: AppSizes.spacing24),
+
+                    // Medicine Breakdown
+                    if (state.medicineDetails.isNotEmpty)
+                      _buildMedicineBreakdownCard(context, state),
+                  ],
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }

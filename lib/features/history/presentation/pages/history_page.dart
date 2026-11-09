@@ -43,15 +43,6 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Reload data when page becomes visible (e.g., after adding medicine)
-    if (ModalRoute.of(context)?.isCurrent == true) {
-      getIt<HistoryCubit>().loadHistory();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
@@ -77,125 +68,128 @@ class _HistoryPageState extends State<HistoryPage>
           ),
         ],
       ),
-      body: BlocConsumer<HistoryCubit, HistoryState>(
-        listener: (context, state) {
-          if (state is HistoryError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
+      body: MedifyAdaptive.body(
+        tabShell: true,
+        child: BlocConsumer<HistoryCubit, HistoryState>(
+          listener: (context, state) {
+            if (state is HistoryError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
 
-          if (state is HistoryExportSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('History exported successfully!'),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
+            if (state is HistoryExportSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('History exported successfully!'),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
 
-          if (state is HistoryExporting) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
+            if (state is HistoryExporting) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 16),
+                      Text('Exporting...'),
+                    ],
+                  ),
+                  duration: Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is HistoryLoading) {
+              // Use shimmer loading for history
+              return const ShimmerLoadingList(
+                itemCount: 5,
+                shimmerWidget: ShimmerMedicineLogCard(),
+              );
+            }
+
+            if (state is HistoryError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                    const SizedBox(height: AppSizes.spacing16),
+                    Text(
+                      'Error loading history',
+                      style: theme.textTheme.titleLarge,
                     ),
-                    SizedBox(width: 16),
-                    Text('Exporting...'),
+                    const SizedBox(height: AppSizes.spacing8),
+                    Text(
+                      state.message,
+                      style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSizes.spacing24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        getIt<HistoryCubit>().refresh();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
                   ],
                 ),
-                duration: Duration(seconds: 2),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is HistoryLoading) {
-            // Use shimmer loading for history
-            return const ShimmerLoadingList(
-              itemCount: 5,
-              shimmerWidget: ShimmerMedicineLogCard(),
-            );
-          }
+              );
+            }
 
-          if (state is HistoryError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                  const SizedBox(height: AppSizes.spacing16),
-                  Text(
-                    'Error loading history',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppSizes.spacing8),
-                  Text(
-                    state.message,
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSizes.spacing24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      getIt<HistoryCubit>().refresh();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+            if (state is HistoryLoaded) {
+              return RefreshIndicator(
+                onRefresh: () async {
+                  await getIt<HistoryCubit>().refresh();
+                },
+                child: ListView(
+                  padding: const EdgeInsets.all(AppSizes.spacing16),
+                  children: [
+                    // Calendar
+                    _buildCalendar(context, state),
+                    const SizedBox(height: AppSizes.spacing24),
 
-          if (state is HistoryLoaded) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                await getIt<HistoryCubit>().refresh();
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(AppSizes.spacing16),
-                children: [
-                  // Calendar
-                  _buildCalendar(context, state),
-                  const SizedBox(height: AppSizes.spacing24),
+                    // Selected date header
+                    _buildDateHeader(context, state),
+                    const SizedBox(height: AppSizes.spacing16),
 
-                  // Selected date header
-                  _buildDateHeader(context, state),
-                  const SizedBox(height: AppSizes.spacing16),
+                    // Active filter chips
+                    if (state.filter.hasActiveFilters)
+                      _buildFilterChips(context, state),
 
-                  // Active filter chips
-                  if (state.filter.hasActiveFilters)
-                    _buildFilterChips(context, state),
+                    // Logs list
+                    if (state.logs.isEmpty)
+                      EmptyState(
+                        icon: Icons.history,
+                        title: 'No Logs',
+                        message: state.filter.hasActiveFilters
+                            ? 'No logs match your filters'
+                            : 'No medicines scheduled for this date',
+                      )
+                    else
+                      ..._buildLogsList(context, state),
+                  ],
+                ),
+              );
+            }
 
-                  // Logs list
-                  if (state.logs.isEmpty)
-                    EmptyState(
-                      icon: Icons.history,
-                      title: 'No Logs',
-                      message: state.filter.hasActiveFilters
-                          ? 'No logs match your filters'
-                          : 'No medicines scheduled for this date',
-                    )
-                  else
-                    ..._buildLogsList(context, state),
-                ],
-              ),
-            );
-          }
-
-          return const SizedBox.shrink();
-        },
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }

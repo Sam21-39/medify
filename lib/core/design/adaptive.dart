@@ -53,4 +53,20 @@ abstract final class MedifyAdaptive {
       onPressed: onPressed,
     );
   }
+
+  /// Clears AdaptiveScaffold chrome. Plugin only bumps MediaQuery — body
+  /// must use SafeArea. [tabShell] adds clearance under overlay tab bar.
+  static Widget body({required Widget child, bool tabShell = false}) {
+    return SafeArea(
+      child: tabShell
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: tabOverlayClearance),
+              child: child,
+            )
+          : child,
+    );
+  }
+
+  /// Bottom inset so scroll content clears native/Material tab overlay.
+  static const double tabOverlayClearance = 88;
 }

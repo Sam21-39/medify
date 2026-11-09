@@ -5,6 +5,7 @@ import 'package:medify/core/system/system_service.dart';
 
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 // import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/gen/assets.gen.dart';
@@ -35,61 +36,63 @@ class _SettingsView extends StatelessWidget {
 
     return AdaptiveScaffold(
       appBar: const AdaptiveAppBar(title: 'Settings', useNativeToolbar: true),
-      body: BlocBuilder<SettingsCubit, SettingsState>(
-        bloc: getIt<SettingsCubit>(),
-        builder: (context, state) {
-          if (state is SettingsLoaded) {
-            return ListView(
-              padding: const EdgeInsets.all(AppSizes.spacing16),
-              children: [
-                // App Section
-                _buildSectionHeader('App', theme),
-                _buildThemeSetting(context, state, theme),
+      body: MedifyAdaptive.body(
+        child: BlocBuilder<SettingsCubit, SettingsState>(
+          bloc: getIt<SettingsCubit>(),
+          builder: (context, state) {
+            if (state is SettingsLoaded) {
+              return ListView(
+                padding: const EdgeInsets.all(AppSizes.spacing16),
+                children: [
+                  // App Section
+                  _buildSectionHeader('App', theme),
+                  _buildThemeSetting(context, state, theme),
 
-                // const SizedBox(height: AppSizes.spacing8),
-                // _buildLanguageSetting(context, theme), // Commented out for now
-                const SizedBox(height: AppSizes.spacing24),
+                  // const SizedBox(height: AppSizes.spacing8),
+                  // _buildLanguageSetting(context, theme), // Commented out for now
+                  const SizedBox(height: AppSizes.spacing24),
 
-                // Notifications Section
-                _buildSectionHeader('Notifications', theme),
-                // _buildNotificationsSetting(context, state, theme),
-                const SizedBox(height: AppSizes.spacing8),
-                _buildSnoozeDurationSetting(context, state, theme),
+                  // Notifications Section
+                  _buildSectionHeader('Notifications', theme),
+                  // _buildNotificationsSetting(context, state, theme),
+                  const SizedBox(height: AppSizes.spacing8),
+                  _buildSnoozeDurationSetting(context, state, theme),
 
-                const SizedBox(height: AppSizes.spacing24),
+                  const SizedBox(height: AppSizes.spacing24),
 
-                // About Section
-                _buildSectionHeader('About', theme),
-                // COMMENTED OUT FOR UPCOMING RELEASE
-                // _buildProfilesCard(context, theme),
-                // const SizedBox(height: AppSizes.spacing8),
-                _buildAchievementsCard(context, theme),
-                const SizedBox(height: AppSizes.spacing8),
-                // _buildHistoryCard(context, theme),
-                // const SizedBox(height: AppSizes.spacing8),
-                _buildAboutCard(context, theme),
-                const SizedBox(height: AppSizes.spacing8),
-                _buildVersionCard(theme),
+                  // About Section
+                  _buildSectionHeader('About', theme),
+                  // COMMENTED OUT FOR UPCOMING RELEASE
+                  // _buildProfilesCard(context, theme),
+                  // const SizedBox(height: AppSizes.spacing8),
+                  _buildAchievementsCard(context, theme),
+                  const SizedBox(height: AppSizes.spacing8),
+                  // _buildHistoryCard(context, theme),
+                  // const SizedBox(height: AppSizes.spacing8),
+                  _buildAboutCard(context, theme),
+                  const SizedBox(height: AppSizes.spacing8),
+                  _buildVersionCard(theme),
 
-                const SizedBox(height: AppSizes.spacing24),
+                  const SizedBox(height: AppSizes.spacing24),
 
-                // Reset Button
-                Center(
-                  child: TextButton.icon(
-                    onPressed: () => _showResetDialog(context),
-                    icon: const Icon(Icons.restore, color: AppColors.error),
-                    label: const Text(
-                      'Reset All Settings',
-                      style: TextStyle(color: AppColors.error),
+                  // Reset Button
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _showResetDialog(context),
+                      icon: const Icon(Icons.restore, color: AppColors.error),
+                      label: const Text(
+                        'Reset All Settings',
+                        style: TextStyle(color: AppColors.error),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            );
-          }
+                ],
+              );
+            }
 
-          return const Center(child: CircularProgressIndicator());
-        },
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
     );
   }
