@@ -157,7 +157,9 @@ class $AssetsSongsGen {
   List<String> get values => [newNotification026380249];
 }
 
-abstract final class Assets {
+class Assets {
+  const Assets._();
+
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsSongsGen songs = $AssetsSongsGen();
