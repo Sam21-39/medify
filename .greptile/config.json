@@ -1,0 +1,34 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax"],
+  "autoReview": ["open", "push"],
+  "triggerOnDrafts": false,
+  "shouldUpdateDescription": false,
+  "statusCheck": true,
+  "includeConfidenceScore": true,
+  "excludeAuthors": ["dependabot[bot]", "cursoragent"],
+  "ignorePatterns": "build/**\n.dart_tool/**\n.fvm/**\n**/*.g.dart\n**/objectbox-model.json\n**/generated/**\nlib/gen/**\nlib/l10n/app_localizations*.dart\nios/Flutter/ephemeral/**\nandroid/.gradle/**\nandroid/app/build/**\npubspec.lock\n**/*.png\n**/*.jpg\n**/*.ttf\n**/*.mp3\n**/*.jks\n**/*.keystore\ndocs/**\n*.md",
+  "instructions": "Medify is an offline-first Flutter medicine reminder app (Clean Architecture, Cubit, GetIt, ObjectBox). Prefer correctness around scheduling, notifications, permissions, local DB, and adherence tracking. Avoid style nits covered by flutter_lints. Flag regressions that reintroduce CocoaPods, weaken privacy/offline guarantees, or break medicine/log state sync.",
+  "rules": [
+    {
+      "id": "offline-first",
+      "rule": "Keep medicine and dose data local (ObjectBox / SharedPreferences). Do not introduce cloud sync or third-party analytics without explicit product intent.",
+      "severity": "high"
+    },
+    {
+      "id": "notification-safety",
+      "rule": "Notification and permission changes must preserve Taken/Skip/Snooze actions and avoid silently dropping scheduled reminders.",
+      "severity": "high"
+    },
+    {
+      "id": "no-cocoapods-regression",
+      "rule": "Do not reintroduce CocoaPods (Podfile, Pods xcconfig includes, [CP] build phases). iOS dependencies use Swift Package Manager.",
+      "severity": "medium"
+    },
+    {
+      "id": "feature-flags-comments",
+      "rule": "Respect COMMENTED OUT FOR UPCOMING RELEASE blocks (profiles, refill UI, CSV export). Do not silently re-enable without matching product scope.",
+      "severity": "medium"
+    }
+  ]
+}

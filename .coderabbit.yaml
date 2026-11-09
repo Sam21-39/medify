@@ -1,0 +1,15 @@
+# CodeRabbit disabled — Greptile is the AI reviewer for this repo.
+# This file only silences CodeRabbit. Fully remove access by uninstalling
+# the CodeRabbit GitHub App: Settings → Applications → Installed GitHub Apps → CodeRabbit → Uninstall.
+# Schema: https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  request_changes_workflow: false
+  high_level_summary: false
+  poem: false
+  review_status: false
+  collapse_walkthrough: true
+  auto_review:
+    enabled: false
+    drafts: false
+chat:
+  auto_reply: false
