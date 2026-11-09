@@ -14,12 +14,126 @@ import 'package:flutter/widgets.dart';
 class $AssetsIconsGen {
   const $AssetsIconsGen();
 
+  /// File path: assets/icons/add.svg
+  String get add => 'assets/icons/add.svg';
+
+  /// File path: assets/icons/calendar.svg
+  String get calendar => 'assets/icons/calendar.svg';
+
+  /// File path: assets/icons/capsule.svg
+  String get capsule => 'assets/icons/capsule.svg';
+
+  /// File path: assets/icons/capture.svg
+  String get capture => 'assets/icons/capture.svg';
+
+  /// File path: assets/icons/caregiver.svg
+  String get caregiver => 'assets/icons/caregiver.svg';
+
+  /// File path: assets/icons/delete.svg
+  String get delete => 'assets/icons/delete.svg';
+
+  /// File path: assets/icons/doctor.svg
+  String get doctor => 'assets/icons/doctor.svg';
+
+  /// File path: assets/icons/drop.svg
+  String get drop => 'assets/icons/drop.svg';
+
+  /// File path: assets/icons/history.svg
+  String get history => 'assets/icons/history.svg';
+
+  /// File path: assets/icons/home.svg
+  String get home => 'assets/icons/home.svg';
+
+  /// File path: assets/icons/injection.svg
+  String get injection => 'assets/icons/injection.svg';
+
+  /// File path: assets/icons/list.svg
+  String get list => 'assets/icons/list.svg';
+
+  /// File path: assets/icons/medicine.svg
+  String get medicine => 'assets/icons/medicine.svg';
+
   /// File path: assets/icons/medify-icon.png
   AssetGenImage get medifyIcon =>
       const AssetGenImage('assets/icons/medify-icon.png');
 
+  /// File path: assets/icons/notify.svg
+  String get notify => 'assets/icons/notify.svg';
+
+  /// File path: assets/icons/ointment.svg
+  String get ointment => 'assets/icons/ointment.svg';
+
+  /// File path: assets/icons/other_medicine.svg
+  String get otherMedicine => 'assets/icons/other_medicine.svg';
+
+  /// File path: assets/icons/patient.svg
+  String get patient => 'assets/icons/patient.svg';
+
+  /// File path: assets/icons/pills.svg
+  String get pills => 'assets/icons/pills.svg';
+
+  /// File path: assets/icons/refresh.svg
+  String get refresh => 'assets/icons/refresh.svg';
+
+  /// File path: assets/icons/reminder.svg
+  String get reminder => 'assets/icons/reminder.svg';
+
+  /// File path: assets/icons/settings.svg
+  String get settings => 'assets/icons/settings.svg';
+
+  /// File path: assets/icons/skip.svg
+  String get skip => 'assets/icons/skip.svg';
+
+  /// File path: assets/icons/snooze.svg
+  String get snooze => 'assets/icons/snooze.svg';
+
+  /// File path: assets/icons/statistics.svg
+  String get statistics => 'assets/icons/statistics.svg';
+
+  /// File path: assets/icons/tablets.svg
+  String get tablets => 'assets/icons/tablets.svg';
+
+  /// File path: assets/icons/theme.svg
+  String get theme => 'assets/icons/theme.svg';
+
+  /// File path: assets/icons/time.svg
+  String get time => 'assets/icons/time.svg';
+
+  /// File path: assets/icons/voice_note.svg
+  String get voiceNote => 'assets/icons/voice_note.svg';
+
   /// List of all assets
-  List<AssetGenImage> get values => [medifyIcon];
+  List<dynamic> get values => [
+    add,
+    calendar,
+    capsule,
+    capture,
+    caregiver,
+    delete,
+    doctor,
+    drop,
+    history,
+    home,
+    injection,
+    list,
+    medicine,
+    medifyIcon,
+    notify,
+    ointment,
+    otherMedicine,
+    patient,
+    pills,
+    refresh,
+    reminder,
+    settings,
+    skip,
+    snooze,
+    statistics,
+    tablets,
+    theme,
+    time,
+    voiceNote,
+  ];
 }
 
 class $AssetsImagesGen {
