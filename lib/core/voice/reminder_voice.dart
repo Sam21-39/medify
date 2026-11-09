@@ -1,11 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
+import 'package:medify/core/voice/native_speech_channel.dart';
 
 class ReminderVoice {
-  final FlutterTts _tts = FlutterTts();
   Timer? _repeat;
   int _said = 0;
 
@@ -25,12 +24,12 @@ class ReminderVoice {
       return;
     }
     _said++;
-    await _tts.speak('Medicine $name at $time.');
+    await NativeSpeech.speak('Medicine $name at $time.');
   }
 
   Future<void> stop() async {
     _repeat?.cancel();
     _repeat = null;
-    await _tts.stop();
+    await NativeSpeech.stop();
   }
 }

@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/platform/medify_paths.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
@@ -130,9 +130,9 @@ class HistoryCubit extends Cubit<HistoryState> {
       final csvData = _generateCSVData(logs, currentState.medicines);
 
       // Save to file
-      final directory = await getTemporaryDirectory();
+      final directory = await MedifyPaths.temporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = '${directory.path}/medicine_history_$timestamp.csv';
+      final filePath = '$directory/medicine_history_$timestamp.csv';
       final file = File(filePath);
       await file.writeAsString(csvData);
 

@@ -1,6 +1,6 @@
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:medify/core/platform/medify_paths.dart';
 import 'package:medify/features/medicines/data/models/medicine_model.dart';
 import 'package:medify/features/schedule/data/models/medicine_log_model.dart';
 import 'package:medify/objectbox.g.dart';
@@ -17,8 +17,8 @@ class ObjectBoxService {
 
   /// Initialize ObjectBox
   Future<void> init() async {
-    final docsDir = await getApplicationDocumentsDirectory();
-    final storePath = p.join(docsDir.path, 'medify-db');
+    final docsDir = await MedifyPaths.documentsDirectory();
+    final storePath = p.join(docsDir, 'medify-db');
 
     _store = await openStore(directory: storePath);
     _medicineBox = Box<MedicineModel>(_store);
