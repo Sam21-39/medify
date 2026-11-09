@@ -1,0 +1,93 @@
+{
+  "@@locale": "bn",
+  
+  "appName": "মেডিফাই",
+  "appTagline": "আপনার ওষুধ কখনো মিস করবেন না",
+  
+  "yes": "হ্যাঁ",
+  "no": "না",
+  "ok": "ঠিক আছে",
+  "cancel": "বাতিল",
+  "save": "সংরক্ষণ করুন",
+  "delete": "মুছুন",
+  "edit": "সম্পাদনা",
+  "done": "সম্পন্ন",
+  "close": "বন্ধ করুন",
+  "retry": "পুনরায় চেষ্টা করুন",
+  "loading": "লোড হচ্ছে...",
+  "error": "ত্রুটি",
+  "success": "সফল",
+  "next": "পরবর্তী",
+  
+  "onboardingTitle1": "মেডিফাইতে স্বাগতম",
+  "onboardingDesc1": "আপনার ব্যক্তিগত ওষুধ রিমাইন্ডার এবং ট্র্যাকার",
+  "onboardingTitle2": "কখনো ডোজ মিস করবেন না",
+  "onboardingDesc2": "আপনার সমস্ত ওষুধের জন্য সময়মতো রিমাইন্ডার পান",
+  "onboardingTitle3": "আপনার অগ্রগতি ট্র্যাক করুন",
+  "onboardingDesc3": "আপনার ওষুধের ইতিহাস এবং মেনে চলার ট্র্যাক রাখুন",
+  "getStarted": "শুরু করুন",
+  
+  "medicines": "ওষুধ",
+  "addMedicine": "ওষুধ যোগ করুন",
+  "editMedicine": "ওষুধ সম্পাদনা করুন",
+  "deleteMedicine": "ওষুধ মুছুন",
+  "medicineName": "ওষুধের নাম",
+  "dosage": "ডোজ",
+  "schedule": "সময়সূচী",
+  "notes": "নোট",
+  "noMedicines": "এখনো কোনো ওষুধ যোগ করা হয়নি",
+  "addYourFirstMedicine": "আপনার প্রথম ওষুধ যোগ করুন",
+  
+  "reminders": "রিমাইন্ডার",
+  "todaysSchedule": "আজকের সময়সূচী",
+  "upcomingReminders": "আসন্ন রিমাইন্ডার",
+  "noReminders": "আজকের জন্য কোনো রিমাইন্ডার নেই",
+  "allCaughtUp": "আপনি সব শেষ করেছেন!",
+  
+  "markAsTaken": "গৃহীত হিসাবে চিহ্নিত করুন",
+  "taken": "গৃহীত",
+  "snooze": "স্নুজ",
+  "skip": "এড়িয়ে যান",
+  "undo": "পূর্বাবস্থায় ফিরুন",
+  
+  "morning": "সকাল",
+  "afternoon": "বিকাল",
+  "evening": "সন্ধ্যা",
+  "night": "রাত",
+  "daily": "দৈনিক",
+  "today": "আজ",
+  "statistics": "পরিসংখ্যান",
+  
+  "pending": "অপেক্ষমান",
+  "missed": "মিস করা",
+  "completed": "সম্পন্ন",
+  "snoozed": "স্নুজ করা",
+  
+  "notificationPermission": "বিজ্ঞপ্তি অনুমতি",
+  "notificationPermissionDesc": "আপনার ওষুধের কথা মনে করিয়ে দিতে আমাদের বিজ্ঞপ্তি অনুমতি প্রয়োজন",
+  "grantPermission": "অনুমতি দিন",
+  "notificationTitle": "আপনার ওষুধ খাওয়ার সময়",
+  
+  "errorGeneric": "কিছু ভুল হয়েছে",
+  "errorNoInternet": "ইন্টারনেট সংযোগ নেই",
+  "errorInvalidInput": "অনুগ্রহ করে আপনার ইনপুট চেক করুন",
+  "errorMedicineNameRequired": "ওষুধের নাম প্রয়োজন",
+  "errorDosageRequired": "ডোজ প্রয়োজন",
+  "errorScheduleRequired": "অন্তত একটি সময় প্রয়োজন",
+  
+  "snooze15min": "১৫ মিনিট",
+  "snooze30min": "৩০ মিনিট",
+  "snooze1hour": "১ ঘন্টা",
+  
+  "deleteConfirmation": "মুছে ফেলার নিশ্চিতকরণ",
+  "deleteMedicineConfirmation": "আপনি কি নিশ্চিত যে এই ওষুধটি মুছে ফেলতে চান?",
+  
+  "language": "ভাষা",
+  "selectLanguage": "ভাষা নির্বাচন করুন",
+  "english": "ইংরেজি",
+  "hindi": "হিন্দি",
+  "bengali": "বাংলা",
+  
+  "aboutDialogDesc": "মেডিফাই আপনাকে সময়মতো রিমাইন্ডার এবং ব্যাপক ট্র্যাকিংয়ের মাধ্যমে আপনার ওষুধের সাথে ট্র্যাকে থাকতে সাহায্য করে।",
+  "copyrightNotice": "© ২০২৫ মেডিফাই। সর্বস্বত্ব সংরক্ষিত।"
+}
