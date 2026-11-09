@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:medify/core/error/failure.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
 import 'package:medify/core/notifications/notification_service.dart';
@@ -19,7 +20,8 @@ class RefillReminderService {
         name: 'RefillReminderService',
       );
 
-      final activeMedicines = await _medicineRepository.getActiveMedicines();
+      final activeMedicines = (await _medicineRepository.getActiveMedicines())
+          .unwrap();
 
       for (final medicine in activeMedicines) {
         await _checkMedicineRefillStatus(medicine);
@@ -136,7 +138,8 @@ class RefillReminderService {
   /// Update medicine quantity after taking a dose
   Future<void> decrementMedicineQuantity(int medicineId) async {
     try {
-      final medicine = await _medicineRepository.getMedicineById(medicineId);
+      final medicine = (await _medicineRepository.getMedicineById(medicineId))
+          .unwrap();
       if (medicine == null) {
         developer.log(
           'Medicine not found: $medicineId',
@@ -158,7 +161,7 @@ class RefillReminderService {
         updatedAt: DateTime.now(),
       );
 
-      await _medicineRepository.updateMedicine(updatedMedicine);
+      (await _medicineRepository.updateMedicine(updatedMedicine)).unwrap();
 
       developer.log(
         'Decremented quantity for ${medicine.name}: ${medicine.currentQuantity} -> $newQuantity (decreased by $decrementAmount ${medicine.medicineType.unit})',
@@ -179,7 +182,8 @@ class RefillReminderService {
   /// Refill medicine stock
   Future<void> refillMedicine(int medicineId, {double? newQuantity}) async {
     try {
-      final medicine = await _medicineRepository.getMedicineById(medicineId);
+      final medicine = (await _medicineRepository.getMedicineById(medicineId))
+          .unwrap();
       if (medicine == null) {
         developer.log(
           'Medicine not found: $medicineId',
@@ -197,7 +201,7 @@ class RefillReminderService {
         updatedAt: DateTime.now(),
       );
 
-      await _medicineRepository.updateMedicine(updatedMedicine);
+      (await _medicineRepository.updateMedicine(updatedMedicine)).unwrap();
 
       developer.log(
         'Refilled ${medicine.name}: currentQuantity = $refillAmount ${medicine.medicineType.unit}',
@@ -231,7 +235,8 @@ class RefillReminderService {
   /// Get list of medicines that need refilling
   Future<List<Medicine>> getMedicinesNeedingRefill() async {
     try {
-      final activeMedicines = await _medicineRepository.getActiveMedicines();
+      final activeMedicines = (await _medicineRepository.getActiveMedicines())
+          .unwrap();
       return activeMedicines
           .where((medicine) => medicine.isLowStock || medicine.isOutOfStock)
           .toList();

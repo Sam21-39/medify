@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dartz/dartz.dart' hide Order;
+
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/statistics/domain/entities/statistics.dart';
@@ -9,6 +11,9 @@ import 'package:medify/core/database/objectbox_service.dart';
 import 'package:medify/features/schedule/data/models/medicine_log_model.dart';
 import 'package:medify/objectbox.g.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/error/failure.dart';
+import 'package:medify/features/profiles/data/repositories/care_link_repository.dart';
+import 'package:medify/features/profiles/data/services/profile_service.dart';
 
 /// Implementation of MedicineLogRepository using ObjectBox
 class MedicineLogRepositoryImpl implements MedicineLogRepository {
@@ -16,6 +21,24 @@ class MedicineLogRepositoryImpl implements MedicineLogRepository {
   final _logStreamController = StreamController<List<MedicineLog>>.broadcast();
 
   MedicineLogRepositoryImpl(this._objectBoxService);
+
+  int _actorId() {
+    if (!getIt.isRegistered<ProfileService>()) return 0;
+    return getIt<ProfileService>().active?.id ?? 0;
+  }
+
+  bool _canAct(int patientId) {
+    if (!getIt.isRegistered<ProfileService>()) return true;
+    final actor = getIt<ProfileService>().active;
+    if (actor == null || actor.role == 0) return true;
+    if (actor.id == null) return false;
+    if (actor.id == patientId) return true;
+    if (!getIt.isRegistered<CareLinkRepository>()) return false;
+    return getIt<CareLinkRepository>().canActFor(
+      caregiverId: actor.id!,
+      patientId: patientId,
+    );
+  }
 
   @override
   Future<List<MedicineLog>> getAllLogs() async {
@@ -100,30 +123,34 @@ class MedicineLogRepositoryImpl implements MedicineLogRepository {
   }
 
   @override
-  Future<MedicineLog> markAsTaken(int id) async {
+  Future<Either<Failure, MedicineLog>> markAsTaken(int id) async {
     final model = _objectBoxService.medicineLogBox.get(id);
-    if (model == null) {
-      throw Exception('Log not found');
+    if (model == null) return const Left(Failure('Log not found'));
+    if (!_canAct(model.profileId)) {
+      return const Left(Failure('No care link for this patient'));
     }
     model.status = MedicineLogStatus.taken.index;
     model.takenTime = DateTime.now();
+    model.actorProfileId = _actorId();
     model.updatedAt = DateTime.now();
     _objectBoxService.medicineLogBox.put(model);
     _notifyListeners();
-    return model.toEntity();
+    return Right(model.toEntity());
   }
 
   @override
-  Future<MedicineLog> markAsSkipped(int id) async {
+  Future<Either<Failure, MedicineLog>> markAsSkipped(int id) async {
     final model = _objectBoxService.medicineLogBox.get(id);
-    if (model == null) {
-      throw Exception('Log not found');
+    if (model == null) return const Left(Failure('Log not found'));
+    if (!_canAct(model.profileId)) {
+      return const Left(Failure('No care link for this patient'));
     }
     model.status = MedicineLogStatus.skipped.index;
+    model.actorProfileId = _actorId();
     model.updatedAt = DateTime.now();
     _objectBoxService.medicineLogBox.put(model);
     _notifyListeners();
-    return model.toEntity();
+    return Right(model.toEntity());
   }
 
   @override
@@ -140,17 +167,19 @@ class MedicineLogRepositoryImpl implements MedicineLogRepository {
   }
 
   @override
-  Future<MedicineLog> snoozeLog(int id, int minutes) async {
+  Future<Either<Failure, MedicineLog>> snoozeLog(int id, int minutes) async {
     final model = _objectBoxService.medicineLogBox.get(id);
-    if (model == null) {
-      throw Exception('Log not found');
+    if (model == null) return const Left(Failure('Log not found'));
+    if (!_canAct(model.profileId)) {
+      return const Left(Failure('No care link for this patient'));
     }
     model.status = MedicineLogStatus.snoozed.index;
-    model.scheduledTime = model.scheduledTime.add(Duration(minutes: minutes));
+    model.snoozedUntil = DateTime.now().add(Duration(minutes: minutes));
+    model.actorProfileId = _actorId();
     model.updatedAt = DateTime.now();
     _objectBoxService.medicineLogBox.put(model);
     _notifyListeners();
-    return model.toEntity();
+    return Right(model.toEntity());
   }
 
   @override
@@ -478,7 +507,7 @@ class MedicineLogRepositoryImpl implements MedicineLogRepository {
 
     // Get medicine repository to fetch medicine details
     final medicineRepo = getIt<MedicineRepository>();
-    final medicines = await medicineRepo.getAllMedicines();
+    final medicines = (await medicineRepo.getAllMedicines()).unwrap();
 
     // Create medicine map for quick lookup
     final Map<int, Medicine> medicineMap = {

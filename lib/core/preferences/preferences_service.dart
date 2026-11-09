@@ -9,6 +9,9 @@ class PreferencesService {
   static const String _keyNotificationsEnabled = 'notifications_enabled';
   static const String _keySnoozeDuration = 'snooze_duration';
   static const String _keyLastLogGeneration = 'last_log_generation_date';
+  static const String _keyRoleChosen = 'role_chosen';
+  static const String _keySpeakReminder = 'speak_reminder';
+  static const String _keyActingPatient = 'acting_patient_id';
 
   final SharedPreferences _prefs;
 
@@ -22,6 +25,20 @@ class PreferencesService {
 
   // First Launch
   bool get isFirstLaunch => _prefs.getBool(_keyFirstLaunch) ?? true;
+
+  bool get roleChosen => _prefs.getBool(_keyRoleChosen) ?? false;
+
+  Future<void> setRoleChosen() => _prefs.setBool(_keyRoleChosen, true);
+
+  bool get speakReminder => _prefs.getBool(_keySpeakReminder) ?? true;
+
+  Future<void> setSpeakReminder(bool value) =>
+      _prefs.setBool(_keySpeakReminder, value);
+
+  int? get actingPatientId => _prefs.getInt(_keyActingPatient);
+
+  Future<void> setActingPatientId(int id) =>
+      _prefs.setInt(_keyActingPatient, id);
 
   Future<bool> setFirstLaunchComplete() async {
     // Set first launch date if not already set

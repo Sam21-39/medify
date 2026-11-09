@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'package:medify/app/main_navigation_page.dart';
+import 'package:medify/app/app_router.dart';
+import 'package:go_router/go_router.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/di/injection_container.dart';
-import 'package:medify/core/navigation/navigation_service.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/core/theme/app_theme.dart';
 import 'package:medify/core/theme/theme_service.dart';
 import 'package:medify/features/history/presentation/cubit/history_cubit.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
-import 'package:medify/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:medify/features/schedule/presentation/cubit/medicine_log_cubit.dart';
 import 'package:medify/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:medify/features/statistics/presentation/cubit/statistics_cubit.dart';
@@ -29,6 +29,7 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   late final PreferencesService _prefsService;
+  late final GoRouter _router;
   late ThemeMode _themeMode;
   Locale? _locale;
 
@@ -36,6 +37,8 @@ class MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _prefsService = getIt<PreferencesService>();
+    _router = buildRouter(_prefsService);
+    getIt<AppMessenger>().router = _router;
     _themeMode = _prefsService.themeMode;
 
     ThemeService().registerThemeCallback((themeMode) {
@@ -93,7 +96,7 @@ class MyAppState extends State<MyApp> {
       // iOS 26+ → native Liquid Glass via adaptive_platform_ui;
       // Android → Material 3 tinted theme. Theme wrapper keeps MedifyTokens
       // + ScaffoldMessenger available under CupertinoApp on iOS.
-      child: AdaptiveApp(
+      child: AdaptiveApp.router(
         title: 'Medify',
         themeMode: _themeMode,
         materialLightTheme: AppTheme.lightTheme,
@@ -108,16 +111,14 @@ class MyAppState extends State<MyApp> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en')],
-        navigatorKey: NavigationService().navigatorKey,
+        scaffoldMessengerKey: getIt<AppMessenger>().scaffoldKey,
+        routerConfig: _router,
         builder: (context, child) {
           return Theme(
             data: _resolveMaterialTheme(context),
-            child: ScaffoldMessenger(child: child ?? const SizedBox.shrink()),
+            child: child ?? const SizedBox.shrink(),
           );
         },
-        home: _prefsService.isFirstLaunch
-            ? const OnboardingPage()
-            : const MainNavigationPage(),
       ),
     );
   }

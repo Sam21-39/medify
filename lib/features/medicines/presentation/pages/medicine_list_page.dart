@@ -7,6 +7,7 @@ import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/widgets/empty_state.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
@@ -19,8 +20,6 @@ import 'package:medify/features/medicines/presentation/widgets/medicine_card.dar
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../widgets/profile_switcher.dart';
 import 'package:medify/features/schedule/presentation/widgets/todays_summary_card.dart';
-import 'package:medify/features/medicines/presentation/pages/add_edit_medicine_page.dart';
-import 'package:medify/features/settings/presentation/pages/settings_page.dart';
 
 /// Page to display list of all medicines
 class MedicineListPage extends StatefulWidget {
@@ -70,11 +69,7 @@ class _MedicineListPageState extends State<MedicineListPage>
             iosSymbol: 'gearshape',
             icon: Icons.settings,
             label: 'Settings',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              );
-            },
+            onPressed: () => getIt<AppMessenger>().push('/settings'),
           ),
         ],
       ),
@@ -349,9 +344,7 @@ class _MedicineListPageState extends State<MedicineListPage>
 
   /// Navigate to add medicine page
   Future<void> _navigateToAddMedicine() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => const AddEditMedicinePage()),
-    );
+    final result = await getIt<AppMessenger>().push<bool>('/medicine/add');
 
     // Reload medicines if a medicine was added
     if (result == true && mounted) {
@@ -368,10 +361,9 @@ class _MedicineListPageState extends State<MedicineListPage>
 
     final medicine = state.medicines.firstWhere((m) => m.id == medicineId);
 
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => AddEditMedicinePage(medicine: medicine),
-      ),
+    final result = await getIt<AppMessenger>().push<bool>(
+      '/medicine/edit',
+      extra: medicine,
     );
 
     // Reload medicines if a medicine was updated

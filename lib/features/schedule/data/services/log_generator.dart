@@ -7,9 +7,20 @@ class LogGenerator {
   LogGenerator._();
 
   /// Generate today's logs for a medicine
+  static bool scheduledOn(Medicine medicine, DateTime date) {
+    if (medicine.endDate != null &&
+        DateTimeUtils.getStartOfDay(date)
+            .isAfter(DateTimeUtils.getStartOfDay(medicine.endDate!))) {
+      return false;
+    }
+    if (medicine.daysOfWeek.isEmpty) return true;
+    return medicine.daysOfWeek.contains(date.weekday);
+  }
+
   static List<MedicineLog> generateTodayLogs(Medicine medicine) {
-    final logs = <MedicineLog>[];
     final now = DateTime.now();
+    if (!scheduledOn(medicine, now)) return [];
+    final logs = <MedicineLog>[];
 
     for (final seconds in medicine.reminderTimes) {
       final scheduledTime = DateTimeUtils.secondsToDateTime(seconds);
@@ -34,6 +45,7 @@ class LogGenerator {
     Medicine medicine,
     DateTime date,
   ) {
+    if (!scheduledOn(medicine, date)) return [];
     final logs = <MedicineLog>[];
     final startOfDay = DateTimeUtils.getStartOfDay(date);
 

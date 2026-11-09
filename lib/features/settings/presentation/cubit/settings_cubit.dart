@@ -21,6 +21,7 @@ class SettingsCubit extends Cubit<SettingsState> {
         themeMode: _preferencesService.themeMode,
         notificationsEnabled: _preferencesService.notificationsEnabled,
         snoozeDuration: _preferencesService.snoozeDuration,
+        speakReminder: _preferencesService.speakReminder,
       ),
     );
   }
@@ -61,6 +62,14 @@ class SettingsCubit extends Cubit<SettingsState> {
       await _preferencesService.setSnoozeDuration(minutes);
 
       emit(currentState.copyWith(snoozeDuration: minutes));
+    }
+  }
+
+  Future<void> updateSpeakReminder(bool enabled) async {
+    if (state is SettingsLoaded) {
+      final currentState = state as SettingsLoaded;
+      await _preferencesService.setSpeakReminder(enabled);
+      emit(currentState.copyWith(speakReminder: enabled));
     }
   }
 

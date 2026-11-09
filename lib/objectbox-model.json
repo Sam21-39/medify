@@ -39,7 +39,7 @@
     },
     {
       "id": "2:7348902232756259354",
-      "lastPropertyId": "9:655895618946392476",
+      "lastPropertyId": "11:791226322851839881",
       "name": "MedicineLogModel",
       "properties": [
         {
@@ -87,13 +87,23 @@
           "id": "9:655895618946392476",
           "name": "updatedAt",
           "type": 10
+        },
+        {
+          "id": "10:6986449303818297992",
+          "name": "snoozedUntil",
+          "type": 10
+        },
+        {
+          "id": "11:791226322851839881",
+          "name": "actorProfileId",
+          "type": 6
         }
       ],
       "relations": []
     },
     {
       "id": "3:9007703315664188821",
-      "lastPropertyId": "16:8600774446825595415",
+      "lastPropertyId": "20:4542354920058966191",
       "name": "MedicineModel",
       "properties": [
         {
@@ -176,13 +186,33 @@
           "id": "16:8600774446825595415",
           "name": "updatedAt",
           "type": 10
+        },
+        {
+          "id": "17:3227538801247336202",
+          "name": "daysOfWeek",
+          "type": 27
+        },
+        {
+          "id": "18:4738854571386030361",
+          "name": "endDate",
+          "type": 10
+        },
+        {
+          "id": "19:5114387053673319844",
+          "name": "photoPath",
+          "type": 9
+        },
+        {
+          "id": "20:4542354920058966191",
+          "name": "voiceNotePath",
+          "type": 9
         }
       ],
       "relations": []
     },
     {
       "id": "4:2617600093965691686",
-      "lastPropertyId": "11:2686205517257221054",
+      "lastPropertyId": "12:6115955375437206816",
       "name": "UserProfileModel",
       "properties": [
         {
@@ -240,12 +270,41 @@
           "id": "11:2686205517257221054",
           "name": "updatedAt",
           "type": 10
+        },
+        {
+          "id": "12:6115955375437206816",
+          "name": "role",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:6169913660011982505",
+      "lastPropertyId": "3:2277523643621995178",
+      "name": "CareLinkModel",
+      "properties": [
+        {
+          "id": "1:2342706206222392637",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7307008246302009272",
+          "name": "patientProfileId",
+          "type": 6
+        },
+        {
+          "id": "3:2277523643621995178",
+          "name": "caregiverProfileId",
+          "type": 6
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "4:2617600093965691686",
+  "lastEntityId": "5:6169913660011982505",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",

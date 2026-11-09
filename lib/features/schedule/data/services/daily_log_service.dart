@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:medify/core/error/failure.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
 import 'package:medify/features/schedule/data/services/log_generator.dart';
@@ -55,7 +56,8 @@ class DailyLogService {
   Future<void> _generateLogsForToday() async {
     try {
       // Get all active medicines
-      final activeMedicines = await _medicineRepository.getActiveMedicines();
+      final activeMedicines = (await _medicineRepository.getActiveMedicines())
+          .unwrap();
 
       if (activeMedicines.isEmpty) {
         developer.log(

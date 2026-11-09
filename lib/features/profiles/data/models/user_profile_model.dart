@@ -20,6 +20,8 @@ class UserProfileModel {
   bool isActive;
   bool isDefaultProfile;
 
+  int role;
+
   @Property(type: PropertyType.date)
   DateTime createdAt;
 
@@ -36,6 +38,7 @@ class UserProfileModel {
     this.notes,
     this.isActive = true,
     this.isDefaultProfile = false,
+    this.role = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -52,6 +55,7 @@ class UserProfileModel {
       notes: profile.notes,
       isActive: profile.isActive,
       isDefaultProfile: profile.isDefaultProfile,
+      role: profile.role,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
     );
@@ -69,6 +73,7 @@ class UserProfileModel {
       notes: notes,
       isActive: isActive,
       isDefaultProfile: isDefaultProfile,
+      role: role,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

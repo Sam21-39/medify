@@ -6,6 +6,9 @@ import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/preferences/preferences_service.dart';
+import 'package:medify/core/ui/app_messenger.dart';
+import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/core/widgets/empty_state.dart';
@@ -17,9 +20,9 @@ import 'package:medify/features/medicines/presentation/cubit/medicine_state.dart
 import 'package:medify/features/schedule/presentation/cubit/medicine_log_cubit.dart';
 import 'package:medify/features/schedule/presentation/cubit/medicine_log_state.dart';
 import 'package:medify/features/schedule/presentation/widgets/medicine_log_card.dart';
+
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../widgets/profile_switcher.dart';
-import 'package:medify/features/settings/presentation/pages/settings_page.dart';
 
 /// Page to display today's medicine schedule
 class SchedulePage extends StatefulWidget {
@@ -54,6 +57,16 @@ class _SchedulePageState extends State<SchedulePage>
       else
         getIt<MedicineLogCubit>().loadLogsByDate(_selectedDate),
     ]);
+  }
+
+  String? _careHeader() {
+    final profile = getIt<ProfileService>().active;
+    if (profile == null || profile.role != 1) return null;
+    final patientId = getIt<PreferencesService>().actingPatientId;
+    if (patientId == null) return null;
+    final name = getIt<ProfileService>().nameFor(patientId);
+    if (name == null) return null;
+    return 'For $name';
   }
 
   bool _isToday() {
@@ -137,11 +150,7 @@ class _SchedulePageState extends State<SchedulePage>
             iosSymbol: 'gearshape',
             icon: Icons.settings,
             label: 'Settings',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              );
-            },
+            onPressed: () => getIt<AppMessenger>().push('/settings'),
           ),
         ],
       ),
@@ -232,7 +241,27 @@ class _SchedulePageState extends State<SchedulePage>
                       return ListView(
                         padding: const EdgeInsets.all(AppSizes.paddingM),
                         children: [
-                          // Progress Card
+                          if (_careHeader() != null) ...[
+                            Text(
+                              _careHeader()!,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: AppSizes.paddingM),
+                          ],
+                          if (_medicines.any((m) => m.isLowStock))
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSizes.paddingM,
+                              ),
+                              child: Material(
+                                color: AppColors.error.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Text('Refill soon'),
+                                ),
+                              ),
+                            ),
                           _buildProgressCard(
                             context,
                             takenCount,

@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:medify/core/error/failure.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/statistics/domain/entities/statistics.dart';
 
@@ -28,16 +30,16 @@ abstract class MedicineLogRepository {
   Future<void> deleteLog(int id);
 
   /// Mark log as taken
-  Future<MedicineLog> markAsTaken(int id);
+  Future<Either<Failure, MedicineLog>> markAsTaken(int id);
 
   /// Mark log as skipped
-  Future<MedicineLog> markAsSkipped(int id);
+  Future<Either<Failure, MedicineLog>> markAsSkipped(int id);
 
   /// Mark log as missed
   Future<MedicineLog> markAsMissed(int id);
 
   /// Snooze log by specified minutes
-  Future<MedicineLog> snoozeLog(int id, int minutes);
+  Future<Either<Failure, MedicineLog>> snoozeLog(int id, int minutes);
 
   /// Get overdue logs
   Future<List<MedicineLog>> getOverdueLogs();

@@ -1,32 +1,16 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/design/medify_theme_extension.dart';
-import 'package:medify/features/history/presentation/pages/history_page.dart';
-import 'package:medify/features/medicines/presentation/pages/medicine_list_page.dart';
-import 'package:medify/features/schedule/presentation/pages/schedule_page.dart';
-import 'package:medify/features/statistics/presentation/pages/statistics_page.dart';
 import 'package:medify/l10n/app_localizations.dart';
 
-/// Shell with adaptive tab bar — iOS 26 Liquid Glass, Material tint elsewhere.
-class MainNavigationPage extends StatefulWidget {
-  const MainNavigationPage({super.key});
+class MainNavigationPage extends StatelessWidget {
+  const MainNavigationPage({super.key, required this.shell});
 
-  @override
-  State<MainNavigationPage> createState() => _MainNavigationPageState();
-}
-
-class _MainNavigationPageState extends State<MainNavigationPage> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = const [
-    SchedulePage(),
-    MedicineListPage(),
-    HistoryPage(),
-    StatisticsPage(),
-  ];
+  final StatefulNavigationShell shell;
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +19,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
     return AdaptiveScaffold(
       enableBlur: true,
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: shell,
       bottomNavigationBar: AdaptiveBottomNavigationBar(
         useNativeBottomBar: true,
-        selectedIndex: _currentIndex,
+        selectedIndex: shell.currentIndex,
         selectedItemColor: tokens.brand,
         unselectedItemColor: tokens.labelSecondary,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) =>
+            shell.goBranch(index, initialLocation: index == shell.currentIndex),
         items: [
           MedifyAdaptive.destination(
             sf: 'calendar',

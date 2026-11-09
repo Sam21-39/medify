@@ -7,6 +7,8 @@ import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/preferences/preferences_service.dart';
+import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../../core/services/profile_service.dart';
@@ -38,6 +40,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
 
   // List to store selected reminder times (as seconds since midnight)
   final List<int> _reminderTimes = [];
+  final List<int> _daysOfWeek = [];
 
   // Selected medicine type
   MedicineType _selectedMedicineType = MedicineType.tablet;
@@ -68,6 +71,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
         : medicine.dosageAmount.toString();
     _notesController.text = medicine.notes ?? '';
     _reminderTimes.addAll(medicine.reminderTimes);
+    _daysOfWeek.addAll(medicine.daysOfWeek);
     _selectedIntakeTiming = medicine.intakeTiming;
 
     // Load refill tracking data
@@ -471,6 +475,30 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                 //   ),
                 // ],
                 // const SizedBox(height: AppSizes.paddingL),
+                Text('Days', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: AppSizes.paddingS),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final day in [1, 2, 3, 4, 5, 6, 7])
+                      FilterChip(
+                        label: Text(
+                          const ['M', 'T', 'W', 'T', 'F', 'S', 'S'][day - 1],
+                        ),
+                        selected: _daysOfWeek.contains(day),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _daysOfWeek.add(day);
+                            } else {
+                              _daysOfWeek.remove(day);
+                            }
+                          });
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.paddingL),
 
                 // Reminder Times Section
                 Text(
@@ -729,7 +757,10 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
     //   );
     //   return;
     // }
-    const activeProfileId = 1; // Default profile ID for now
+    final activeProfileId =
+        getIt<PreferencesService>().actingPatientId ??
+        getIt<ProfileService>().active?.id ??
+        0;
 
     // Parse dosage amount
     final dosageAmount = double.parse(_dosageAmountController.text.trim());
@@ -772,6 +803,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
       dosageAmount: dosageAmount,
       dosage: dosageString,
       reminderTimes: _reminderTimes,
+      daysOfWeek: List<int>.from(_daysOfWeek),
       intakeTiming: _selectedIntakeTiming,
       notes: _notesController.text.trim().isEmpty
           ? null

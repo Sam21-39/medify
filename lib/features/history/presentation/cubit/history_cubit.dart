@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:medify/core/error/failure.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
@@ -25,7 +26,7 @@ class HistoryCubit extends Cubit<HistoryState> {
       emit(const HistoryLoading());
 
       final selectedDate = date ?? DateTime.now();
-      final medicines = await _medicineRepository.getAllMedicines();
+      final medicines = (await _medicineRepository.getAllMedicines()).unwrap();
 
       // Load calendar data (30 days before and after selected date)
       final startDate = selectedDate.subtract(const Duration(days: 30));

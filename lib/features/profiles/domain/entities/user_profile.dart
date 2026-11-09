@@ -12,6 +12,9 @@ class UserProfile extends Equatable {
   final String? notes;
   final bool isActive;
   final bool isDefaultProfile;
+
+  /// 0 patient, 1 caregiver. Do not reuse [relationship].
+  final int role;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -25,6 +28,7 @@ class UserProfile extends Equatable {
     this.notes,
     this.isActive = true,
     this.isDefaultProfile = false,
+    this.role = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -63,6 +67,7 @@ class UserProfile extends Equatable {
     String? notes,
     bool? isActive,
     bool? isDefaultProfile,
+    int? role,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -76,6 +81,7 @@ class UserProfile extends Equatable {
       notes: notes ?? this.notes,
       isActive: isActive ?? this.isActive,
       isDefaultProfile: isDefaultProfile ?? this.isDefaultProfile,
+      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -92,6 +98,7 @@ class UserProfile extends Equatable {
     notes,
     isActive,
     isDefaultProfile,
+    role,
     createdAt,
     updatedAt,
   ];

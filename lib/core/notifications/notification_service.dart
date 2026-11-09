@@ -12,8 +12,9 @@ import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
-import 'package:medify/core/navigation/navigation_service.dart';
 
 /// Service for managing local notifications
 /// Handles foreground, background, and terminated app states
@@ -62,6 +63,7 @@ class NotificationService {
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
+        requestCriticalPermission: true,
         // Critical: This allows notifications to show in foreground on iOS
         defaultPresentAlert: true,
         defaultPresentSound: true,
@@ -84,6 +86,13 @@ class NotificationService {
 
       if (initialized == true) {
         _isInitialized = true;
+        if (Platform.isAndroid) {
+          final androidPlugin = _notifications
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
+          await androidPlugin?.requestFullScreenIntentPermission();
+        }
         _log('Notification service initialized successfully');
       } else {
         _log('Failed to initialize notification service', isError: true);
@@ -125,7 +134,7 @@ class NotificationService {
         _channelId,
         _channelName,
         description: _channelDescription,
-        importance: Importance.high,
+        importance: Importance.max,
         sound: RawResourceAndroidNotificationSound('notification_sound'),
         playSound: true,
         enableVibration: true,
@@ -139,6 +148,13 @@ class NotificationService {
 
       if (androidPlugin != null) {
         await androidPlugin.createNotificationChannel(androidChannel);
+        const priorChannel = AndroidNotificationChannel(
+          'medify_prior',
+          'Upcoming dose',
+          description: '15 minutes before a dose',
+          importance: Importance.low,
+        );
+        await androidPlugin.createNotificationChannel(priorChannel);
         _log('Android notification channel created: $_channelId');
       }
     } catch (e) {
@@ -162,6 +178,10 @@ class NotificationService {
       final Map<String, dynamic> payload = jsonDecode(response.payload!);
       final int medicineId = payload['medicineId'];
       final int scheduledSeconds = payload['scheduledSeconds'];
+      if (payload['prior'] == true) {
+        getIt<AppMessenger>().go('/today');
+        return;
+      }
 
       // Get medicine log repository
       final medicineLogRepository = getIt<MedicineLogRepository>();
@@ -194,20 +214,9 @@ class NotificationService {
           medicineLogRepository,
         );
       } else {
-        // Default tap: Mark as taken and navigate to home
-        await _handleTakenAction(
-          medicineId,
-          scheduledSeconds,
-          log,
-          medicineLogRepository,
+        getIt<AppMessenger>().go(
+          '/alarm?medicineId=$medicineId&seconds=$scheduledSeconds',
         );
-
-        // Navigate to home page (main navigation page)
-        final context = NavigationService().context;
-        if (context != null) {
-          // Already on main navigation page, just refresh
-          _log('Navigating to home page');
-        }
       }
     } catch (e) {
       _log('Error handling notification tap: $e', isError: true);
@@ -233,6 +242,10 @@ class NotificationService {
       final Map<String, dynamic> payload = jsonDecode(response.payload!);
       final int medicineId = payload['medicineId'];
       final int scheduledSeconds = payload['scheduledSeconds'];
+      if (payload['prior'] == true) {
+        getIt<AppMessenger>().go('/today');
+        return;
+      }
 
       // Get medicine log repository
       final medicineLogRepository = getIt<MedicineLogRepository>();
@@ -269,59 +282,12 @@ class NotificationService {
           medicineLogRepository,
         );
       } else {
-        // Default tap: Mark as taken (navigation will happen when app opens)
-        await NotificationService()._handleTakenAction(
-          medicineId,
-          scheduledSeconds,
-          log,
-          medicineLogRepository,
+        getIt<AppMessenger>().go(
+          '/alarm?medicineId=$medicineId&seconds=$scheduledSeconds',
         );
       }
     } catch (e) {
       developer.log('Error handling background notification tap: $e');
-    }
-  }
-
-  /// Handle "Mark as Taken" action
-  Future<void> _handleTakenAction(
-    int medicineId,
-    int scheduledSeconds,
-    MedicineLog? log,
-    MedicineLogRepository medicineLogRepository,
-  ) async {
-    try {
-      if (log != null) {
-        // Update existing log
-        await medicineLogRepository.markAsTaken(log.id!);
-        _log('Marked log ${log.id} as taken');
-      } else {
-        // Create new log and mark as taken
-        // Get medicine to determine profileId
-        final medicineRepository = getIt<MedicineRepository>();
-        final medicine = await medicineRepository.getMedicineById(medicineId);
-
-        if (medicine == null) {
-          _log('Medicine not found: $medicineId', isError: true);
-          return;
-        }
-
-        final scheduledDateTime = DateTimeUtils.secondsToDateTime(
-          scheduledSeconds,
-        );
-        final newLog = MedicineLog(
-          profileId: medicine.profileId,
-          medicineId: medicineId,
-          scheduledTime: scheduledDateTime,
-          takenTime: DateTime.now(),
-          status: MedicineLogStatus.taken,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        await medicineLogRepository.addLog(newLog);
-        _log('Created new log and marked as taken');
-      }
-    } catch (e) {
-      _log('Error handling taken action: $e', isError: true);
     }
   }
 
@@ -347,8 +313,9 @@ class NotificationService {
         _channelId,
         _channelName,
         channelDescription: _channelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
+        category: AndroidNotificationCategory.alarm,
         icon: '@mipmap/ic_launcher',
         // Custom notification sound
         sound: const RawResourceAndroidNotificationSound('notification_sound'),
@@ -424,7 +391,8 @@ class NotificationService {
         // Create new log and mark as skipped
         // Get medicine to determine profileId
         final medicineRepository = getIt<MedicineRepository>();
-        final medicine = await medicineRepository.getMedicineById(medicineId);
+        final medicine = (await medicineRepository.getMedicineById(medicineId))
+            .unwrap();
 
         if (medicine == null) {
           _log('Medicine not found: $medicineId', isError: true);
@@ -491,6 +459,7 @@ class NotificationService {
             alert: true,
             badge: true,
             sound: true,
+            critical: true,
           );
           _log('iOS permission granted: $granted');
           return granted ?? false;
@@ -531,6 +500,7 @@ class NotificationService {
             alert: true,
             badge: true,
             sound: true,
+            critical: true,
           );
           return granted ?? false;
         }
@@ -630,8 +600,9 @@ class NotificationService {
         _channelId,
         _channelName,
         channelDescription: _channelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
+        category: AndroidNotificationCategory.alarm,
         icon: '@mipmap/ic_launcher',
         // Custom notification sound
         sound: const RawResourceAndroidNotificationSound('notification_sound'),
@@ -673,7 +644,7 @@ class NotificationService {
             ? '$profileName\'s Medicine'
             : 'Medicine Reminder',
         // iOS 10+ allows notifications to show in foreground
-        interruptionLevel: InterruptionLevel.timeSensitive,
+        interruptionLevel: InterruptionLevel.critical,
       );
 
       final details = NotificationDetails(
@@ -699,6 +670,13 @@ class NotificationService {
         payload: payload,
       );
 
+      await _schedulePriorNotice(
+        medicineName: medicineName,
+        seconds: seconds,
+        medicineId: medicineId,
+        when: tzDateTime,
+        alarmId: notificationId,
+      );
       _log('Notification scheduled successfully: ID $notificationId');
     } catch (e) {
       _log('Error in _scheduleDailyNotification: $e', isError: true);
@@ -715,6 +693,7 @@ class NotificationService {
       for (int i = 0; i < 10; i++) {
         final notificationId = _generateNotificationId(medicineId, i);
         await _notifications.cancel(id: notificationId);
+        await _notifications.cancel(id: notificationId + 50000);
       }
       _log('Canceled reminders for medicine ID: $medicineId');
     } catch (e) {
@@ -758,8 +737,9 @@ class NotificationService {
         _channelId,
         _channelName,
         channelDescription: _channelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
+        category: AndroidNotificationCategory.alarm,
         icon: '@mipmap/ic_launcher',
         // Custom notification sound
         sound: const RawResourceAndroidNotificationSound('notification_sound'),
@@ -794,6 +774,51 @@ class NotificationService {
     } catch (e) {
       _log('Error showing immediate notification: $e', isError: true);
     }
+  }
+
+  Future<void> _schedulePriorNotice({
+    required String medicineName,
+    required int seconds,
+    required int medicineId,
+    required tz.TZDateTime when,
+    required int alarmId,
+  }) async {
+    final prior = when.subtract(const Duration(minutes: 15));
+    if (!prior.isAfter(tz.TZDateTime.now(tz.local))) return;
+    final timeLabel = DateTimeUtils.formatTime(when);
+    final androidDetails = AndroidNotificationDetails(
+      'medify_prior',
+      'Upcoming dose',
+      channelDescription: '15 minutes before a dose',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      chronometerCountDown: true,
+      when: when.millisecondsSinceEpoch,
+      icon: '@mipmap/ic_launcher',
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: false,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    await _notifications.zonedSchedule(
+      id: alarmId + 50000,
+      scheduledDate: prior,
+      title: 'Medicine $medicineName at $timeLabel.',
+      body: 'In 15 minutes',
+      notificationDetails: NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: jsonEncode({
+        'medicineId': medicineId,
+        'scheduledSeconds': seconds,
+        'prior': true,
+      }),
+    );
   }
 
   /// Generate unique notification ID from medicine ID and time index

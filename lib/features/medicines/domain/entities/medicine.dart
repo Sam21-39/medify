@@ -43,6 +43,12 @@ class Medicine extends Equatable {
   final bool isActive;
   final String? notes;
 
+  /// Weekdays 1–7 (Mon–Sun). Empty means every day (old rows stay daily).
+  final List<int> daysOfWeek;
+  final DateTime? endDate;
+  final String? photoPath;
+  final String? voiceNotePath;
+
   // Refill tracking fields
   final double?
   totalQuantity; // Total quantity in the bottle (supports decimals for ml)
@@ -64,6 +70,10 @@ class Medicine extends Equatable {
     this.intakeTiming = MedicineIntakeTiming.anytime,
     this.isActive = true,
     this.notes,
+    this.daysOfWeek = const [],
+    this.endDate,
+    this.photoPath,
+    this.voiceNotePath,
     this.totalQuantity,
     this.currentQuantity,
     this.refillRemindDays,
@@ -95,6 +105,10 @@ class Medicine extends Equatable {
     MedicineIntakeTiming? intakeTiming,
     bool? isActive,
     String? notes,
+    List<int>? daysOfWeek,
+    DateTime? endDate,
+    String? photoPath,
+    String? voiceNotePath,
     double? totalQuantity,
     double? currentQuantity,
     int? refillRemindDays,
@@ -113,6 +127,10 @@ class Medicine extends Equatable {
       intakeTiming: intakeTiming ?? this.intakeTiming,
       isActive: isActive ?? this.isActive,
       notes: notes ?? this.notes,
+      daysOfWeek: daysOfWeek ?? this.daysOfWeek,
+      endDate: endDate ?? this.endDate,
+      photoPath: photoPath ?? this.photoPath,
+      voiceNotePath: voiceNotePath ?? this.voiceNotePath,
       totalQuantity: totalQuantity ?? this.totalQuantity,
       currentQuantity: currentQuantity ?? this.currentQuantity,
       refillRemindDays: refillRemindDays ?? this.refillRemindDays,
@@ -157,6 +175,10 @@ class Medicine extends Equatable {
     intakeTiming,
     isActive,
     notes,
+    daysOfWeek,
+    endDate,
+    photoPath,
+    voiceNotePath,
     totalQuantity,
     currentQuantity,
     refillRemindDays,

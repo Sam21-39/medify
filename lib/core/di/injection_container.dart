@@ -17,11 +17,13 @@ import 'package:medify/features/history/presentation/cubit/history_cubit.dart';
 // import 'package:medify/features/profiles/presentation/cubit/profile_cubit.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
+import 'package:medify/core/ui/app_messenger.dart';
+import 'package:medify/core/voice/reminder_voice.dart';
+import 'package:medify/features/profiles/data/repositories/care_link_repository.dart';
+import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/features/schedule/data/services/daily_log_service.dart';
 import 'package:medify/features/schedule/data/services/refill_reminder_service.dart';
 import 'package:medify/features/achievements/data/services/achievement_service.dart';
-
-// import 'package:medify/features/profiles/data/services/profile_service.dart';
 
 /// Service locator instance
 final getIt = GetIt.instance;
@@ -50,15 +52,17 @@ Future<void> initializeDependencies() async {
   await objectBoxService.init();
   getIt.registerSingleton<ObjectBoxService>(objectBoxService);
 
-  // COMMENTED OUT FOR UPCOMING RELEASE - Profile service (needs to be before repositories)
-  // getIt.registerLazySingleton<ProfileService>(
-  //   () =>
-  //       ProfileService(getIt<ObjectBoxService>(), getIt<PreferencesService>()),
-  // );
+  getIt.registerLazySingleton<ProfileService>(
+    () =>
+        ProfileService(getIt<ObjectBoxService>(), getIt<PreferencesService>()),
+  );
+  await getIt<ProfileService>().initialize();
 
-  // // Initialize profile service (creates default profile if needed)
-  // final profileService = getIt<ProfileService>();
-  // await profileService.initialize();
+  getIt.registerLazySingleton<CareLinkRepository>(
+    () => CareLinkRepository(getIt<ObjectBoxService>()),
+  );
+  getIt.registerLazySingleton<AppMessenger>(AppMessenger.new);
+  getIt.registerLazySingleton<ReminderVoice>(ReminderVoice.new);
 
   // Repositories
   getIt.registerLazySingleton<MedicineRepository>(

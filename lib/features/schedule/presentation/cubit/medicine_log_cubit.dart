@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:medify/core/error/failure.dart';
 
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
@@ -76,7 +77,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
       final log = await _medicineLogRepository.getLogById(id);
 
       // Mark as taken
-      await _medicineLogRepository.markAsTaken(id);
+      (await _medicineLogRepository.markAsTaken(id)).unwrap();
 
       // Decrement medicine quantity if refill service is available
       if (_refillReminderService != null && log != null) {
@@ -98,7 +99,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Mark log as skipped
   Future<void> markAsSkipped(int id) async {
     try {
-      await _medicineLogRepository.markAsSkipped(id);
+      (await _medicineLogRepository.markAsSkipped(id)).unwrap();
       emit(const MedicineLogOperationSuccess('Marked as skipped'));
       await loadTodayLogs();
     } catch (e) {
@@ -109,7 +110,7 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Snooze log
   Future<void> snoozeLog(int id, int minutes) async {
     try {
-      await _medicineLogRepository.snoozeLog(id, minutes);
+      (await _medicineLogRepository.snoozeLog(id, minutes)).unwrap();
       emit(MedicineLogOperationSuccess('Snoozed for $minutes minutes'));
       await loadTodayLogs();
     } catch (e) {

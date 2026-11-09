@@ -22,6 +22,11 @@ class MedicineLogModel {
   String? notes;
 
   @Property(type: PropertyType.date)
+  DateTime? snoozedUntil;
+
+  int actorProfileId;
+
+  @Property(type: PropertyType.date)
   DateTime createdAt;
 
   @Property(type: PropertyType.date)
@@ -35,6 +40,8 @@ class MedicineLogModel {
     this.takenTime,
     required this.status,
     this.notes,
+    this.snoozedUntil,
+    this.actorProfileId = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -49,6 +56,8 @@ class MedicineLogModel {
       takenTime: log.takenTime,
       status: log.status.index,
       notes: log.notes,
+      snoozedUntil: log.snoozedUntil,
+      actorProfileId: log.actorProfileId,
       createdAt: log.createdAt,
       updatedAt: log.updatedAt,
     );
@@ -64,6 +73,8 @@ class MedicineLogModel {
       takenTime: takenTime,
       status: MedicineLogStatus.values[status],
       notes: notes,
+      snoozedUntil: snoozedUntil,
+      actorProfileId: actorProfileId,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

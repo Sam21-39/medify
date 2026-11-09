@@ -12,6 +12,8 @@ class MedicineLog extends Equatable {
   final DateTime? takenTime;
   final MedicineLogStatus status;
   final String? notes;
+  final DateTime? snoozedUntil;
+  final int actorProfileId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,6 +25,8 @@ class MedicineLog extends Equatable {
     this.takenTime,
     required this.status,
     this.notes,
+    this.snoozedUntil,
+    this.actorProfileId = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -36,6 +40,8 @@ class MedicineLog extends Equatable {
     DateTime? takenTime,
     MedicineLogStatus? status,
     String? notes,
+    DateTime? snoozedUntil,
+    int? actorProfileId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -47,6 +53,8 @@ class MedicineLog extends Equatable {
       takenTime: takenTime ?? this.takenTime,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      snoozedUntil: snoozedUntil ?? this.snoozedUntil,
+      actorProfileId: actorProfileId ?? this.actorProfileId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -78,6 +86,8 @@ class MedicineLog extends Equatable {
     takenTime,
     status,
     notes,
+    snoozedUntil,
+    actorProfileId,
     createdAt,
     updatedAt,
   ];

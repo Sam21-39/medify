@@ -19,25 +19,34 @@ class SettingsLoaded extends SettingsState {
   final ThemeMode themeMode;
   final bool notificationsEnabled;
   final int snoozeDuration;
+  final bool speakReminder;
 
   const SettingsLoaded({
     required this.themeMode,
     required this.notificationsEnabled,
     required this.snoozeDuration,
+    this.speakReminder = true,
   });
 
   @override
-  List<Object?> get props => [themeMode, notificationsEnabled, snoozeDuration];
+  List<Object?> get props => [
+    themeMode,
+    notificationsEnabled,
+    snoozeDuration,
+    speakReminder,
+  ];
 
   SettingsLoaded copyWith({
     ThemeMode? themeMode,
     bool? notificationsEnabled,
     int? snoozeDuration,
+    bool? speakReminder,
   }) {
     return SettingsLoaded(
       themeMode: themeMode ?? this.themeMode,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       snoozeDuration: snoozeDuration ?? this.snoozeDuration,
+      speakReminder: speakReminder ?? this.speakReminder,
     );
   }
 }

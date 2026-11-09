@@ -1,31 +1,15 @@
+import 'package:dartz/dartz.dart';
+import 'package:medify/core/error/failure.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 
-/// Repository interface for Medicine operations
 abstract class MedicineRepository {
-  /// Get all medicines
-  Future<List<Medicine>> getAllMedicines();
-
-  /// Get active medicines only
-  Future<List<Medicine>> getActiveMedicines();
-
-  /// Get medicine by ID
-  Future<Medicine?> getMedicineById(int id);
-
-  /// Add a new medicine
-  Future<Medicine> addMedicine(Medicine medicine);
-
-  /// Update an existing medicine
-  Future<Medicine> updateMedicine(Medicine medicine);
-
-  /// Delete a medicine
-  Future<void> deleteMedicine(int id);
-
-  /// Toggle medicine active status
-  Future<Medicine> toggleMedicineStatus(int id);
-
-  /// Stream of all medicines
+  Future<Either<Failure, List<Medicine>>> getAllMedicines();
+  Future<Either<Failure, List<Medicine>>> getActiveMedicines();
+  Future<Either<Failure, Medicine?>> getMedicineById(int id);
+  Future<Either<Failure, Medicine>> addMedicine(Medicine medicine);
+  Future<Either<Failure, Medicine>> updateMedicine(Medicine medicine);
+  Future<Either<Failure, void>> deleteMedicine(int id);
+  Future<Either<Failure, Medicine>> toggleMedicineStatus(int id);
   Stream<List<Medicine>> watchAllMedicines();
-
-  /// Stream of active medicines
   Stream<List<Medicine>> watchActiveMedicines();
 }

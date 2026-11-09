@@ -18,6 +18,12 @@ class MedicineModel {
   bool isActive;
   String? notes;
 
+  List<int> daysOfWeek;
+  @Property(type: PropertyType.date)
+  DateTime? endDate;
+  String? photoPath;
+  String? voiceNotePath;
+
   // Refill tracking fields
   double? totalQuantity; // Total quantity in bottle (supports decimals for ml)
   double? currentQuantity; // Current remaining quantity
@@ -43,6 +49,10 @@ class MedicineModel {
     this.intakeTiming = 4, // Default to anytime (index 4)
     this.isActive = true,
     this.notes,
+    this.daysOfWeek = const [],
+    this.endDate,
+    this.photoPath,
+    this.voiceNotePath,
     this.totalQuantity,
     this.currentQuantity,
     this.refillRemindDays,
@@ -64,6 +74,10 @@ class MedicineModel {
       intakeTiming: medicine.intakeTiming.index,
       isActive: medicine.isActive,
       notes: medicine.notes,
+      daysOfWeek: medicine.daysOfWeek,
+      endDate: medicine.endDate,
+      photoPath: medicine.photoPath,
+      voiceNotePath: medicine.voiceNotePath,
       totalQuantity: medicine.totalQuantity,
       currentQuantity: medicine.currentQuantity,
       refillRemindDays: medicine.refillRemindDays,
@@ -86,6 +100,10 @@ class MedicineModel {
       intakeTiming: MedicineIntakeTiming.values[intakeTiming],
       isActive: isActive,
       notes: notes,
+      daysOfWeek: daysOfWeek,
+      endDate: endDate,
+      photoPath: photoPath,
+      voiceNotePath: voiceNotePath,
       totalQuantity: totalQuantity,
       currentQuantity: currentQuantity,
       refillRemindDays: refillRemindDays,

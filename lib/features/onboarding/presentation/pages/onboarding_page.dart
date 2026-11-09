@@ -7,9 +7,9 @@ import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/l10n/app_localizations.dart';
-import 'package:medify/app/main_navigation_page.dart';
 
 /// Onboarding page with 3 screens
 class OnboardingPage extends StatefulWidget {
@@ -42,9 +42,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (!mounted) return;
 
     // Navigate to main app
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const MainNavigationPage()),
-    );
+    getIt<AppMessenger>().go('/role');
   }
 
   Future<void> _requestNotificationPermission() async {

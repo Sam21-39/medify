@@ -23,6 +23,10 @@ class ProfileService {
   // Cache for active profile to reduce database queries
   UserProfile? _activeProfile;
 
+  UserProfile? get active => _activeProfile;
+
+  String? nameFor(int id) => _profileBox.get(id)?.name;
+
   ProfileService(this._objectBoxService, this._preferencesService);
 
   /// Get the box for UserProfileModel
@@ -44,6 +48,11 @@ class ProfileService {
         await _loadActiveProfile(allProfiles);
       }
 
+      await _backfillZeroProfileIds();
+      final activeId = _activeProfile?.id;
+      if (activeId != null && _preferencesService.actingPatientId == null) {
+        await _preferencesService.setActingPatientId(activeId);
+      }
       developer.log(
         'ProfileService initialized. Active profile: ${_activeProfile?.name}',
       );
@@ -54,6 +63,26 @@ class ProfileService {
         stackTrace: stackTrace,
       );
       rethrow;
+    }
+  }
+
+  /// Old installs stored profileId 0. Point those rows at the active profile.
+  Future<void> _backfillZeroProfileIds() async {
+    final id = _activeProfile?.id;
+    if (id == null) return;
+    final medicines = _objectBoxService.medicineBox.getAll();
+    for (final medicine in medicines) {
+      if (medicine.profileId == 0) {
+        medicine.profileId = id;
+        _objectBoxService.medicineBox.put(medicine);
+      }
+    }
+    final logs = _objectBoxService.medicineLogBox.getAll();
+    for (final log in logs) {
+      if (log.profileId == 0) {
+        log.profileId = id;
+        _objectBoxService.medicineLogBox.put(log);
+      }
     }
   }
 

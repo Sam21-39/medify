@@ -57,6 +57,15 @@ class _SettingsView extends StatelessWidget {
                   // _buildNotificationsSetting(context, state, theme),
                   const SizedBox(height: AppSizes.spacing8),
                   _buildSnoozeDurationSetting(context, state, theme),
+                  SwitchListTile(
+                    title: const Text('Speak reminder'),
+                    subtitle: const Text(
+                      'Medicine name and time, up to 3 times',
+                    ),
+                    value: state.speakReminder,
+                    onChanged: (value) =>
+                        getIt<SettingsCubit>().updateSpeakReminder(value),
+                  ),
 
                   const SizedBox(height: AppSizes.spacing24),
 

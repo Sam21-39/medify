@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/error/failure.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../../../core/services/profile_service.dart';
@@ -24,8 +25,10 @@ class MedicineCubit extends Cubit<MedicineState> {
       if (state is! MedicineLoaded) {
         emit(MedicineLoading());
       }
-      final medicines = await _medicineRepository.getAllMedicines();
-      emit(MedicineLoaded(medicines));
+      final result = await _medicineRepository.getAllMedicines();
+      result.fold((failure) {
+        if (state is! MedicineLoaded) emit(MedicineError(failure.message));
+      }, (medicines) => emit(MedicineLoaded(medicines)));
     } catch (e) {
       emit(MedicineError('Failed to load medicines: ${e.toString()}'));
     }
@@ -37,8 +40,10 @@ class MedicineCubit extends Cubit<MedicineState> {
       if (state is! MedicineLoaded) {
         emit(MedicineLoading());
       }
-      final medicines = await _medicineRepository.getActiveMedicines();
-      emit(MedicineLoaded(medicines));
+      final result = await _medicineRepository.getActiveMedicines();
+      result.fold((failure) {
+        if (state is! MedicineLoaded) emit(MedicineError(failure.message));
+      }, (medicines) => emit(MedicineLoaded(medicines)));
     } catch (e) {
       emit(MedicineError('Failed to load medicines: ${e.toString()}'));
     }
@@ -48,7 +53,8 @@ class MedicineCubit extends Cubit<MedicineState> {
   Future<void> addMedicine(Medicine medicine) async {
     try {
       emit(MedicineLoading());
-      final savedMedicine = await _medicineRepository.addMedicine(medicine);
+      final savedMedicine = (await _medicineRepository.addMedicine(medicine))
+          .unwrap();
 
       // Generate today's logs for the medicine
       try {
@@ -92,14 +98,13 @@ class MedicineCubit extends Cubit<MedicineState> {
       emit(MedicineLoading());
 
       // CRITICAL FIX: Get old medicine to check if reminder times changed
-      final oldMedicine = await _medicineRepository.getMedicineById(
+      final oldMedicine = (await _medicineRepository.getMedicineById(
         medicine.id!,
-      );
+      )).unwrap();
 
-      // Update the medicine
-      final updatedMedicine = await _medicineRepository.updateMedicine(
+      final updatedMedicine = (await _medicineRepository.updateMedicine(
         medicine,
-      );
+      )).unwrap();
 
       // Check if reminder times changed
       final timesChanged =
@@ -166,7 +171,7 @@ class MedicineCubit extends Cubit<MedicineState> {
         // Silently handle notification errors
       }
 
-      await _medicineRepository.deleteMedicine(id);
+      (await _medicineRepository.deleteMedicine(id)).unwrap();
       emit(const MedicineOperationSuccess('Medicine deleted successfully'));
       // For delete, we can reload immediately since we're not navigating
       await loadMedicines();
@@ -178,7 +183,8 @@ class MedicineCubit extends Cubit<MedicineState> {
   /// Toggle medicine active status
   Future<void> toggleMedicineStatus(int id) async {
     try {
-      final medicine = await _medicineRepository.toggleMedicineStatus(id);
+      final medicine = (await _medicineRepository.toggleMedicineStatus(id))
+          .unwrap();
 
       // Update notifications based on active status
       // COMMENTED OUT FOR UPCOMING RELEASE - profile name support
