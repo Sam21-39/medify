@@ -194,6 +194,52 @@ void main() {
     },
   );
 
+  group('care_links', () {
+    Future<void> link(Database db, int patientId, int caregiverId) =>
+        db.insert('care_links', {
+          'patient_profile_id': patientId,
+          'caregiver_profile_id': caregiverId,
+          'created_at_utc': 0,
+        });
+
+    test('foreign keys: both profiles must exist', () async {
+      final patientId = await _profile(db, name: 'P');
+      await expectLater(
+        link(db, patientId, 999),
+        throwsA(isA<DatabaseException>()),
+      );
+      await expectLater(
+        link(db, 999, patientId),
+        throwsA(isA<DatabaseException>()),
+      );
+    });
+
+    test('UNIQUE: duplicate pair rejected', () async {
+      final patientId = await _profile(db, name: 'P');
+      final caregiverId = await _profile(db, name: 'C');
+      await link(db, patientId, caregiverId);
+      await expectLater(
+        link(db, patientId, caregiverId),
+        throwsA(isA<DatabaseException>()),
+      );
+    });
+
+    test('CHECK: self-link rejected', () async {
+      final profileId = await _profile(db);
+      await expectLater(
+        link(db, profileId, profileId),
+        throwsA(isA<DatabaseException>()),
+      );
+    });
+  });
+
+  test('profiles has notes and is_default columns', () async {
+    final columns = (await db.rawQuery('PRAGMA table_info(profiles)'))
+        .map((row) => row['name'])
+        .toSet();
+    expect(columns, containsAll(['notes', 'is_default']));
+  });
+
   test('guard: occurrence medicine must match schedule medicine', () async {
     final profileId = await _profile(db);
     final medicineA = await _medicine(db, profileId: profileId);

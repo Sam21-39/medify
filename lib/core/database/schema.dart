@@ -14,9 +14,22 @@ CREATE TABLE profiles (
   role TEXT NOT NULL CHECK (role IN (${_names(ProfileRole.values)})),
   color_value INTEGER NOT NULL,
   avatar_emoji TEXT,
+  notes TEXT,
+  is_default INTEGER NOT NULL DEFAULT 0 CHECK (is_default IN (0, 1)),
   is_archived INTEGER NOT NULL DEFAULT 0 CHECK (is_archived IN (0, 1)),
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
+);
+''';
+
+const careLinksTable = '''
+CREATE TABLE care_links (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  patient_profile_id INTEGER NOT NULL REFERENCES profiles (id) ON DELETE CASCADE,
+  caregiver_profile_id INTEGER NOT NULL REFERENCES profiles (id) ON DELETE CASCADE,
+  created_at_utc INTEGER NOT NULL,
+  UNIQUE (patient_profile_id, caregiver_profile_id),
+  CHECK (patient_profile_id <> caregiver_profile_id)
 );
 ''';
 
@@ -147,6 +160,7 @@ final schemaStatements = [
   schedulesTable,
   occurrencesTable,
   achievementsTable,
+  careLinksTable,
   settingsTable,
   installationMetadataTable,
   occurrencesGuardInsertTrigger,

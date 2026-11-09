@@ -1,0 +1,147 @@
+import 'package:medify/core/database/settings_store.dart';
+import 'package:medify/features/profiles/data/sqflite/profile_exceptions.dart';
+import 'package:medify/features/profiles/data/sqflite/profile_row_mapper.dart';
+import 'package:medify/features/profiles/domain/entities/user_profile.dart';
+import 'package:medify/features/profiles/domain/repositories/user_profile_repository.dart';
+import 'package:sqflite/sqflite.dart';
+
+/// sqflite-backed [UserProfileRepository].
+///
+/// The active profile ID is stored in `settings` under [_activeKey]; the
+/// `profiles` table has no column for it.
+class ProfileSqfliteRepository implements UserProfileRepository {
+  ProfileSqfliteRepository(this._db) : _settings = SettingsStore(_db);
+
+  static const _activeKey = 'active_profile_id';
+
+  final Database _db;
+  final SettingsStore _settings;
+
+  @override
+  Future<List<UserProfile>> getAllProfiles() => _list();
+
+  @override
+  Future<UserProfile?> getProfileById(int id) => _byId(_db, id);
+
+  @override
+  Future<List<UserProfile>> getActiveProfiles() =>
+      _list(where: 'is_archived = 0');
+
+  @override
+  Future<UserProfile> createProfile(UserProfile profile) async {
+    final id = await _db.insert('profiles', ProfileRowMapper.toRow(profile));
+    return (await _byId(_db, id))!;
+  }
+
+  @override
+  Future<UserProfile> updateProfile(UserProfile profile) async {
+    final id = profile.id;
+    if (id == null) throw const InvalidProfileException('update needs an id');
+    return _db.transaction<UserProfile>((txn) async {
+      if (await _byId(txn, id) == null) throw ProfileNotFoundException(id);
+      await txn.update(
+        'profiles',
+        ProfileRowMapper.toRow(profile),
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return (await _byId(txn, id))!;
+    });
+  }
+
+  /// Hard-deletes when nothing references the profile. Otherwise archives it
+  /// (`is_archived = 1`). Medicines, occurrences (as patient or actor) and
+  /// achievements all block a hard delete.
+  @override
+  Future<void> deleteProfile(int id) => _db.transaction<void>((txn) async {
+    if (await _byId(txn, id) == null) throw ProfileNotFoundException(id);
+    final refs = Sqflite.firstIntValue(
+      await txn.rawQuery(
+        '''
+        SELECT (SELECT COUNT(*) FROM medicines WHERE profile_id = ?1)
+             + (SELECT COUNT(*) FROM occurrences
+                  WHERE profile_id = ?1 OR actor_profile_id = ?1)
+             + (SELECT COUNT(*) FROM achievements WHERE profile_id = ?1)
+        ''',
+        [id],
+      ),
+    )!;
+    if (refs == 0) {
+      await txn.delete('profiles', where: 'id = ?', whereArgs: [id]);
+    } else {
+      await txn.update(
+        'profiles',
+        {'is_archived': 1, 'updated_at': DateTime.now().millisecondsSinceEpoch},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+  });
+
+  @override
+  Future<UserProfile?> getActiveProfile() async {
+    final id = await _settings.getInt(_activeKey, defaultValue: 0);
+    return id == 0 ? null : _byId(_db, id);
+  }
+
+  @override
+  Future<void> setActiveProfile(int profileId) async {
+    final profile = await _byId(_db, profileId);
+    if (profile == null) throw ProfileNotFoundException(profileId);
+    await _settings.setInt(_activeKey, profileId);
+  }
+
+  @override
+  Future<List<UserProfile>> searchProfiles(String query) {
+    final like = '%$query%';
+    return _list(
+      where: 'is_archived = 0 AND (name LIKE ? OR relation LIKE ?)',
+      whereArgs: [like, like],
+    );
+  }
+
+  @override
+  Future<int> getProfileCount() async {
+    return Sqflite.firstIntValue(
+          await _db.rawQuery(
+            'SELECT COUNT(*) FROM profiles WHERE is_archived = 0',
+          ),
+        ) ??
+        0;
+  }
+
+  @override
+  Future<bool> isProfileNameExists(String name, {int? excludeId}) async {
+    final rows = await _db.query(
+      'profiles',
+      columns: ['id'],
+      where: 'name = ? AND is_archived = 0 AND id != ?',
+      whereArgs: [name, excludeId ?? -1],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
+  }
+
+  Future<List<UserProfile>> _list({
+    String? where,
+    List<Object?>? whereArgs,
+  }) async {
+    final rows = await _db.query(
+      'profiles',
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: 'id ASC',
+    );
+    return rows.map(ProfileRowMapper.fromRow).toList();
+  }
+
+  static Future<UserProfile?> _byId(DatabaseExecutor db, int id) async {
+    final rows = await db.query(
+      'profiles',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : ProfileRowMapper.fromRow(rows.single);
+  }
+}
