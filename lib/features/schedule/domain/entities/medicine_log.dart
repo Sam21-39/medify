@@ -8,6 +8,7 @@ class MedicineLog extends Equatable {
   final int? id;
   final int profileId; // User profile this log belongs to
   final int medicineId;
+  final int? scheduleId;
   final DateTime scheduledTime;
   final DateTime? takenTime;
   final MedicineLogStatus status;
@@ -21,6 +22,7 @@ class MedicineLog extends Equatable {
     this.id,
     required this.profileId,
     required this.medicineId,
+    this.scheduleId,
     required this.scheduledTime,
     this.takenTime,
     required this.status,
@@ -36,6 +38,7 @@ class MedicineLog extends Equatable {
     int? id,
     int? profileId,
     int? medicineId,
+    int? scheduleId,
     DateTime? scheduledTime,
     DateTime? takenTime,
     MedicineLogStatus? status,
@@ -49,6 +52,7 @@ class MedicineLog extends Equatable {
       id: id ?? this.id,
       profileId: profileId ?? this.profileId,
       medicineId: medicineId ?? this.medicineId,
+      scheduleId: scheduleId ?? this.scheduleId,
       scheduledTime: scheduledTime ?? this.scheduledTime,
       takenTime: takenTime ?? this.takenTime,
       status: status ?? this.status,
@@ -82,6 +86,7 @@ class MedicineLog extends Equatable {
     id,
     profileId,
     medicineId,
+    scheduleId,
     scheduledTime,
     takenTime,
     status,
