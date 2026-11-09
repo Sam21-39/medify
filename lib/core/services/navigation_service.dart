@@ -39,4 +39,3 @@ class NavigationService {
   /// Get current context
   BuildContext? get context => navigatorKey.currentContext;
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/di/injection_container.dart';
@@ -213,9 +214,8 @@ class _ProfileSwitcherContent extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Theme.of(
-                    sheetContext,
-                  ).colorScheme.primary.withValues(alpha: 0.1),
+                  color: Theme.of(sheetContext).colorScheme.primary
+                      .withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Theme.of(sheetContext).colorScheme.primary,

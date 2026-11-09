@@ -1,0 +1,259 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:8797902063538858328",
+      "lastPropertyId": "5:7012338548447548560",
+      "name": "AchievementModel",
+      "properties": [
+        {
+          "id": "1:629067616718255770",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:762773737434572039",
+          "name": "achievementType",
+          "type": 6
+        },
+        {
+          "id": "3:8440355048910369079",
+          "name": "unlockedAt",
+          "type": 10
+        },
+        {
+          "id": "4:3174392934631713481",
+          "name": "progress",
+          "type": 6
+        },
+        {
+          "id": "5:7012338548447548560",
+          "name": "isUnlocked",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:7348902232756259354",
+      "lastPropertyId": "9:655895618946392476",
+      "name": "MedicineLogModel",
+      "properties": [
+        {
+          "id": "1:6415555899707600654",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5777110828099769285",
+          "name": "profileId",
+          "type": 6
+        },
+        {
+          "id": "3:8466055026921663991",
+          "name": "medicineId",
+          "type": 6
+        },
+        {
+          "id": "4:5408460726808431779",
+          "name": "scheduledTime",
+          "type": 10
+        },
+        {
+          "id": "5:6113207773432058731",
+          "name": "takenTime",
+          "type": 10
+        },
+        {
+          "id": "6:3055619578112226253",
+          "name": "status",
+          "type": 6
+        },
+        {
+          "id": "7:2856895550164323253",
+          "name": "notes",
+          "type": 9
+        },
+        {
+          "id": "8:3935672687304070643",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "9:655895618946392476",
+          "name": "updatedAt",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:9007703315664188821",
+      "lastPropertyId": "16:8600774446825595415",
+      "name": "MedicineModel",
+      "properties": [
+        {
+          "id": "1:4838779713331959775",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:264149571627594926",
+          "name": "profileId",
+          "type": 6
+        },
+        {
+          "id": "3:3070011356160726790",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:6103140515878915928",
+          "name": "medicineType",
+          "type": 6
+        },
+        {
+          "id": "5:153091978136003528",
+          "name": "dosageAmount",
+          "type": 8
+        },
+        {
+          "id": "6:6205634888308714220",
+          "name": "dosage",
+          "type": 9
+        },
+        {
+          "id": "7:4976220417632797239",
+          "name": "reminderTimes",
+          "type": 27
+        },
+        {
+          "id": "8:5597979639832126016",
+          "name": "intakeTiming",
+          "type": 6
+        },
+        {
+          "id": "9:8179400596479849299",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "10:7668265692371707778",
+          "name": "notes",
+          "type": 9
+        },
+        {
+          "id": "11:1534365215700899379",
+          "name": "totalQuantity",
+          "type": 8
+        },
+        {
+          "id": "12:3676806976626911645",
+          "name": "currentQuantity",
+          "type": 8
+        },
+        {
+          "id": "13:5237951092680171426",
+          "name": "refillRemindDays",
+          "type": 6
+        },
+        {
+          "id": "14:1909620453711731313",
+          "name": "lastRefillDate",
+          "type": 10
+        },
+        {
+          "id": "15:5814634541962813415",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "16:8600774446825595415",
+          "name": "updatedAt",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:2617600093965691686",
+      "lastPropertyId": "11:2686205517257221054",
+      "name": "UserProfileModel",
+      "properties": [
+        {
+          "id": "1:557910551552379153",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1687296272443873977",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:2707544811501214197",
+          "name": "avatarEmoji",
+          "type": 9
+        },
+        {
+          "id": "4:6663817704931263421",
+          "name": "colorValue",
+          "type": 6
+        },
+        {
+          "id": "5:49123495914201707",
+          "name": "relationship",
+          "type": 9
+        },
+        {
+          "id": "6:6521037782120150944",
+          "name": "dateOfBirth",
+          "type": 10
+        },
+        {
+          "id": "7:4019899289889355819",
+          "name": "notes",
+          "type": 9
+        },
+        {
+          "id": "8:3047363782690656975",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "9:8697767562591874019",
+          "name": "isDefaultProfile",
+          "type": 1
+        },
+        {
+          "id": "10:1294404615452294975",
+          "name": "createdAt",
+          "type": 10
+        },
+        {
+          "id": "11:2686205517257221054",
+          "name": "updatedAt",
+          "type": 10
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "4:2617600093965691686",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

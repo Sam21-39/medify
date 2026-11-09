@@ -63,4 +63,3 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     return _profileService.isProfileNameExists(name, excludeId: excludeId);
   }
 }
-

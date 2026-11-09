@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:medify/core/services/permission_service.dart';
 import 'package:medify/core/services/system_service.dart';
+
 import '../../data/datasources/objectbox_service.dart';
 import '../../data/repositories/medicine_repository_impl.dart';
 import '../../data/repositories/medicine_log_repository_impl.dart';
@@ -19,6 +20,7 @@ import '../services/preferences_service.dart';
 import '../services/daily_log_service.dart';
 import '../services/refill_reminder_service.dart';
 import '../services/achievement_service.dart';
+
 // import '../services/profile_service.dart';
 
 /// Service locator instance
@@ -75,7 +77,10 @@ Future<void> initializeDependencies() async {
   // Refill reminder service for medicine stock tracking
   // Register before cubits that depend on it
   getIt.registerLazySingleton<RefillReminderService>(
-    () => RefillReminderService(getIt<NotificationService>(), getIt<MedicineRepository>()),
+    () => RefillReminderService(
+      getIt<NotificationService>(),
+      getIt<MedicineRepository>(),
+    ),
   );
 
   // Achievement service for gamification
@@ -90,7 +95,9 @@ Future<void> initializeDependencies() async {
 
   // Cubits - Using LazySingleton to ensure single instance across app
   // This ensures all pages use the SAME cubit instance for state synchronization
-  getIt.registerLazySingleton<MedicineCubit>(() => MedicineCubit(getIt<MedicineRepository>()));
+  getIt.registerLazySingleton<MedicineCubit>(
+    () => MedicineCubit(getIt<MedicineRepository>()),
+  );
 
   getIt.registerLazySingleton<MedicineLogCubit>(
     () => MedicineLogCubit(
@@ -105,10 +112,15 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerLazySingleton<HistoryCubit>(
-    () => HistoryCubit(getIt<MedicineLogRepository>(), getIt<MedicineRepository>()),
+    () => HistoryCubit(
+      getIt<MedicineLogRepository>(),
+      getIt<MedicineRepository>(),
+    ),
   );
 
-  getIt.registerLazySingleton<SettingsCubit>(() => SettingsCubit(getIt<PreferencesService>()));
+  getIt.registerLazySingleton<SettingsCubit>(
+    () => SettingsCubit(getIt<PreferencesService>()),
+  );
 
   // COMMENTED OUT FOR UPCOMING RELEASE - ProfileCubit
   // CRITICAL: ProfileCubit MUST be LazySingleton, not Factory

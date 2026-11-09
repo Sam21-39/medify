@@ -97,4 +97,3 @@ class AppStrings {
   static const String deleteMedicineConfirmation =
       'Are you sure you want to delete this medicine?';
 }
-

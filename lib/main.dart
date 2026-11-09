@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'l10n/app_localizations.dart';
 import 'core/di/injection_container.dart';
 import 'core/services/navigation_service.dart';
@@ -73,13 +74,21 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<MedicineCubit>(create: (context) => getIt<MedicineCubit>()),
-        BlocProvider<MedicineLogCubit>(create: (context) => getIt<MedicineLogCubit>()),
-        BlocProvider<StatisticsCubit>(create: (context) => getIt<StatisticsCubit>()),
+        BlocProvider<MedicineCubit>(
+          create: (context) => getIt<MedicineCubit>(),
+        ),
+        BlocProvider<MedicineLogCubit>(
+          create: (context) => getIt<MedicineLogCubit>(),
+        ),
+        BlocProvider<StatisticsCubit>(
+          create: (context) => getIt<StatisticsCubit>(),
+        ),
         BlocProvider<HistoryCubit>(create: (context) => getIt<HistoryCubit>()),
         // COMMENTED OUT FOR UPCOMING RELEASE
         // BlocProvider<ProfileCubit>(create: (context) => getIt<ProfileCubit>()),
-        BlocProvider<SettingsCubit>(create: (context) => getIt<SettingsCubit>()),
+        BlocProvider<SettingsCubit>(
+          create: (context) => getIt<SettingsCubit>(),
+        ),
       ],
       child: MaterialApp(
         title: 'Medify',
@@ -101,7 +110,9 @@ class _MyAppState extends State<MyApp> {
           // Locale('hi'), // Hindi - Commented out for now
           // Locale('bn'), // Bengali - Commented out for now
         ],
-        home: _prefsService.isFirstLaunch ? const OnboardingPage() : const MainNavigationPage(),
+        home: _prefsService.isFirstLaunch
+            ? const OnboardingPage()
+            : const MainNavigationPage(),
       ),
     );
   }

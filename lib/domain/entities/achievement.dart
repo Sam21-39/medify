@@ -13,23 +13,38 @@ enum AchievementType {
   // Perfect adherence achievements
   perfectWeek('Perfect Week', '7 days with 100% adherence', 7, '✨'),
   perfectMonth('Perfect Month', '30 days with 100% adherence', 30, '🎯'),
-  
+
   // Usage milestones
   century('Century Club', 'Take 100 doses', 100, '💯'),
   fiveHundred('Half Thousand', 'Take 500 doses', 500, '🎖️'),
   thousand('Millennium', 'Take 1000 doses', 1000, '🏅'),
 
   // Early bird achievements
-  earlyBird('Early Bird', 'Take medicine before scheduled time 10 times', 10, '🐦'),
-  superEarly('Super Early', 'Take medicine before scheduled time 50 times', 50, '🦅'),
+  earlyBird(
+    'Early Bird',
+    'Take medicine before scheduled time 10 times',
+    10,
+    '🐦',
+  ),
+  superEarly(
+    'Super Early',
+    'Take medicine before scheduled time 50 times',
+    50,
+    '🦅',
+  ),
 
   // Consistency achievements
   neverMiss('Never Miss', 'Complete 30 days without missing a dose', 30, '🎪'),
   organized('Organized', 'Use app for 6 months', 180, '📋'),
-  
+
   // Special achievements
   firstDose('Getting Started', 'Take your first dose', 1, '🎉'),
-  weekendWarrior('Weekend Warrior', 'Don\'t miss any weekend doses for a month', 8, '🏖️'),
+  weekendWarrior(
+    'Weekend Warrior',
+    'Don\'t miss any weekend doses for a month',
+    8,
+    '🏖️',
+  ),
   nightOwl('Night Owl', 'Take 50 nighttime medicines', 50, '🦉'),
   morningPerson('Morning Person', 'Take 50 morning medicines', 50, '☀️');
 
@@ -55,23 +70,23 @@ enum AchievementType {
       case AchievementType.sixMonths:
       case AchievementType.oneYear:
         return AchievementCategory.streak;
-      
+
       case AchievementType.perfectWeek:
       case AchievementType.perfectMonth:
       case AchievementType.neverMiss:
         return AchievementCategory.perfect;
-      
+
       case AchievementType.century:
       case AchievementType.fiveHundred:
       case AchievementType.thousand:
         return AchievementCategory.milestone;
-      
+
       case AchievementType.earlyBird:
       case AchievementType.superEarly:
       case AchievementType.nightOwl:
       case AchievementType.morningPerson:
         return AchievementCategory.timeOfDay;
-      
+
       case AchievementType.firstDose:
       case AchievementType.organized:
       case AchievementType.weekendWarrior:
@@ -162,13 +177,7 @@ class Achievement extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        id,
-        type,
-        unlockedAt,
-        progress,
-        isUnlocked,
-      ];
+  List<Object?> get props => [id, type, unlockedAt, progress, isUnlocked];
 }
 
 /// User achievement statistics summary
@@ -203,15 +212,14 @@ class AchievementStats extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalAchievements,
-        unlockedAchievements,
-        commonUnlocked,
-        uncommonUnlocked,
-        rareUnlocked,
-        epicUnlocked,
-        legendaryUnlocked,
-        lastUnlocked,
-        recentUnlocked,
-      ];
+    totalAchievements,
+    unlockedAchievements,
+    commonUnlocked,
+    uncommonUnlocked,
+    rareUnlocked,
+    epicUnlocked,
+    legendaryUnlocked,
+    lastUnlocked,
+    recentUnlocked,
+  ];
 }
-

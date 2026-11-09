@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../constants/app_sizes.dart';
 
 /// Custom elevated button with consistent styling
@@ -84,10 +85,7 @@ class CustomOutlinedButton extends StatelessWidget {
             icon: Icon(icon),
             label: Text(text),
           )
-        : OutlinedButton(
-            onPressed: onPressed,
-            child: Text(text),
-          );
+        : OutlinedButton(onPressed: onPressed, child: Text(text));
 
     return SizedBox(
       width: width,
@@ -96,4 +94,3 @@ class CustomOutlinedButton extends StatelessWidget {
     );
   }
 }
-

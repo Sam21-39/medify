@@ -8,8 +8,7 @@ class AppPermissionService {
     required BuildContext context,
     bool showDialog = true,
     String dialogTitle = 'Enable Notifications',
-    String dialogDescription =
-        'Please allow notifications to receive timely medicine reminders and important alerts.',
+    String dialogDescription = 'Please allow notifications to receive timely medicine reminders and important alerts.',
     bool isRetry = false,
   }) async {
     // Check if already granted
@@ -77,7 +76,10 @@ class AppPermissionService {
     return result ?? false;
   }
 
-  Future<bool> _requestSystemPermission(BuildContext context, bool isRetry) async {
+  Future<bool> _requestSystemPermission(
+    BuildContext context,
+    bool isRetry,
+  ) async {
     final status = await Permission.notification.request();
 
     if (status.isGranted) {
@@ -110,7 +112,10 @@ class AppPermissionService {
           'Please enable it in your device settings to receive medicine reminders.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -127,7 +132,9 @@ class AppPermissionService {
     // You can show a snackbar or quick dialog here
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Permission denied. Medicine reminders will not work.'),
+        content: const Text(
+          'Permission denied. Medicine reminders will not work.',
+        ),
         action: SnackBarAction(
           label: 'RETRY',
           onPressed: () {
@@ -136,8 +143,7 @@ class AppPermissionService {
               context: context,
               isRetry: true,
               dialogTitle: 'Reminders Required',
-              dialogDescription:
-                  'Medicine reminders are essential for your treatment. Please enable notifications.',
+              dialogDescription: 'Medicine reminders are essential for your treatment. Please enable notifications.',
             );
           },
         ),
@@ -182,7 +188,8 @@ class _PermissionDialog extends StatelessWidget {
             // Title
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -201,14 +208,20 @@ class _PermissionDialog extends StatelessWidget {
                 // Deny button - only show in retry mode
                 if (isRetry) ...[
                   Expanded(
-                    child: OutlinedButton(onPressed: onDeny, child: const Text('Not Now')),
+                    child: OutlinedButton(
+                      onPressed: onDeny,
+                      child: const Text('Not Now'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                 ],
 
                 // Allow button
                 Expanded(
-                  child: FilledButton(onPressed: onAllow, child: const Text('Allow')),
+                  child: FilledButton(
+                    onPressed: onAllow,
+                    child: const Text('Allow'),
+                  ),
                 ),
               ],
             ),

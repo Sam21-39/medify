@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:medify/core/services/system_service.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/di/injection_container.dart';
@@ -10,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../blocs/settings/settings_cubit.dart';
 import '../blocs/settings/settings_state.dart';
 import 'achievements_page.dart';
+
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import 'profiles_page.dart';
 
@@ -93,7 +95,10 @@ class _SettingsView extends StatelessWidget {
 
   Widget _buildSectionHeader(String title, ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.only(left: AppSizes.spacing8, bottom: AppSizes.spacing8),
+      padding: const EdgeInsets.only(
+        left: AppSizes.spacing8,
+        bottom: AppSizes.spacing8,
+      ),
       child: Text(
         title,
         style: theme.textTheme.titleMedium?.copyWith(
@@ -104,7 +109,11 @@ class _SettingsView extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeSetting(BuildContext context, SettingsLoaded state, ThemeData theme) {
+  Widget _buildThemeSetting(
+    BuildContext context,
+    SettingsLoaded state,
+    ThemeData theme,
+  ) {
     String getThemeLabel(ThemeMode mode) {
       switch (mode) {
         case ThemeMode.light:
@@ -154,7 +163,9 @@ class _SettingsView extends StatelessWidget {
       builder: (modalContext) => BlocBuilder<SettingsCubit, SettingsState>(
         bloc: getIt<SettingsCubit>(),
         builder: (context, modalState) {
-          final currentState = modalState is SettingsLoaded ? modalState : state;
+          final currentState = modalState is SettingsLoaded
+              ? modalState
+              : state;
           return Padding(
             padding: const EdgeInsets.all(AppSizes.spacing16),
             child: Column(
@@ -179,7 +190,9 @@ class _SettingsView extends StatelessWidget {
                   ),
                   child: Text(
                     'Select Theme',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSizes.spacing8),
@@ -242,11 +255,17 @@ class _SettingsView extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? AppColors.primary : Colors.grey[600], size: 28),
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : Colors.grey[600],
+              size: 28,
+            ),
             const SizedBox(width: AppSizes.spacing16),
             Expanded(
               child: Column(
@@ -255,7 +274,9 @@ class _SettingsView extends StatelessWidget {
                   Text(
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected ? AppColors.primary : null,
                     ),
                   ),
@@ -263,7 +284,12 @@ class _SettingsView extends StatelessWidget {
                 ],
               ),
             ),
-            if (isSelected) const Icon(Icons.check_circle, color: AppColors.primary, size: 24),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+                size: 24,
+              ),
           ],
         ),
       ),
@@ -448,7 +474,11 @@ class _SettingsView extends StatelessWidget {
   //   );
   // }
 
-  Widget _buildSnoozeDurationSetting(BuildContext context, SettingsLoaded state, ThemeData theme) {
+  Widget _buildSnoozeDurationSetting(
+    BuildContext context,
+    SettingsLoaded state,
+    ThemeData theme,
+  ) {
     String getSnoozeDurationLabel(int duration) {
       if (duration == 15) return '15 minutes';
       if (duration == 30) return '30 minutes';
@@ -483,7 +513,9 @@ class _SettingsView extends StatelessWidget {
       builder: (modalContext) => BlocBuilder<SettingsCubit, SettingsState>(
         bloc: getIt<SettingsCubit>(),
         builder: (context, modalState) {
-          final currentState = modalState is SettingsLoaded ? modalState : state;
+          final currentState = modalState is SettingsLoaded
+              ? modalState
+              : state;
           return Padding(
             padding: const EdgeInsets.all(AppSizes.spacing16),
             child: Column(
@@ -508,7 +540,9 @@ class _SettingsView extends StatelessWidget {
                   ),
                   child: Text(
                     'Select Snooze Duration',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSizes.spacing8),
@@ -567,11 +601,17 @@ class _SettingsView extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
         ),
         child: Row(
           children: [
-            Icon(Icons.timer, color: isSelected ? AppColors.primary : Colors.grey[600], size: 28),
+            Icon(
+              Icons.timer,
+              color: isSelected ? AppColors.primary : Colors.grey[600],
+              size: 28,
+            ),
             const SizedBox(width: AppSizes.spacing16),
             Expanded(
               child: Column(
@@ -580,7 +620,9 @@ class _SettingsView extends StatelessWidget {
                   Text(
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected ? AppColors.primary : null,
                     ),
                   ),
@@ -588,7 +630,12 @@ class _SettingsView extends StatelessWidget {
                 ],
               ),
             ),
-            if (isSelected) const Icon(Icons.check_circle, color: AppColors.primary, size: 24),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+                size: 24,
+              ),
           ],
         ),
       ),
@@ -620,12 +667,15 @@ class _SettingsView extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.emoji_events, color: AppColors.warning),
         title: Text('Achievements', style: theme.textTheme.titleMedium),
-        subtitle: Text('View your unlocked badges and progress', style: theme.textTheme.bodySmall),
+        subtitle: Text(
+          'View your unlocked badges and progress',
+          style: theme.textTheme.bodySmall,
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (context) => const AchievementsPage()));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const AchievementsPage()),
+          );
         },
       ),
     );
@@ -658,7 +708,10 @@ class _SettingsView extends StatelessWidget {
           'About ${AppLocalizations.of(context)!.appName}',
           style: theme.textTheme.titleMedium,
         ),
-        subtitle: Text(AppLocalizations.of(context)!.appTagline, style: theme.textTheme.bodySmall),
+        subtitle: Text(
+          AppLocalizations.of(context)!.appTagline,
+          style: theme.textTheme.bodySmall,
+        ),
         onTap: () => _showAboutDialog(context),
       ),
     );
@@ -696,7 +749,10 @@ class _SettingsView extends StatelessWidget {
       ),
       children: [
         const SizedBox(height: 16),
-        Text(AppLocalizations.of(context)!.appTagline, style: const TextStyle(fontSize: 16)),
+        Text(
+          AppLocalizations.of(context)!.appTagline,
+          style: const TextStyle(fontSize: 16),
+        ),
         const SizedBox(height: 16),
         Text(AppLocalizations.of(context)!.aboutDialogDesc),
         const SizedBox(height: 16),
@@ -710,7 +766,9 @@ class _SettingsView extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Reset Settings'),
-        content: const Text('Are you sure you want to reset all settings to default values?'),
+        content: const Text(
+          'Are you sure you want to reset all settings to default values?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -720,9 +778,9 @@ class _SettingsView extends StatelessWidget {
             onPressed: () {
               getIt<SettingsCubit>().resetSettings();
               Navigator.of(dialogContext).pop();
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Settings reset to default')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Settings reset to default')),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,

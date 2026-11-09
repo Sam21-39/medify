@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/di/injection_container.dart';
@@ -297,9 +298,8 @@ class _AddEditProfilePageState extends State<AddEditProfilePage> {
               style: TextStyle(
                 color: _selectedDateOfBirth != null
                     ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    : Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.5),
               ),
             ),
             if (_selectedDateOfBirth != null)

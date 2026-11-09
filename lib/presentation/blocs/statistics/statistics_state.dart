@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../domain/entities/statistics.dart';
 
 /// States for Statistics Cubit

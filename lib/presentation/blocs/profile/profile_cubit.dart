@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../core/di/injection_container.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../../domain/repositories/user_profile_repository.dart';

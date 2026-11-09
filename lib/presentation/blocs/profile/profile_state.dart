@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../domain/entities/user_profile.dart';
 
 /// Base state for profile management
@@ -66,4 +67,3 @@ class ProfileError extends ProfileState {
   @override
   List<Object?> get props => [message];
 }
-

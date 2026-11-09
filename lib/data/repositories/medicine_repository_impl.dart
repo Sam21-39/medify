@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import '../../domain/entities/medicine.dart';
 import '../../domain/repositories/medicine_repository.dart';
 import '../datasources/objectbox_service.dart';
@@ -64,12 +65,12 @@ class MedicineRepositoryImpl implements MedicineRepository {
         .build();
     final logs = logsQuery.find();
     logsQuery.close();
-    
+
     // Delete all logs for this medicine
     for (final log in logs) {
       _objectBoxService.medicineLogBox.remove(log.id);
     }
-    
+
     // Now delete the medicine itself
     _objectBoxService.medicineBox.remove(id);
     _notifyListeners();
@@ -102,8 +103,9 @@ class MedicineRepositoryImpl implements MedicineRepository {
   @override
   Stream<List<Medicine>> watchActiveMedicines() {
     // For simplicity, filter the main stream
-    return watchAllMedicines().map((medicines) =>
-        medicines.where((medicine) => medicine.isActive).toList());
+    return watchAllMedicines().map(
+      (medicines) => medicines.where((medicine) => medicine.isActive).toList(),
+    );
   }
 
   void _notifyListeners() {

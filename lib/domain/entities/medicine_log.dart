@@ -1,13 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Log entry status enum
-enum MedicineLogStatus {
-  pending,
-  taken,
-  missed,
-  skipped,
-  snoozed,
-}
+enum MedicineLogStatus { pending, taken, missed, skipped, snoozed }
 
 /// Medicine log entity representing the history of medicine intake
 class MedicineLog extends Equatable {
@@ -77,15 +71,14 @@ class MedicineLog extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        profileId,
-        medicineId,
-        scheduledTime,
-        takenTime,
-        status,
-        notes,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    profileId,
+    medicineId,
+    scheduledTime,
+    takenTime,
+    status,
+    notes,
+    createdAt,
+    updatedAt,
+  ];
 }
-

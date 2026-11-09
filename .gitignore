@@ -12,19 +12,14 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ / VS Code
 *.iml
 *.ipr
 *.iws
 .idea/
 .vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
+# Flutter / Dart / Pub
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -34,33 +29,23 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+coverage/
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# Android Studio build outputs
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# FVM Version Cache
+# FVM — pin via .fvmrc (tracked); ignore local SDK cache
 .fvm/
-.fvmrc
 
-# ObjectBox generated files
+# ObjectBox — generated Dart + local store; model JSON must be committed
 *.g.dart
-objectbox-model.json
 objectbox/
 
-# Environment
+# Environment / secrets
 .env
-
-# Keystore files - NEVER commit these!
 *.jks
 *.keystore
 android/key.properties
 key.properties
-

@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+
 import '../../domain/entities/user_profile.dart';
 
 /// ObjectBox model for UserProfile entity
@@ -73,4 +74,3 @@ class UserProfileModel {
     );
   }
 }
-

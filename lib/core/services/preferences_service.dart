@@ -26,7 +26,10 @@ class PreferencesService {
   Future<bool> setFirstLaunchComplete() async {
     // Set first launch date if not already set
     if (firstLaunchDate == null) {
-      await _prefs.setString(_keyFirstLaunchDate, DateTime.now().toIso8601String());
+      await _prefs.setString(
+        _keyFirstLaunchDate,
+        DateTime.now().toIso8601String(),
+      );
     }
     return await _prefs.setBool(_keyFirstLaunch, false);
   }

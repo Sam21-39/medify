@@ -1,8 +1,10 @@
 import 'dart:io';
+
 import 'package:csv/csv.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+
 import '../../../domain/entities/medicine.dart';
 import '../../../domain/entities/medicine_log.dart';
 import '../../../domain/repositories/medicine_log_repository.dart';
@@ -254,7 +256,7 @@ class HistoryCubit extends Cubit<HistoryState> {
     final csvData = [headers, ...rows];
 
     // Convert to CSV string
-    return const ListToCsvConverter().convert(csvData);
+    return csv.encode(csvData);
   }
 
   /// Format date for CSV

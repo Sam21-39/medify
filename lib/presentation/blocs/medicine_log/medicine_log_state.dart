@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../domain/entities/medicine_log.dart';
 
 /// Base state for MedicineLog operations
@@ -44,4 +45,3 @@ class MedicineLogOperationSuccess extends MedicineLogState {
   @override
   List<Object?> get props => [message];
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/di/injection_container.dart';
@@ -114,9 +115,8 @@ class _ProfilesPageContent extends StatelessWidget {
             Icon(
               Icons.people_outline,
               size: 100,
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.primary
+                  .withValues(alpha: 0.3),
             ),
             const SizedBox(height: AppSizes.paddingL),
             Text(
@@ -203,9 +203,8 @@ class _ProfilesPageContent extends StatelessWidget {
                   children: [
                     Text(
                       'Family Profiles',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     Text(
                       '$activeCount active ${activeCount == 1 ? "profile" : "profiles"}',
@@ -239,9 +238,8 @@ class _ProfilesPageContent extends StatelessWidget {
                     ),
                     Text(
                       activeProfile.displayName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -354,9 +352,8 @@ class _ProfilesPageContent extends StatelessWidget {
               // Arrow
               Icon(
                 Icons.chevron_right,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.onSurface
+                    .withValues(alpha: 0.5),
               ),
             ],
           ),

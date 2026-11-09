@@ -29,4 +29,3 @@ abstract class MedicineRepository {
   /// Stream of active medicines
   Stream<List<Medicine>> watchActiveMedicines();
 }
-

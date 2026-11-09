@@ -144,6 +144,7 @@ lib/
    ```bash
    git clone <your-repo-url>
    cd medify
+   git config core.hooksPath .githooks
    ```
 
 2. **Use FVM (if installed)**
@@ -172,6 +173,8 @@ lib/
    # or without FVM
    flutter run
    ```
+
+Pre-push runs `tool/check.sh` (`dart format`, `flutter analyze`, `flutter test`). Same checks run in GitHub Actions.
 
 ## 🎨 Design System
 

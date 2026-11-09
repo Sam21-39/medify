@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/constants/app_sizes.dart';
@@ -59,7 +60,8 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
     final medicine = widget.medicine!;
     _nameController.text = medicine.name;
     _selectedMedicineType = medicine.medicineType;
-    _dosageAmountController.text = medicine.dosageAmount == medicine.dosageAmount.toInt()
+    _dosageAmountController.text =
+        medicine.dosageAmount == medicine.dosageAmount.toInt()
         ? medicine.dosageAmount.toInt().toString()
         : medicine.dosageAmount.toString();
     _notesController.text = medicine.notes ?? '';
@@ -69,10 +71,12 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
     // Load refill tracking data
     if (medicine.totalQuantity != null) {
       _enableRefillTracking = true;
-      _totalQuantityController.text = medicine.totalQuantity == medicine.totalQuantity!.toInt()
+      _totalQuantityController.text =
+          medicine.totalQuantity == medicine.totalQuantity!.toInt()
           ? medicine.totalQuantity!.toInt().toString()
           : medicine.totalQuantity.toString();
-      _refillRemindDaysController.text = (medicine.refillRemindDays ?? 7).toString();
+      _refillRemindDaysController.text = (medicine.refillRemindDays ?? 7)
+          .toString();
     }
   }
 
@@ -100,7 +104,8 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
       body: BlocListener<MedicineCubit, MedicineState>(
         listenWhen: (previous, current) {
           // Only listen to relevant state changes
-          return (current is MedicineOperationSuccess || current is MedicineError) &&
+          return (current is MedicineOperationSuccess ||
+                  current is MedicineError) &&
               previous != current;
         },
         listener: (context, state) async {
@@ -110,13 +115,16 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
               final notificationService = getIt<NotificationService>();
 
               // Check permission first
-              final hasPermission = await notificationService.areNotificationsEnabled();
+              final hasPermission = await notificationService
+                  .areNotificationsEnabled();
               if (!hasPermission) {
                 final granted = await notificationService.requestPermissions();
                 if (!granted && mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Notification permission required for reminders'),
+                      content: Text(
+                        'Notification permission required for reminders',
+                      ),
                       backgroundColor: Colors.orange,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -180,7 +188,10 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                   padding: const EdgeInsets.all(AppSizes.paddingM),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.info_outline,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(width: AppSizes.paddingM),
                       Expanded(
                         child: Text(
@@ -212,7 +223,10 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
               const SizedBox(height: AppSizes.paddingM),
 
               // Medicine Type
-              Text('Medicine Type', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Medicine Type',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: AppSizes.paddingS),
               Card(
                 child: Padding(
@@ -230,7 +244,10 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                       ),
                     ),
                     items: MedicineType.values.map((type) {
-                      return DropdownMenuItem(value: type, child: Text(type.label));
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Text(type.label),
+                      );
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -264,14 +281,19 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                   return null;
                 },
                 prefixIcon: const Icon(Icons.medical_information),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 suffixText: _selectedMedicineType.unit,
                 semanticLabel: 'Dosage amount input field',
               ),
               const SizedBox(height: AppSizes.paddingM),
 
               // Intake Timing
-              Text('When to take', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'When to take',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: AppSizes.paddingS),
               Card(
                 child: Padding(
@@ -289,7 +311,10 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                       ),
                     ),
                     items: MedicineIntakeTiming.values.map((timing) {
-                      return DropdownMenuItem(value: timing, child: Text(timing.label));
+                      return DropdownMenuItem(
+                        value: timing,
+                        child: Text(timing.label),
+                      );
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -313,7 +338,8 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                 maxLength: 200, // Standard max length for notes
                 keyboardType: TextInputType.multiline,
                 textCapitalization: TextCapitalization.sentences,
-                showValidationIndicator: false, // Optional field, no validation indicator
+                showValidationIndicator:
+                    false, // Optional field, no validation indicator
                 semanticLabel: 'Additional notes input field, optional',
               ),
               const SizedBox(height: AppSizes.paddingL),
@@ -445,12 +471,16 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
               // const SizedBox(height: AppSizes.paddingL),
 
               // Reminder Times Section
-              Text('Reminder Times', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Reminder Times',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: AppSizes.paddingS),
               Text(
                 'Set times when you need to take this medicine',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: AppSizes.paddingM),
@@ -465,16 +495,22 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                         Icon(
                           Icons.access_time,
                           size: AppSizes.iconXL,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: AppSizes.paddingS),
-                        Text('No reminder times set', style: Theme.of(context).textTheme.bodyLarge),
+                        Text(
+                          'No reminder times set',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           'Tap the button below to add',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface
+                                    .withValues(alpha: 0.6),
+                              ),
                         ),
                       ],
                     ),
@@ -491,7 +527,10 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
 
                     return Chip(
                       avatar: Icon(_getTimeOfDayIcon(timeOfDay), size: 18),
-                      label: Text(timeString, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      label: Text(
+                        timeString,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       deleteIcon: const Icon(Icons.close, size: 18),
                       onDeleted: () {
                         setState(() {
@@ -594,7 +633,11 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
       builder: (context) {
         final theme = Theme.of(context);
         return AlertDialog(
-          icon: Icon(Icons.schedule, size: 48, color: theme.colorScheme.secondary),
+          icon: Icon(
+            Icons.schedule,
+            size: 48,
+            color: theme.colorScheme.secondary,
+          ),
           title: const Text('Time Already Passed'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -609,11 +652,17 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                 decoration: BoxDecoration(
                   color: AppColors.info.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                  border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.info.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 20, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: AppSizes.paddingS),
                     Expanded(
                       child: Text(
@@ -721,7 +770,9 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
       dosage: dosageString,
       reminderTimes: _reminderTimes,
       intakeTiming: _selectedIntakeTiming,
-      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
       totalQuantity: totalQuantity,
       currentQuantity: currentQuantity,
       refillRemindDays: refillRemindDays,

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../domain/entities/medicine.dart';
 import '../../../domain/entities/medicine_log.dart';
 
@@ -38,12 +39,12 @@ class HistoryLoaded extends HistoryState {
 
   @override
   List<Object?> get props => [
-        selectedDate,
-        logs,
-        calendarLogs,
-        medicines,
-        filter,
-      ];
+    selectedDate,
+    logs,
+    calendarLogs,
+    medicines,
+    filter,
+  ];
 
   HistoryLoaded copyWith({
     DateTime? selectedDate,
@@ -134,4 +135,3 @@ class HistoryFilter extends Equatable {
     );
   }
 }
-

@@ -35,4 +35,3 @@ abstract class UserProfileRepository {
   /// Check if profile name exists
   Future<bool> isProfileNameExists(String name, {int? excludeId});
 }
-

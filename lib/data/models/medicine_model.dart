@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+
 import '../../domain/entities/medicine.dart';
 
 /// ObjectBox model for Medicine entity

@@ -1,5 +1,6 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/di/injection_container.dart';
@@ -14,7 +15,8 @@ class AchievementsPage extends StatefulWidget {
   State<AchievementsPage> createState() => _AchievementsPageState();
 }
 
-class _AchievementsPageState extends State<AchievementsPage> with SingleTickerProviderStateMixin {
+class _AchievementsPageState extends State<AchievementsPage>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final ConfettiController _confettiController;
 
@@ -30,7 +32,9 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     _loadAchievements();
   }
 
@@ -126,7 +130,9 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                 children: [
                   Text(
                     '🏆 Achievement Progress',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Container(
@@ -153,8 +159,12 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
             LinearProgressIndicator(
               value: _stats!.completionPercentage / 100,
               minHeight: 8,
-              backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              backgroundColor: theme.colorScheme.onSurface.withValues(
+                alpha: 0.1,
+              ),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
             const SizedBox(height: AppSizes.paddingM),
             Row(
@@ -180,7 +190,12 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
     );
   }
 
-  Widget _buildStatPill(ThemeData theme, String value, String label, Color color) {
+  Widget _buildStatPill(
+    ThemeData theme,
+    String value,
+    String label,
+    Color color,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -202,7 +217,10 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
               ),
             ),
             const SizedBox(width: 4),
-            Text(label, style: theme.textTheme.bodySmall?.copyWith(color: color)),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(color: color),
+            ),
           ],
         ),
       ),
@@ -225,15 +243,20 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
             Icon(
               Icons.emoji_events_outlined,
               size: 80,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.onSurface
+                  .withValues(alpha: 0.3),
             ),
             const SizedBox(height: AppSizes.paddingL),
-            Text('No achievements yet', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'No achievements yet',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSizes.paddingS),
             Text(
               'Start taking your medicines to unlock achievements!',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: Theme.of(context).colorScheme.onSurface
+                    .withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -331,7 +354,10 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
   }
 
   /// Build achievement card
-  Widget _buildAchievementCard(Achievement achievement, {required bool isUnlocked}) {
+  Widget _buildAchievementCard(
+    Achievement achievement, {
+    required bool isUnlocked,
+  }) {
     final theme = Theme.of(context);
     final rarity = achievement.type.rarity;
 
@@ -372,7 +398,9 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                     achievement.type.emoji,
                     style: TextStyle(
                       fontSize: 40,
-                      color: isUnlocked ? null : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      color: isUnlocked
+                          ? null
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
                   ),
                   if (!isUnlocked)
@@ -390,7 +418,9 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                 achievement.type.title,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isUnlocked ? null : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  color: isUnlocked
+                      ? null
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -400,7 +430,10 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
 
               // Rarity badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingS,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: isUnlocked
                       ? Color(rarity.colorValue).withValues(alpha: 0.15)
@@ -425,8 +458,12 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                 LinearProgressIndicator(
                   value: achievement.progressPercentage / 100,
                   minHeight: 4,
-                  backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(rarity.colorValue)),
+                  backgroundColor: theme.colorScheme.onSurface.withValues(
+                    alpha: 0.1,
+                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Color(rarity.colorValue),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -460,7 +497,10 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(rarity.colorValue).withValues(alpha: 0.1), theme.cardColor],
+                colors: [
+                  Color(rarity.colorValue).withValues(alpha: 0.1),
+                  theme.cardColor,
+                ],
               ),
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
             ),
@@ -473,13 +513,18 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                   child: Column(
                     children: [
                       // Large emoji
-                      Text(achievement.type.emoji, style: const TextStyle(fontSize: 80)),
+                      Text(
+                        achievement.type.emoji,
+                        style: const TextStyle(fontSize: 80),
+                      ),
                       const SizedBox(height: AppSizes.paddingM),
 
                       // Title
                       Text(
                         achievement.type.title,
-                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: AppSizes.paddingS),
@@ -491,13 +536,18 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                           vertical: AppSizes.paddingS,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(rarity.colorValue).withValues(alpha: 0.15),
+                          color: Color(rarity.colorValue)
+                              .withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppSizes.radiusL),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.star, size: 16, color: Color(rarity.colorValue)),
+                            Icon(
+                              Icons.star,
+                              size: 16,
+                              color: Color(rarity.colorValue),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               rarity.label,
@@ -540,7 +590,10 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.check_circle, color: AppColors.success),
+                            const Icon(
+                              Icons.check_circle,
+                              color: AppColors.success,
+                            ),
                             const SizedBox(width: AppSizes.paddingS),
                             Text(
                               'Unlocked on ${_formatDate(achievement.unlockedAt)}',
@@ -556,8 +609,11 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                             LinearProgressIndicator(
                               value: achievement.progressPercentage / 100,
                               minHeight: 8,
-                              backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(rarity.colorValue)),
+                              backgroundColor: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.1),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(rarity.colorValue),
+                              ),
                             ),
                             const SizedBox(height: AppSizes.paddingS),
                             Text(
@@ -569,7 +625,9 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
                             Text(
                               '${achievement.progressPercentage.toStringAsFixed(0)}% Complete',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                           ],
@@ -579,7 +637,10 @@ class _AchievementsPageState extends State<AchievementsPage> with SingleTickerPr
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
           ],
         );
       },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/di/injection_container.dart';
@@ -11,6 +12,7 @@ import '../../core/utils/date_time_utils.dart';
 import '../../domain/entities/medicine_log.dart';
 import '../blocs/history/history_cubit.dart';
 import '../blocs/history/history_state.dart';
+
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../widgets/profile_switcher.dart';
 
@@ -22,7 +24,8 @@ class HistoryPage extends StatefulWidget {
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClientMixin {
+class _HistoryPageState extends State<HistoryPage>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -131,7 +134,10 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
         builder: (context, state) {
           if (state is HistoryLoading) {
             // Use shimmer loading for history
-            return const ShimmerLoadingList(itemCount: 5, shimmerWidget: ShimmerMedicineLogCard());
+            return const ShimmerLoadingList(
+              itemCount: 5,
+              shimmerWidget: ShimmerMedicineLogCard(),
+            );
           }
 
           if (state is HistoryError) {
@@ -141,7 +147,10 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
                 children: [
                   Icon(Icons.error_outline, size: 64, color: AppColors.error),
                   const SizedBox(height: AppSizes.spacing16),
-                  Text('Error loading history', style: theme.textTheme.titleLarge),
+                  Text(
+                    'Error loading history',
+                    style: theme.textTheme.titleLarge,
+                  ),
                   const SizedBox(height: AppSizes.spacing8),
                   Text(
                     state.message,
@@ -178,7 +187,8 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
                   const SizedBox(height: AppSizes.spacing16),
 
                   // Active filter chips
-                  if (state.filter.hasActiveFilters) _buildFilterChips(context, state),
+                  if (state.filter.hasActiveFilters)
+                    _buildFilterChips(context, state),
 
                   // Logs list
                   if (state.logs.isEmpty)
@@ -240,7 +250,10 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),
-            markerDecoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+            markerDecoration: const BoxDecoration(
+              color: AppColors.success,
+              shape: BoxShape.circle,
+            ),
           ),
           headerStyle: HeaderStyle(
             formatButtonDecoration: BoxDecoration(
@@ -260,14 +273,19 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
   }
 
   /// Build date marker (colored dot)
-  Widget? _buildDateMarker(DateTime date, Map<DateTime, List<MedicineLog>> calendarLogs) {
+  Widget? _buildDateMarker(
+    DateTime date,
+    Map<DateTime, List<MedicineLog>> calendarLogs,
+  ) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final logs = calendarLogs[normalizedDate];
 
     if (logs == null || logs.isEmpty) return null;
 
     final total = logs.length;
-    final taken = logs.where((log) => log.status == MedicineLogStatus.taken).length;
+    final taken = logs
+        .where((log) => log.status == MedicineLogStatus.taken)
+        .length;
     final adherenceRate = (taken / total) * 100;
 
     Color color;
@@ -301,7 +319,9 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
         Expanded(
           child: Text(
             dateStr,
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         if (state.logs.isNotEmpty) ...[
@@ -327,7 +347,9 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
           children: [
             Text(
               'Active Filters:',
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const Spacer(),
             TextButton.icon(
@@ -336,7 +358,9 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
               },
               icon: const Icon(Icons.clear, size: 16),
               label: const Text('Clear All'),
-              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
             ),
           ],
         ),
@@ -348,11 +372,17 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
             if (state.filter.medicineId != null)
               _buildFilterChip(
                 context,
-                state.medicines.firstWhere((m) => m.id == state.filter.medicineId).name,
+                state.medicines
+                    .firstWhere((m) => m.id == state.filter.medicineId)
+                    .name,
                 Icons.medication,
               ),
             if (state.filter.status != null)
-              _buildFilterChip(context, _getStatusString(state.filter.status!), Icons.info),
+              _buildFilterChip(
+                context,
+                _getStatusString(state.filter.status!),
+                Icons.info,
+              ),
           ],
         ),
         const SizedBox(height: AppSizes.spacing16),
@@ -403,7 +433,9 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('${medicine.dosage} • ${DateTimeUtils.formatTime(log.scheduledTime)}'),
+            Text(
+              '${medicine.dosage} • ${DateTimeUtils.formatTime(log.scheduledTime)}',
+            ),
             if (log.takenTime != null) ...[
               const SizedBox(height: 2),
               Text(
@@ -424,7 +456,11 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
           ),
           child: Text(
             _getStatusString(log.status),
-            style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12),
+            style: TextStyle(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
           ),
         ),
       ),
@@ -452,7 +488,10 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Medicine filter
-                const Text('Medicine:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Medicine:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int?>(
                   value: selectedMedicineId,
@@ -461,9 +500,15 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
                     border: OutlineInputBorder(),
                   ),
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('All Medicines')),
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('All Medicines'),
+                    ),
                     ...state.medicines.map((medicine) {
-                      return DropdownMenuItem(value: medicine.id, child: Text(medicine.name));
+                      return DropdownMenuItem(
+                        value: medicine.id,
+                        child: Text(medicine.name),
+                      );
                     }),
                   ],
                   onChanged: (value) {
@@ -475,7 +520,10 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
                 const SizedBox(height: 16),
 
                 // Status filter
-                const Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Status:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<MedicineLogStatus?>(
                   value: selectedStatus,
@@ -484,9 +532,15 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
                     border: OutlineInputBorder(),
                   ),
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('All Statuses')),
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('All Statuses'),
+                    ),
                     ...MedicineLogStatus.values.map((status) {
-                      return DropdownMenuItem(value: status, child: Text(_getStatusString(status)));
+                      return DropdownMenuItem(
+                        value: status,
+                        child: Text(_getStatusString(status)),
+                      );
                     }),
                   ],
                   onChanged: (value) {
@@ -506,7 +560,10 @@ class _HistoryPageState extends State<HistoryPage> with AutomaticKeepAliveClient
             TextButton(
               onPressed: () {
                 cubit.applyFilter(
-                  HistoryFilter(medicineId: selectedMedicineId, status: selectedStatus),
+                  HistoryFilter(
+                    medicineId: selectedMedicineId,
+                    status: selectedStatus,
+                  ),
                 );
                 Navigator.of(dialogContext).pop();
               },

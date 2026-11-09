@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medify/core/services/permission_service.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/services/notification_service.dart';
@@ -40,9 +41,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (!mounted) return;
 
     // Navigate to main app
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (context) => const MainNavigationPage()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const MainNavigationPage()),
+    );
   }
 
   Future<void> _requestNotificationPermission() async {
@@ -51,9 +52,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final permissionService = getIt<AppPermissionService>();
 
     if (mounted) {
-      final isNotificationEnabled = await permissionService.requestNotificationPermission(
-        context: context,
-      );
+      final isNotificationEnabled = await permissionService
+          .requestNotificationPermission(context: context);
       // Move to next page or complete
       if (_currentPage < 2) {
         _pageController.nextPage(
@@ -110,7 +110,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.spacing24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (index) => _buildPageIndicator(index == _currentPage)),
+                children: List.generate(
+                  3,
+                  (index) => _buildPageIndicator(index == _currentPage),
+                ),
               ),
             ),
 
@@ -139,7 +142,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               child: const Text('Back'),
                             ),
                           ),
-                        if (_currentPage > 0) const SizedBox(width: AppSizes.spacing16),
+                        if (_currentPage > 0)
+                          const SizedBox(width: AppSizes.spacing16),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
@@ -171,7 +175,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       height: 8,
       width: isActive ? 24 : 8,
       decoration: BoxDecoration(
-        color: isActive ? AppColors.primary : AppColors.primary.withValues(alpha: 0.3),
+        color: isActive
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -201,7 +207,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           // Title
           Text(
             AppLocalizations.of(context)!.onboardingTitle1,
-            style: theme.textTheme.displayLarge?.copyWith(color: AppColors.primary),
+            style: theme.textTheme.displayLarge?.copyWith(
+              color: AppColors.primary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.spacing16),
@@ -237,7 +245,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           // Title
           Text(
             AppLocalizations.of(context)!.onboardingTitle2,
-            style: theme.textTheme.displayLarge?.copyWith(color: AppColors.primary),
+            style: theme.textTheme.displayLarge?.copyWith(
+              color: AppColors.primary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.spacing16),
@@ -292,14 +302,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
               color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.notifications_active, size: 48, color: AppColors.primary),
+            child: const Icon(
+              Icons.notifications_active,
+              size: 48,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(height: AppSizes.spacing32),
 
           // Title
           Text(
             'Enable Notifications',
-            style: theme.textTheme.displayLarge?.copyWith(color: AppColors.primary),
+            style: theme.textTheme.displayLarge?.copyWith(
+              color: AppColors.primary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.spacing16),
@@ -321,7 +337,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.info, size: AppSizes.iconL),
+                const Icon(
+                  Icons.info_outline,
+                  color: AppColors.info,
+                  size: AppSizes.iconL,
+                ),
                 const SizedBox(width: AppSizes.spacing16),
                 Expanded(
                   child: Text(

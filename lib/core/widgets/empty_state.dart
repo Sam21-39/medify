@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../constants/app_sizes.dart';
 
 /// Empty state widget for displaying when no data is available
@@ -29,7 +30,8 @@ class EmptyState extends StatelessWidget {
             Icon(
               icon,
               size: AppSizes.iconXL * 2,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.primary
+                  .withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppSizes.paddingL),
             Text(
@@ -47,10 +49,7 @@ class EmptyState extends StatelessWidget {
             ],
             if (actionText != null && onAction != null) ...[
               const SizedBox(height: AppSizes.paddingXL),
-              ElevatedButton(
-                onPressed: onAction,
-                child: Text(actionText!),
-              ),
+              ElevatedButton(onPressed: onAction, child: Text(actionText!)),
             ],
           ],
         ),
@@ -58,4 +57,3 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-

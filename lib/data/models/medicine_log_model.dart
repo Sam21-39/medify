@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+
 import '../../domain/entities/medicine_log.dart';
 
 /// ObjectBox model for MedicineLog entity
@@ -68,4 +69,3 @@ class MedicineLogModel {
     );
   }
 }
-

@@ -83,18 +83,18 @@ class UserProfile extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        avatarEmoji,
-        colorValue,
-        relationship,
-        dateOfBirth,
-        notes,
-        isActive,
-        isDefaultProfile,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    name,
+    avatarEmoji,
+    colorValue,
+    relationship,
+    dateOfBirth,
+    notes,
+    isActive,
+    isDefaultProfile,
+    createdAt,
+    updatedAt,
+  ];
 }
 
 /// Predefined avatar emojis for quick selection
@@ -159,4 +159,3 @@ class ProfileRelationships {
     'Other',
   ];
 }
-

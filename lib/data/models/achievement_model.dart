@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+
 import '../../domain/entities/achievement.dart';
 
 /// ObjectBox model for Achievement entity
@@ -8,10 +9,10 @@ class AchievementModel {
   int id;
 
   int achievementType; // Store as int (enum index)
-  
+
   @Property(type: PropertyType.date)
   DateTime unlockedAt;
-  
+
   int progress;
   bool isUnlocked;
 
@@ -45,4 +46,3 @@ class AchievementModel {
     );
   }
 }
-

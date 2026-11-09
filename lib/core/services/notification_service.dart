@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
 import '../../domain/entities/medicine.dart';
 import '../../domain/entities/medicine_log.dart';
 import '../../domain/repositories/medicine_repository.dart';
@@ -73,7 +75,7 @@ class NotificationService {
 
       // Initialize plugin with callbacks
       final initialized = await _notifications.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
         // CRITICAL: This handles foreground notifications on Android
         onDidReceiveBackgroundNotificationResponse:
@@ -391,11 +393,11 @@ class NotificationService {
       final snoozeNotificationId = _generateNotificationId(medicineId, 999);
 
       await _notifications.zonedSchedule(
-        snoozeNotificationId,
-        '💊 Reminder: Time to take your medicine',
-        'Snoozed reminder',
-        tzDateTime,
-        details,
+        id: snoozeNotificationId,
+        title: '💊 Reminder: Time to take your medicine',
+        body: 'Snoozed reminder',
+        scheduledDate: tzDateTime,
+        notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
       );
@@ -550,7 +552,9 @@ class NotificationService {
       return;
     }
 
-    _log('Scheduling reminders for medicine: ${medicine.name}${profileName != null ? " (Profile: $profileName)" : ""}');
+    _log(
+      'Scheduling reminders for medicine: ${medicine.name}${profileName != null ? " (Profile: $profileName)" : ""}',
+    );
 
     // Cancel existing notifications for this medicine
     await cancelMedicineReminders(medicine.id!);
@@ -665,7 +669,9 @@ class NotificationService {
         // Custom notification sound (iOS uses the default sound in assets)
         sound: 'notification_sound.mp3',
         badgeNumber: 1,
-        subtitle: profileName != null ? '$profileName\'s Medicine' : 'Medicine Reminder',
+        subtitle: profileName != null
+            ? '$profileName\'s Medicine'
+            : 'Medicine Reminder',
         // iOS 10+ allows notifications to show in foreground
         interruptionLevel: InterruptionLevel.timeSensitive,
       );
@@ -683,11 +689,11 @@ class NotificationService {
 
       // Schedule the notification
       await _notifications.zonedSchedule(
-        notificationId,
-        notificationTitle,
-        notificationBody,
-        tzDateTime,
-        details,
+        id: notificationId,
+        title: notificationTitle,
+        body: notificationBody,
+        scheduledDate: tzDateTime,
+        notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
         payload: payload,
@@ -708,7 +714,7 @@ class NotificationService {
       // Assuming max 10 reminder times per medicine
       for (int i = 0; i < 10; i++) {
         final notificationId = _generateNotificationId(medicineId, i);
-        await _notifications.cancel(notificationId);
+        await _notifications.cancel(id: notificationId);
       }
       _log('Canceled reminders for medicine ID: $medicineId');
     } catch (e) {
@@ -777,10 +783,10 @@ class NotificationService {
       );
 
       await _notifications.show(
-        DateTime.now().millisecondsSinceEpoch % 100000, // Random ID
-        title,
-        body,
-        details,
+        id: DateTime.now().millisecondsSinceEpoch % 100000, // Random ID
+        title: title,
+        body: body,
+        notificationDetails: details,
         payload: payload,
       );
 

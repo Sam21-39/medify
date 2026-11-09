@@ -46,4 +46,3 @@ class SettingsLoaded extends SettingsState {
 class SettingsUpdating extends SettingsState {
   const SettingsUpdating();
 }
-
