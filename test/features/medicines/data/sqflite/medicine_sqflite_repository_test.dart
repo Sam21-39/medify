@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medify/core/database/medify_database.dart';
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/medicines/data/sqflite/medicine_sqflite_repository.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -17,7 +18,7 @@ void main() {
 
   setUp(() async {
     db = await MedifyDatabase.open(path: inMemoryDatabasePath);
-    repo = SqfliteMedicineRepository(db);
+    repo = SqfliteMedicineRepository(db, FieldCipher(List.filled(32, 7)));
     profileId = await db.insert('profiles', {
       'name': 'Patient',
       'role': 'patient',
@@ -40,6 +41,23 @@ void main() {
 
   Future<List<Map<String, Object?>>> schedules(int medicineId) =>
       db.query('schedules', where: 'medicine_id = ?', whereArgs: [medicineId]);
+
+  test('name and notes are stored encrypted; reads decrypt', () async {
+    final added = (await repo.addMedicine(
+      medicine().copyWith(notes: 'with food'),
+    )).unwrap();
+    final row = (await db.query(
+      'medicines',
+      where: 'id = ?',
+      whereArgs: [added.id],
+    )).single;
+    expect(row['name'], startsWith('v1.'));
+    expect(row['notes'], startsWith('v1.'));
+    expect(row['dose_label'], '1 tablet');
+    final read = (await repo.getMedicineById(added.id!)).unwrap()!;
+    expect(read.name, 'Aspirin');
+    expect(read.notes, 'with food');
+  });
 
   test('add, get, update, toggle, delete', () async {
     final added = (await repo.addMedicine(medicine())).unwrap();

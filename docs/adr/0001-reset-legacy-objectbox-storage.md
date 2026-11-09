@@ -26,6 +26,15 @@ Medify 2.0.0 moves to Drift (SQLite) because it gives us:
 - Schema snapshots (`drift_dev schema dump`) and generated migration tests.
 - No native plugin pods. sqlite3 arrives through build hooks, which helps the iOS goal of Swift Package Manager only (no CocoaPods). ObjectBox ships native libraries through a CocoaPods plugin, so it blocks that goal.
 
+## Amendment (2026-11-10, owner)
+
+Simplified. The staged journal (section 3–4 below) is dropped. Deletion is idempotent, so it needs no stage machine.
+
+- New install: no reset screen, no legacy code path shown.
+- Existing user (legacy ObjectBox store present, v2 DB absent): one notice screen saying Medify 2.0 changed the database and data resets. "Continue" resets; "Not now" changes nothing and the notice returns on next launch.
+- Reset: cancel reminders, clear legacy prefs, delete legacy `medify-db` directories, create v2 sqflite DB. Each step idempotent. Errors show Retry.
+- ObjectBox is removed from the codebase after the switch-over (P9). Only the detection and delete remain.
+
 ## Decision
 
 2.0.0 permanently deletes legacy ObjectBox data, legacy preferences, and legacy scheduled notifications. It does so only after the user explicitly confirms on a blocking gate.

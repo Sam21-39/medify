@@ -1,4 +1,5 @@
 import 'package:medify/core/database/settings_store.dart';
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/profiles/data/sqflite/profile_exceptions.dart';
 import 'package:medify/features/profiles/data/sqflite/profile_row_mapper.dart';
 import 'package:medify/features/profiles/domain/entities/user_profile.dart';
@@ -10,11 +11,13 @@ import 'package:sqflite/sqflite.dart';
 /// The active profile ID is stored in `settings` under [_activeKey]; the
 /// `profiles` table has no column for it.
 class ProfileSqfliteRepository implements UserProfileRepository {
-  ProfileSqfliteRepository(this._db) : _settings = SettingsStore(_db);
+  ProfileSqfliteRepository(this._db, this._cipher)
+    : _settings = SettingsStore(_db);
 
   static const _activeKey = 'active_profile_id';
 
   final Database _db;
+  final FieldCipher _cipher;
   final SettingsStore _settings;
 
   @override
@@ -29,7 +32,10 @@ class ProfileSqfliteRepository implements UserProfileRepository {
 
   @override
   Future<UserProfile> createProfile(UserProfile profile) async {
-    final id = await _db.insert('profiles', ProfileRowMapper.toRow(profile));
+    final id = await _db.insert(
+      'profiles',
+      await ProfileRowMapper.toRow(profile, _cipher),
+    );
     return (await _byId(_db, id))!;
   }
 
@@ -41,7 +47,7 @@ class ProfileSqfliteRepository implements UserProfileRepository {
       if (await _byId(txn, id) == null) throw ProfileNotFoundException(id);
       await txn.update(
         'profiles',
-        ProfileRowMapper.toRow(profile),
+        await ProfileRowMapper.toRow(profile, _cipher),
         where: 'id = ?',
         whereArgs: [id],
       );
@@ -92,12 +98,19 @@ class ProfileSqfliteRepository implements UserProfileRepository {
   }
 
   @override
-  Future<List<UserProfile>> searchProfiles(String query) {
-    final like = '%$query%';
-    return _list(
-      where: 'is_archived = 0 AND (name LIKE ? OR relation LIKE ?)',
-      whereArgs: [like, like],
-    );
+  /// Names are encrypted, so matching runs in Dart. Case-insensitive
+  /// substring match on name or relation, as the former LIKE query did.
+  @override
+  Future<List<UserProfile>> searchProfiles(String query) async {
+    final needle = query.toLowerCase();
+    final active = await _list(where: 'is_archived = 0');
+    return active
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(needle) ||
+              (p.relationship ?? '').toLowerCase().contains(needle),
+        )
+        .toList();
   }
 
   @override
@@ -111,15 +124,14 @@ class ProfileSqfliteRepository implements UserProfileRepository {
   }
 
   @override
+  /// Names are encrypted, so the comparison runs in Dart over active rows.
+  @override
   Future<bool> isProfileNameExists(String name, {int? excludeId}) async {
-    final rows = await _db.query(
-      'profiles',
-      columns: ['id'],
-      where: 'name = ? AND is_archived = 0 AND id != ?',
-      whereArgs: [name, excludeId ?? -1],
-      limit: 1,
+    final others = await _list(
+      where: 'is_archived = 0 AND id != ?',
+      whereArgs: [excludeId ?? -1],
     );
-    return rows.isNotEmpty;
+    return others.any((p) => p.name == name);
   }
 
   Future<List<UserProfile>> _list({
@@ -132,16 +144,20 @@ class ProfileSqfliteRepository implements UserProfileRepository {
       whereArgs: whereArgs,
       orderBy: 'id ASC',
     );
-    return rows.map(ProfileRowMapper.fromRow).toList();
+    return [
+      for (final row in rows) await ProfileRowMapper.fromRow(row, _cipher),
+    ];
   }
 
-  static Future<UserProfile?> _byId(DatabaseExecutor db, int id) async {
+  Future<UserProfile?> _byId(DatabaseExecutor db, int id) async {
     final rows = await db.query(
       'profiles',
       where: 'id = ?',
       whereArgs: [id],
       limit: 1,
     );
-    return rows.isEmpty ? null : ProfileRowMapper.fromRow(rows.single);
+    return rows.isEmpty
+        ? null
+        : await ProfileRowMapper.fromRow(rows.single, _cipher);
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/medicines/data/sqflite/medicine_row_mapper.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
@@ -13,9 +14,10 @@ import 'package:sqflite/sqflite.dart';
 /// after every write in this repo. Single-process only; writes from another
 /// isolate or another [Database] instance do not refresh the streams.
 class SqfliteMedicineRepository implements MedicineRepository {
-  SqfliteMedicineRepository(this._db);
+  SqfliteMedicineRepository(this._db, this._cipher);
 
   final Database _db;
+  final FieldCipher _cipher;
 
   late final _allController = StreamController<List<Medicine>>.broadcast(
     onListen: _pushAll,
@@ -42,7 +44,7 @@ class SqfliteMedicineRepository implements MedicineRepository {
       final saved = await _db.transaction<Medicine>((txn) async {
         final id = await txn.insert(
           'medicines',
-          MedicineRowMapper.toRow(medicine),
+          await MedicineRowMapper.toRow(medicine, _cipher),
         );
         for (final row in MedicineRowMapper.toScheduleRows(medicine, id)) {
           await txn.insert('schedules', row);
@@ -68,7 +70,7 @@ class SqfliteMedicineRepository implements MedicineRepository {
       ) async {
         final changed = await txn.update(
           'medicines',
-          MedicineRowMapper.toRow(medicine),
+          await MedicineRowMapper.toRow(medicine, _cipher),
           where: 'id = ?',
           whereArgs: [id],
         );
@@ -191,7 +193,7 @@ class SqfliteMedicineRepository implements MedicineRepository {
       whereArgs: [row['id']],
       orderBy: 'time_of_day_seconds',
     );
-    return MedicineRowMapper.fromRow(row, schedules);
+    return MedicineRowMapper.fromRow(row, schedules, _cipher);
   }
 
   void _pushAll() => _emit(_allController, () => _load(_db));

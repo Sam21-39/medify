@@ -4,29 +4,26 @@ import 'package:medify/features/achievements/domain/entities/achievement.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/statistics/domain/entities/statistics.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
-import 'package:medify/core/database/objectbox_service.dart';
-import 'package:medify/features/achievements/data/models/achievement_model.dart';
-import 'package:medify/objectbox.g.dart'; // ObjectBox generated code
+import 'package:medify/features/achievements/data/sqflite/achievement_sqflite_repository.dart';
+import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 
 /// Service for managing achievements and gamification
 class AchievementService {
-  final ObjectBoxService _objectBoxService;
+  final ProfileService _profileService;
+  final AchievementSqfliteRepository _achievementRepository;
   final MedicineLogRepository _medicineLogRepository;
   final NotificationService _notificationService;
   final PreferencesService _preferencesService;
 
   AchievementService(
-    this._objectBoxService,
+    this._profileService,
+    this._achievementRepository,
     this._medicineLogRepository,
     this._notificationService,
     this._preferencesService,
   );
-
-  /// Get achievement box
-  dynamic get _achievementBox =>
-      _objectBoxService.store.box<AchievementModel>();
 
   /// Check and award achievements based on current statistics
   Future<List<Achievement>> checkAndAwardAchievements() async {
@@ -242,21 +239,20 @@ class AchievementService {
   /// Save achievement to database
   Future<void> _saveAchievement(Achievement achievement) async {
     try {
-      final model = AchievementModel.fromEntity(achievement);
+      final profileId = _profileService.active?.id;
+      if (profileId == null) return;
 
-      // Check if achievement already exists
-      final existing = _achievementBox
-          .query(
-            AchievementModel_.achievementType.equals(achievement.type.index),
-          )
-          .build()
-          .findFirst();
-
-      if (existing != null) {
-        model.id = existing.id;
+      await _achievementRepository.updateProgress(
+        profileId,
+        achievement.type,
+        achievement.progress,
+      );
+      if (achievement.isUnlocked) {
+        await _achievementRepository.unlockAchievement(
+          profileId,
+          achievement.type,
+        );
       }
-
-      _achievementBox.put(model);
 
       developer.log(
         'Saved achievement: ${achievement.type.title} (progress: ${achievement.progress}/${achievement.type.targetValue})',
@@ -274,12 +270,9 @@ class AchievementService {
   /// Get specific achievement
   Future<Achievement?> getAchievement(AchievementType type) async {
     try {
-      final model = _achievementBox
-          .query(AchievementModel_.achievementType.equals(type.index))
-          .build()
-          .findFirst();
-
-      return model?.toEntity();
+      final profileId = _profileService.active?.id;
+      if (profileId == null) return null;
+      return await _achievementRepository.getAchievement(profileId, type);
     } catch (e) {
       developer.log(
         'Error getting achievement: $e',

@@ -6,7 +6,8 @@ import 'package:medify/core/error/failure.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../../../core/services/profile_service.dart';
-import 'package:medify/features/schedule/data/services/log_generator.dart';
+import 'package:medify/features/schedule/data/sqflite/occurrence_sqflite_generator.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
@@ -49,6 +50,18 @@ class MedicineCubit extends Cubit<MedicineState> {
     }
   }
 
+  /// Occurrences for today through +7 local days, from the schedules.
+  Future<void> _generateOccurrences() async {
+    final now = DateTime.now();
+    final from = DateTime(now.year, now.month, now.day);
+    await getIt<OccurrenceSqfliteGenerator>().generate(
+      fromDate: from,
+      toDate: DateTime(from.year, from.month, from.day + 7),
+      location: tz.local,
+      nowUtc: now.toUtc(),
+    );
+  }
+
   /// Add a new medicine
   Future<void> addMedicine(Medicine medicine) async {
     try {
@@ -58,11 +71,7 @@ class MedicineCubit extends Cubit<MedicineState> {
 
       // Generate today's logs for the medicine
       try {
-        final logRepository = getIt<MedicineLogRepository>();
-        final logs = LogGenerator.generateTodayLogs(savedMedicine);
-        for (final log in logs) {
-          await logRepository.addLog(log);
-        }
+        await _generateOccurrences();
       } catch (e) {
         // Silently handle log generation errors
       }
@@ -124,11 +133,8 @@ class MedicineCubit extends Cubit<MedicineState> {
             await logRepository.deleteLog(log.id!);
           }
 
-          // Generate new logs for today with updated times
-          final newLogs = LogGenerator.generateTodayLogs(updatedMedicine);
-          for (final log in newLogs) {
-            await logRepository.addLog(log);
-          }
+          // Regenerate occurrences from the updated schedules
+          await _generateOccurrences();
         } catch (e) {
           // Silently handle log regeneration errors
         }

@@ -3,7 +3,7 @@ import 'package:medify/core/design/medify_theme_extension.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/core/ui/app_messenger.dart';
-import 'package:medify/features/profiles/data/repositories/care_link_repository.dart';
+import 'package:medify/features/profiles/data/sqflite/care_link_sqflite_repository.dart';
 import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/features/profiles/domain/entities/user_profile.dart';
 
@@ -56,7 +56,7 @@ class _RolePageState extends State<RolePage> {
       ),
     );
     if (picked?.id == null) return;
-    getIt<CareLinkRepository>().link(
+    await getIt<CareLinkSqfliteRepository>().link(
       caregiverId: caregiver.id!,
       patientId: picked!.id!,
     );

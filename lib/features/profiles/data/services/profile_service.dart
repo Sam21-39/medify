@@ -1,9 +1,7 @@
 import 'dart:developer' as developer;
 
-import 'package:medify/core/database/objectbox_service.dart';
-import 'package:medify/features/profiles/data/models/user_profile_model.dart';
 import 'package:medify/features/profiles/domain/entities/user_profile.dart';
-import 'package:medify/objectbox.g.dart';
+import 'package:medify/features/profiles/domain/repositories/user_profile_repository.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 
 /// Service for managing user profiles and profile switching
@@ -14,7 +12,7 @@ import 'package:medify/core/preferences/preferences_service.dart';
 /// - Profile caching
 /// - Data isolation per profile
 class ProfileService {
-  final ObjectBoxService _objectBoxService;
+  final UserProfileRepository _repository;
   final PreferencesService _preferencesService;
 
   // Key for storing active profile ID in SharedPreferences
@@ -23,15 +21,24 @@ class ProfileService {
   // Cache for active profile to reduce database queries
   UserProfile? _activeProfile;
 
+  // Sync id -> name map for presentation. Refreshed on init and every write.
+  final Map<int, String> _names = {};
+
   UserProfile? get active => _activeProfile;
 
-  String? nameFor(int id) => _profileBox.get(id)?.name;
+  String? nameFor(int id) => _names[id];
 
-  ProfileService(this._objectBoxService, this._preferencesService);
+  ProfileService(this._repository, this._preferencesService);
 
-  /// Get the box for UserProfileModel
-  Box<UserProfileModel> get _profileBox =>
-      _objectBoxService.store.box<UserProfileModel>();
+  Future<void> _refreshNames() async {
+    final all = await _repository.getAllProfiles();
+    _names
+      ..clear()
+      ..addAll({
+        for (final p in all)
+          if (p.id != null) p.id!: p.name,
+      });
+  }
 
   /// Initialize profile service
   ///
@@ -48,7 +55,7 @@ class ProfileService {
         await _loadActiveProfile(allProfiles);
       }
 
-      await _backfillZeroProfileIds();
+      await _refreshNames();
       final activeId = _activeProfile?.id;
       if (activeId != null && _preferencesService.actingPatientId == null) {
         await _preferencesService.setActingPatientId(activeId);
@@ -63,26 +70,6 @@ class ProfileService {
         stackTrace: stackTrace,
       );
       rethrow;
-    }
-  }
-
-  /// Old installs stored profileId 0. Point those rows at the active profile.
-  Future<void> _backfillZeroProfileIds() async {
-    final id = _activeProfile?.id;
-    if (id == null) return;
-    final medicines = _objectBoxService.medicineBox.getAll();
-    for (final medicine in medicines) {
-      if (medicine.profileId == 0) {
-        medicine.profileId = id;
-        _objectBoxService.medicineBox.put(medicine);
-      }
-    }
-    final logs = _objectBoxService.medicineLogBox.getAll();
-    for (final log in logs) {
-      if (log.profileId == 0) {
-        log.profileId = id;
-        _objectBoxService.medicineLogBox.put(log);
-      }
     }
   }
 
@@ -149,8 +136,8 @@ class ProfileService {
 
   /// Set active profile by ID
   ///
-  /// Updates the isActive flag in the database for all profiles and
-  /// stores the active profile ID in SharedPreferences.
+  /// Stores the active profile ID in the settings table (via the repository)
+  /// and in SharedPreferences.
   ///
   /// Throws [Exception] if profile with [profileId] doesn't exist
   Future<void> setActiveProfile(int profileId) async {
@@ -160,30 +147,10 @@ class ProfileService {
     }
 
     try {
-      // 1. Set all profiles to inactive in database
-      final allProfiles = await getAllProfiles();
-      for (final p in allProfiles) {
-        if (p.isActive && p.id != profileId) {
-          final inactiveProfile = p.copyWith(
-            isActive: false,
-            updatedAt: DateTime.now(),
-          );
-          final model = UserProfileModel.fromEntity(inactiveProfile);
-          _profileBox.put(model);
-          developer.log('Set profile ${p.name} (ID: ${p.id}) to inactive');
-        }
-      }
+      await _repository.setActiveProfile(profileId);
 
-      // 2. Set selected profile to active in database
-      final activeProfile = profile.copyWith(
-        isActive: true,
-        updatedAt: DateTime.now(),
-      );
-      final activeModel = UserProfileModel.fromEntity(activeProfile);
-      _profileBox.put(activeModel);
-
-      // 3. Update cache and preferences
-      _activeProfile = activeProfile;
+      // Update cache and preferences
+      _activeProfile = profile.copyWith(isActive: true);
       await _preferencesService.setInt(_keyActiveProfileId, profileId);
 
       developer.log('Active profile set to: ${profile.name} (ID: $profileId)');
@@ -203,15 +170,12 @@ class ProfileService {
   /// Throws [Exception] if profile creation fails
   Future<UserProfile> createProfile(UserProfile profile) async {
     try {
-      final model = UserProfileModel.fromEntity(profile);
-      final id = _profileBox.put(model);
-      final createdProfile = await getProfileById(id);
+      final createdProfile = await _repository.createProfile(profile);
+      await _refreshNames();
 
-      if (createdProfile == null) {
-        throw Exception('Failed to retrieve created profile');
-      }
-
-      developer.log('Profile created: ${createdProfile.name} (ID: $id)');
+      developer.log(
+        'Profile created: ${createdProfile.name} (ID: ${createdProfile.id})',
+      );
       return createdProfile;
     } catch (e, stackTrace) {
       developer.log(
@@ -238,9 +202,10 @@ class ProfileService {
     }
 
     try {
-      final updatedProfile = profile.copyWith(updatedAt: DateTime.now());
-      final model = UserProfileModel.fromEntity(updatedProfile);
-      _profileBox.put(model);
+      final updatedProfile = await _repository.updateProfile(
+        profile.copyWith(updatedAt: DateTime.now()),
+      );
+      await _refreshNames();
 
       // Update cached active profile if it's the one being updated
       if (_activeProfile?.id == profile.id) {
@@ -269,7 +234,7 @@ class ProfileService {
   /// - Profile doesn't exist
   Future<void> deleteProfile(int profileId) async {
     try {
-      final allProfiles = await getAllProfiles();
+      final allProfiles = await _repository.getActiveProfiles();
 
       // Validate: Cannot delete last profile
       if (allProfiles.length <= 1) {
@@ -293,11 +258,9 @@ class ProfileService {
         );
       }
 
-      // Perform deletion
-      final success = _profileBox.remove(profileId);
-      if (!success) {
-        throw Exception('Failed to delete profile from database');
-      }
+      // Perform deletion (repository archives profiles that are still referenced)
+      await _repository.deleteProfile(profileId);
+      await _refreshNames();
 
       developer.log('Profile deleted: ${profile.name} (ID: $profileId)');
     } catch (e, stackTrace) {
@@ -311,37 +274,21 @@ class ProfileService {
   }
 
   /// Get a profile by ID
-  Future<UserProfile?> getProfileById(int id) async {
-    final model = _profileBox.get(id);
-    return model?.toEntity();
-  }
+  Future<UserProfile?> getProfileById(int id) => _repository.getProfileById(id);
 
   /// Get all profiles
-  Future<List<UserProfile>> getAllProfiles() async {
-    final models = _profileBox.getAll();
-    return models.map((model) => model.toEntity()).toList();
-  }
+  Future<List<UserProfile>> getAllProfiles() => _repository.getAllProfiles();
 
   /// Get all active profiles
-  Future<List<UserProfile>> getActiveProfiles() async {
-    final query = _profileBox
-        .query(UserProfileModel_.isActive.equals(true))
-        .build();
-    final models = query.find();
-    query.close();
-    return models.map((model) => model.toEntity()).toList();
-  }
+  Future<List<UserProfile>> getActiveProfiles() =>
+      _repository.getActiveProfiles();
 
   /// Get profiles by relationship
   Future<List<UserProfile>> getProfilesByRelationship(
     String relationship,
   ) async {
-    final query = _profileBox
-        .query(UserProfileModel_.relationship.equals(relationship))
-        .build();
-    final models = query.find();
-    query.close();
-    return models.map((model) => model.toEntity()).toList();
+    final all = await getAllProfiles();
+    return all.where((p) => p.relationship == relationship).toList();
   }
 
   /// Search profiles by name or relationship
@@ -364,9 +311,7 @@ class ProfileService {
   }
 
   /// Get total count of profiles
-  Future<int> getProfileCount() async {
-    return _profileBox.count();
-  }
+  Future<int> getProfileCount() => _repository.getProfileCount();
 
   /// Check if a profile name already exists
   ///

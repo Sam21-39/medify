@@ -1,20 +1,23 @@
-import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import 'package:medify/features/medicines/domain/entities/medicine.dart';
-import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
-import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
-import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
+import 'package:medify/core/database/enums.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/error/failure.dart';
 import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
+import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
+import 'package:medify/features/schedule/domain/engine/notification_payload.dart';
+import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
+import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
 
 /// Service for managing local notifications
 /// Handles foreground, background, and terminated app states
@@ -27,6 +30,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
+  String? _installationId;
 
   // Notification channel constants
   static const String _channelId = 'medicine_reminders';
@@ -46,7 +50,6 @@ class NotificationService {
 
       // Initialize timezone database with local timezone
       tz.initializeTimeZones();
-      _setLocalTimezone();
 
       // Create notification channel for Android
       await _createNotificationChannel();
@@ -103,28 +106,6 @@ class NotificationService {
     }
   }
 
-  /// Set timezone to device's local timezone
-  void _setLocalTimezone() {
-    try {
-      // Try to get the device's timezone
-      final String timeZoneName = DateTime.now().timeZoneName;
-      _log('Device timezone: $timeZoneName');
-
-      // Use a more robust timezone detection
-      try {
-        tz.setLocalLocation(tz.getLocation(timeZoneName));
-        _log('Timezone set to: $timeZoneName');
-      } catch (e) {
-        // Fallback to UTC if device timezone is not found
-        _log('Failed to set device timezone, using UTC as fallback');
-        tz.setLocalLocation(tz.UTC);
-      }
-    } catch (e) {
-      _log('Error setting timezone: $e', isError: true);
-      tz.setLocalLocation(tz.UTC);
-    }
-  }
-
   /// Create Android notification channel (required for Android 8.0+)
   Future<void> _createNotificationChannel() async {
     if (!Platform.isAndroid) return;
@@ -162,60 +143,49 @@ class NotificationService {
     }
   }
 
-  /// Handle notification tap (when app is in foreground or background)
-  void _onNotificationTapped(NotificationResponse response) async {
+  /// Handle notification tap (foreground and background). Only a well-formed
+  /// payload for this installation is acted on.
+  void _onNotificationTapped(NotificationResponse response) =>
+      _handleResponse(response);
+
+  @pragma('vm:entry-point')
+  static void _onBackgroundNotificationTapped(NotificationResponse response) =>
+      NotificationService()._handleResponse(response);
+
+  Future<void> _handleResponse(NotificationResponse response) async {
     _log(
       'Notification tapped: ${response.payload}, action: ${response.actionId}',
     );
-
     try {
-      // Parse payload
-      if (response.payload == null || response.payload!.isEmpty) {
-        _log('Empty payload, ignoring tap');
+      final decoded = decodeNotificationPayload(
+        response.payload,
+        localInstallationId: await _installationIdFor(),
+      );
+      final occurrenceId = switch (decoded) {
+        Valid(:final occurrenceId) => occurrenceId,
+        _ => null,
+      };
+      if (occurrenceId == null) {
+        _log('Ignoring notification tap: ${decoded.runtimeType}');
         return;
       }
 
-      final Map<String, dynamic> payload = jsonDecode(response.payload!);
-      final int medicineId = payload['medicineId'];
-      final int scheduledSeconds = payload['scheduledSeconds'];
-      if (payload['prior'] == true) {
-        getIt<AppMessenger>().go('/today');
+      final logRepository = getIt<MedicineLogRepository>();
+      final log = await logRepository.getLogById(occurrenceId);
+      if (log == null) {
+        _log('Occurrence $occurrenceId not found, ignoring tap', isError: true);
         return;
       }
 
-      // Get medicine log repository
-      final medicineLogRepository = getIt<MedicineLogRepository>();
-
-      // Convert scheduledSeconds to DateTime for today
-      final scheduledDateTime = DateTimeUtils.secondsToDateTime(
-        scheduledSeconds,
-      );
-
-      // Find or create today's log for this medicine at this time
-      final todayLogs = await medicineLogRepository.getTodayLogs();
-      MedicineLog? log = todayLogs.cast<MedicineLog?>().firstWhere(
-        (l) =>
-            l!.medicineId == medicineId &&
-            l.scheduledTime.hour == scheduledDateTime.hour &&
-            l.scheduledTime.minute == scheduledDateTime.minute,
-        orElse: () => null,
-      );
-
-      // Handle different actions
       if (response.actionId == 'snooze') {
-        // Snooze action
-        await _handleSnoozeAction(medicineId, scheduledSeconds, log);
+        await _handleSnoozeAction(log);
       } else if (response.actionId == 'skip') {
-        // Skip action
-        await _handleSkipAction(
-          medicineId,
-          scheduledSeconds,
-          log,
-          medicineLogRepository,
-        );
+        await logRepository.markAsSkipped(occurrenceId);
+        _log('Marked occurrence $occurrenceId as skipped');
       } else {
+        final seconds = DateTimeUtils.dateTimeToSeconds(log.scheduledTime);
         getIt<AppMessenger>().go(
-          '/alarm?medicineId=$medicineId&seconds=$scheduledSeconds',
+          '/alarm?medicineId=${log.medicineId}&seconds=$seconds',
         );
       }
     } catch (e) {
@@ -223,200 +193,61 @@ class NotificationService {
     }
   }
 
-  /// Handle background notification tap (static method required)
-  @pragma('vm:entry-point')
-  static void _onBackgroundNotificationTapped(
-    NotificationResponse response,
-  ) async {
-    developer.log(
-      'Background notification tapped: ${response.payload}, action: ${response.actionId}',
-    );
-
+  /// Handle "Snooze" action: one-off reminder in 5 minutes for the same occurrence
+  Future<void> _handleSnoozeAction(MedicineLog log) async {
     try {
-      // Parse payload
-      if (response.payload == null || response.payload!.isEmpty) {
-        developer.log('Empty payload, ignoring tap');
-        return;
-      }
-
-      final Map<String, dynamic> payload = jsonDecode(response.payload!);
-      final int medicineId = payload['medicineId'];
-      final int scheduledSeconds = payload['scheduledSeconds'];
-      if (payload['prior'] == true) {
-        getIt<AppMessenger>().go('/today');
-        return;
-      }
-
-      // Get medicine log repository
-      final medicineLogRepository = getIt<MedicineLogRepository>();
-
-      // Convert scheduledSeconds to DateTime for today
-      final scheduledDateTime = DateTimeUtils.secondsToDateTime(
-        scheduledSeconds,
+      final when = DateTime.now().add(const Duration(minutes: 5));
+      final payload = encodeNotificationPayload(
+        installationId: await _installationIdFor(),
+        occurrenceId: log.id!,
       );
-
-      // Find or create today's log for this medicine at this time
-      final todayLogs = await medicineLogRepository.getTodayLogs();
-      MedicineLog? log = todayLogs.cast<MedicineLog?>().firstWhere(
-        (l) =>
-            l!.medicineId == medicineId &&
-            l.scheduledTime.hour == scheduledDateTime.hour &&
-            l.scheduledTime.minute == scheduledDateTime.minute,
-        orElse: () => null,
-      );
-
-      // Handle different actions
-      if (response.actionId == 'snooze') {
-        // Snooze action
-        await NotificationService()._handleSnoozeAction(
-          medicineId,
-          scheduledSeconds,
-          log,
-        );
-      } else if (response.actionId == 'skip') {
-        // Skip action
-        await NotificationService()._handleSkipAction(
-          medicineId,
-          scheduledSeconds,
-          log,
-          medicineLogRepository,
-        );
-      } else {
-        getIt<AppMessenger>().go(
-          '/alarm?medicineId=$medicineId&seconds=$scheduledSeconds',
-        );
-      }
-    } catch (e) {
-      developer.log('Error handling background notification tap: $e');
-    }
-  }
-
-  /// Handle "Snooze" action
-  Future<void> _handleSnoozeAction(
-    int medicineId,
-    int scheduledSeconds,
-    MedicineLog? log,
-  ) async {
-    try {
-      // Snooze for 5 minutes as per user requirement
-      final snoozeDuration = 5; // 5 minutes
-
-      _log('Snoozing notification for $snoozeDuration minutes');
-
-      // Schedule a one-time notification after snooze duration
-      final snoozeTime = DateTime.now().add(Duration(minutes: snoozeDuration));
-      final tzDateTime = tz.TZDateTime.from(snoozeTime, tz.local);
-
-      // Get medicine name (we'll need to query it)
-      // For now, use a generic message
-      final androidDetails = AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
-        importance: Importance.max,
-        priority: Priority.max,
-        category: AndroidNotificationCategory.alarm,
-        icon: '@mipmap/ic_launcher',
-        // Custom notification sound
-        sound: const RawResourceAndroidNotificationSound('notification_sound'),
-        enableVibration: true,
-        playSound: true,
-        styleInformation: const BigTextStyleInformation(
-          'Don\'t forget to take your medicine!',
-        ),
-        actions: <AndroidNotificationAction>[
-          const AndroidNotificationAction(
-            'taken',
-            'Mark as Taken',
-            showsUserInterface: true,
-          ),
-          const AndroidNotificationAction(
-            'skip',
-            'Skip',
-            showsUserInterface: false,
-          ),
-        ],
-      );
-
-      const iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      );
-
-      final details = NotificationDetails(
-        android: androidDetails,
-        iOS: iosDetails,
-      );
-
-      // Create payload
-      final payload = jsonEncode({
-        'medicineId': medicineId,
-        'scheduledSeconds': scheduledSeconds,
-        'isSnoozed': true,
-      });
-
-      // Generate unique ID for snoozed notification
-      final snoozeNotificationId = _generateNotificationId(medicineId, 999);
-
       await _notifications.zonedSchedule(
-        id: snoozeNotificationId,
+        id: _snoozeId(log.id!),
         title: '💊 Reminder: Time to take your medicine',
         body: 'Snoozed reminder',
-        scheduledDate: tzDateTime,
-        notificationDetails: details,
+        scheduledDate: tz.TZDateTime.from(when, tz.local),
+        notificationDetails: _reminderDetails(
+          bigText: 'Don\'t forget to take your medicine!',
+        ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
       );
-
-      _log('Snoozed notification scheduled for $snoozeTime');
+      _log('Snoozed notification scheduled for $when');
     } catch (e) {
       _log('Error handling snooze action: $e', isError: true);
     }
   }
 
-  /// Handle "Skip" action
-  Future<void> _handleSkipAction(
-    int medicineId,
-    int scheduledSeconds,
-    MedicineLog? log,
-    MedicineLogRepository medicineLogRepository,
-  ) async {
-    try {
-      if (log != null) {
-        // Update existing log
-        await medicineLogRepository.markAsSkipped(log.id!);
-        _log('Marked log ${log.id} as skipped');
-      } else {
-        // Create new log and mark as skipped
-        // Get medicine to determine profileId
-        final medicineRepository = getIt<MedicineRepository>();
-        final medicine = (await medicineRepository.getMedicineById(medicineId))
-            .unwrap();
+  /// Installation ID: random, created once, stored in installation_metadata.
+  Future<String> _installationIdFor() async {
+    final cached = _installationId;
+    if (cached != null) return cached;
+    final db = getIt<Database>();
+    final rows = await db.query(
+      'installation_metadata',
+      columns: ['installation_id'],
+      where: 'id = 1',
+    );
+    final id = rows.isNotEmpty
+        ? rows.first['installation_id']! as String
+        : await _createInstallationRow(db);
+    _installationId = id;
+    return id;
+  }
 
-        if (medicine == null) {
-          _log('Medicine not found: $medicineId', isError: true);
-          return;
-        }
-
-        final scheduledDateTime = DateTimeUtils.secondsToDateTime(
-          scheduledSeconds,
-        );
-        final newLog = MedicineLog(
-          profileId: medicine.profileId,
-          medicineId: medicineId,
-          scheduledTime: scheduledDateTime,
-          takenTime: null,
-          status: MedicineLogStatus.skipped,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        await medicineLogRepository.addLog(newLog);
-        _log('Created new log and marked as skipped');
-      }
-    } catch (e) {
-      _log('Error handling skip action: $e', isError: true);
-    }
+  Future<String> _createInstallationRow(Database db) async {
+    final random = Random.secure();
+    final id = List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    await db.insert('installation_metadata', {
+      'id': 1,
+      'installation_id': id,
+      'lifecycle': LifecycleState.complete.name,
+      'created_at_utc': DateTime.now().toUtc().millisecondsSinceEpoch,
+    });
+    return id;
   }
 
   /// Request notification permissions (handles Android 13+ and iOS)
@@ -512,7 +343,7 @@ class NotificationService {
     }
   }
 
-  /// Schedule daily notifications for a medicine
+  /// Schedule one-off reminders for the pending occurrences of [medicine]
   Future<void> scheduleMedicineReminders(
     Medicine medicine, {
     String? profileName,
@@ -521,183 +352,167 @@ class NotificationService {
       _log('Medicine ${medicine.name} is inactive, skipping notifications');
       return;
     }
+    _log('Scheduling reminders for medicine: ${medicine.name}');
 
-    _log(
-      'Scheduling reminders for medicine: ${medicine.name}${profileName != null ? " (Profile: $profileName)" : ""}',
-    );
-
-    // Cancel existing notifications for this medicine
     await cancelMedicineReminders(medicine.id!);
 
-    // Schedule notification for each reminder time
-    for (int i = 0; i < medicine.reminderTimes.length; i++) {
-      final seconds = medicine.reminderTimes[i];
+    final now = DateTime.now();
+    final logs = await getIt<MedicineLogRepository>().getLogsByMedicineId(
+      medicine.id!,
+    );
+    for (final log in logs) {
+      if (log.id == null ||
+          log.status != MedicineLogStatus.pending ||
+          !log.scheduledTime.isAfter(now)) {
+        continue;
+      }
       try {
-        await _scheduleDailyNotification(
-          medicineId: medicine.id!,
-          timeIndex: i,
-          seconds: seconds,
+        await _scheduleOccurrence(
+          log: log,
           medicineName: medicine.name,
           dosage: medicine.dosage,
           profileName: profileName,
         );
-        _log(
-          'Scheduled notification ${i + 1}/${medicine.reminderTimes.length} for ${medicine.name}${profileName != null ? " ($profileName)" : ""}',
-        );
       } catch (e) {
-        _log(
-          'Error scheduling notification $i for ${medicine.name}: $e',
-          isError: true,
-        );
+        _log('Error scheduling occurrence ${log.id}: $e', isError: true);
       }
     }
   }
 
-  /// Schedule a single daily notification
-  Future<void> _scheduleDailyNotification({
-    required int medicineId,
-    required int timeIndex,
-    required int seconds,
+  /// Schedule the reminder and the 15-minute prior notice for one occurrence
+  Future<void> _scheduleOccurrence({
+    required MedicineLog log,
     required String medicineName,
     required String dosage,
     String? profileName,
   }) async {
-    try {
-      // Generate unique notification ID
-      final notificationId = _generateNotificationId(medicineId, timeIndex);
+    final occurrenceId = log.id!;
+    final when = tz.TZDateTime.from(log.scheduledTime, tz.local);
+    final payload = encodeNotificationPayload(
+      installationId: await _installationIdFor(),
+      occurrenceId: occurrenceId,
+    );
+    final title = profileName != null
+        ? '💊 Time for $profileName\'s medicine'
+        : '💊 Time to take your medicine';
+    final body = profileName != null
+        ? '$medicineName - $dosage • $profileName'
+        : '$medicineName - $dosage';
+    final bigText = profileName != null
+        ? 'It\'s time for $profileName to take $medicineName ($dosage). Don\'t forget your medicine!'
+        : 'It\'s time to take $medicineName ($dosage). Don\'t forget your medicine!';
 
-      // Convert seconds to DateTime
-      final now = DateTime.now();
-      final scheduledTime = DateTimeUtils.secondsToDateTime(seconds);
+    await _notifications.zonedSchedule(
+      id: _mainId(occurrenceId),
+      title: title,
+      body: body,
+      scheduledDate: when,
+      notificationDetails: _reminderDetails(bigText: bigText),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
+    );
 
-      // If time has passed today, schedule for tomorrow
-      final scheduledDateTime = scheduledTime.isBefore(now)
-          ? scheduledTime.add(const Duration(days: 1))
-          : scheduledTime;
-
-      // Convert to TZDateTime
-      final tzDateTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
-
-      _log(
-        'Scheduling notification ID $notificationId for $medicineName${profileName != null ? " ($profileName)" : ""} at ${DateTimeUtils.formatTime(scheduledDateTime)}',
-      );
-
-      // Build notification title and body with profile context
-      final String notificationTitle = profileName != null
-          ? '💊 Time for $profileName\'s medicine'
-          : '💊 Time to take your medicine';
-
-      final String notificationBody = profileName != null
-          ? '$medicineName - $dosage • $profileName'
-          : '$medicineName - $dosage';
-
-      final String bigText = profileName != null
-          ? 'It\'s time for $profileName to take $medicineName ($dosage). Don\'t forget your medicine!'
-          : 'It\'s time to take $medicineName ($dosage). Don\'t forget your medicine!';
-
-      // Android notification details with foreground presentation
-      final androidDetails = AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
-        importance: Importance.max,
-        priority: Priority.max,
-        category: AndroidNotificationCategory.alarm,
-        icon: '@mipmap/ic_launcher',
-        // Custom notification sound
-        sound: const RawResourceAndroidNotificationSound('notification_sound'),
-        playSound: true,
-        enableVibration: true,
-        // Big text style for better readability
-        styleInformation: BigTextStyleInformation(bigText),
-        // Action buttons: Snooze (5 mins) and Skip
-        actions: <AndroidNotificationAction>[
-          const AndroidNotificationAction(
-            'snooze',
-            'Snooze (5 min)',
-            showsUserInterface: false,
-          ),
-          const AndroidNotificationAction(
-            'skip',
-            'Skip',
-            showsUserInterface: false,
-          ),
-        ],
-        // Full screen intent for critical reminders
-        fullScreenIntent: true,
-        // Show notification even when app is in foreground
-        visibility: NotificationVisibility.public,
-        ticker: profileName != null
-            ? 'Time for $profileName: $medicineName'
-            : 'Time to take $medicineName',
-      );
-
-      // iOS notification details with foreground presentation
-      final iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        // Custom notification sound (iOS uses the default sound in assets)
-        sound: 'notification_sound.mp3',
-        badgeNumber: 1,
-        subtitle: profileName != null
-            ? '$profileName\'s Medicine'
-            : 'Medicine Reminder',
-        // iOS 10+ allows notifications to show in foreground
-        interruptionLevel: InterruptionLevel.critical,
-      );
-
-      final details = NotificationDetails(
+    final prior = when.subtract(const Duration(minutes: 15));
+    if (!prior.isAfter(tz.TZDateTime.now(tz.local))) return;
+    final timeLabel = DateTimeUtils.formatTime(when);
+    final androidDetails = AndroidNotificationDetails(
+      'medify_prior',
+      'Upcoming dose',
+      channelDescription: '15 minutes before a dose',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      chronometerCountDown: true,
+      when: when.millisecondsSinceEpoch,
+      icon: '@mipmap/ic_launcher',
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: false,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+    await _notifications.zonedSchedule(
+      id: _priorId(occurrenceId),
+      title: 'Medicine $medicineName at $timeLabel.',
+      body: 'In 15 minutes',
+      scheduledDate: prior,
+      notificationDetails: NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
-      );
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
+    );
+    _log('Scheduled occurrence $occurrenceId at $timeLabel');
+  }
 
-      // Create payload with medicineId and scheduled time
-      final payload = jsonEncode({
-        'medicineId': medicineId,
-        'scheduledSeconds': seconds,
-      });
+  NotificationDetails _reminderDetails({required String bigText}) {
+    final androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.max,
+      priority: Priority.max,
+      category: AndroidNotificationCategory.alarm,
+      icon: '@mipmap/ic_launcher',
+      sound: const RawResourceAndroidNotificationSound('notification_sound'),
+      playSound: true,
+      enableVibration: true,
+      styleInformation: BigTextStyleInformation(bigText),
+      actions: const <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'snooze',
+          'Snooze (5 min)',
+          showsUserInterface: false,
+        ),
+        AndroidNotificationAction('skip', 'Skip', showsUserInterface: false),
+      ],
+      fullScreenIntent: true,
+      visibility: NotificationVisibility.public,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      sound: 'notification_sound.mp3',
+      badgeNumber: 1,
+      interruptionLevel: InterruptionLevel.critical,
+    );
+    return NotificationDetails(android: androidDetails, iOS: iosDetails);
+  }
 
-      // Schedule the notification
-      await _notifications.zonedSchedule(
-        id: notificationId,
-        title: notificationTitle,
-        body: notificationBody,
-        scheduledDate: tzDateTime,
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
-        payload: payload,
+  /// Cancel the reminder, prior notice and snooze for every occurrence of a medicine
+  Future<void> cancelMedicineReminders(int medicineId) async {
+    try {
+      _log('Canceling reminders for medicine ID $medicineId');
+      final logs = await getIt<MedicineLogRepository>().getLogsByMedicineId(
+        medicineId,
       );
-
-      await _schedulePriorNotice(
-        medicineName: medicineName,
-        seconds: seconds,
-        medicineId: medicineId,
-        when: tzDateTime,
-        alarmId: notificationId,
-      );
-      _log('Notification scheduled successfully: ID $notificationId');
+      for (final log in logs) {
+        if (log.id == null) continue;
+        await _notifications.cancel(id: _mainId(log.id!));
+        await _notifications.cancel(id: _priorId(log.id!));
+        await _notifications.cancel(id: _snoozeId(log.id!));
+      }
+      _log('Canceled reminders for medicine ID $medicineId');
     } catch (e) {
-      _log('Error in _scheduleDailyNotification: $e', isError: true);
-      rethrow;
+      _log('Error canceling medicine reminders $e', isError: true);
     }
   }
 
-  /// Cancel all reminders for a medicine
-  Future<void> cancelMedicineReminders(int medicineId) async {
+  /// Cancel all reminders, then schedule pending occurrences of active medicines.
+  /// Run after the occurrence window is generated (startup, resume).
+  Future<void> rescheduleUpcoming() async {
     try {
-      _log('Canceling reminders for medicine ID: $medicineId');
-      // Cancel all possible notification IDs for this medicine
-      // Assuming max 10 reminder times per medicine
-      for (int i = 0; i < 10; i++) {
-        final notificationId = _generateNotificationId(medicineId, i);
-        await _notifications.cancel(id: notificationId);
-        await _notifications.cancel(id: notificationId + 50000);
+      final medicines = (await getIt<MedicineRepository>().getActiveMedicines())
+          .unwrap();
+      await cancelAllNotifications();
+      for (final medicine in medicines) {
+        await scheduleMedicineReminders(medicine);
       }
-      _log('Canceled reminders for medicine ID: $medicineId');
+      _log('Rescheduled reminders for ${medicines.length} active medicines');
     } catch (e) {
-      _log('Error canceling medicine reminders: $e', isError: true);
+      _log('Error rescheduling reminders $e', isError: true);
     }
   }
 
@@ -776,83 +591,10 @@ class NotificationService {
     }
   }
 
-  Future<void> _schedulePriorNotice({
-    required String medicineName,
-    required int seconds,
-    required int medicineId,
-    required tz.TZDateTime when,
-    required int alarmId,
-  }) async {
-    final prior = when.subtract(const Duration(minutes: 15));
-    if (!prior.isAfter(tz.TZDateTime.now(tz.local))) return;
-    final timeLabel = DateTimeUtils.formatTime(when);
-    final androidDetails = AndroidNotificationDetails(
-      'medify_prior',
-      'Upcoming dose',
-      channelDescription: '15 minutes before a dose',
-      importance: Importance.low,
-      priority: Priority.low,
-      ongoing: true,
-      chronometerCountDown: true,
-      when: when.millisecondsSinceEpoch,
-      icon: '@mipmap/ic_launcher',
-    );
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentSound: false,
-      interruptionLevel: InterruptionLevel.timeSensitive,
-    );
-    await _notifications.zonedSchedule(
-      id: alarmId + 50000,
-      scheduledDate: prior,
-      title: 'Medicine $medicineName at $timeLabel.',
-      body: 'In 15 minutes',
-      notificationDetails: NotificationDetails(
-        android: androidDetails,
-        iOS: iosDetails,
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
-      payload: jsonEncode({
-        'medicineId': medicineId,
-        'scheduledSeconds': seconds,
-        'prior': true,
-      }),
-    );
-  }
-
-  /// Generate unique notification ID from medicine ID and time index
-  int _generateNotificationId(int medicineId, int timeIndex) {
-    // Combine medicine ID and time index to create unique ID
-    // Format: medicineId * 100 + timeIndex
-    // This allows up to 100 reminder times per medicine
-    return (medicineId * 100) + timeIndex;
-  }
-
-  /// Get notification ID for a specific medicine and time
-  int getNotificationId(int medicineId, int timeIndex) {
-    return _generateNotificationId(medicineId, timeIndex);
-  }
-
-  /// Reschedule all active medicine reminders
-  Future<void> rescheduleAllReminders(List<Medicine> medicines) async {
-    try {
-      _log('Rescheduling reminders for ${medicines.length} medicines');
-      await cancelAllNotifications();
-
-      int scheduled = 0;
-      for (final medicine in medicines) {
-        if (medicine.isActive) {
-          await scheduleMedicineReminders(medicine);
-          scheduled++;
-        }
-      }
-
-      _log('Rescheduled reminders for $scheduled active medicines');
-    } catch (e) {
-      _log('Error rescheduling reminders: $e', isError: true);
-    }
-  }
+  // Notification IDs derive from the occurrence ID: reminder, prior, snooze.
+  static int _mainId(int occurrenceId) => occurrenceId * 4;
+  static int _priorId(int occurrenceId) => occurrenceId * 4 + 1;
+  static int _snoozeId(int occurrenceId) => occurrenceId * 4 + 2;
 
   /// Log helper for debugging
   void _log(String message, {bool isError = false}) {

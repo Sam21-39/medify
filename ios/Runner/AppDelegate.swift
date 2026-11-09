@@ -6,6 +6,8 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var speechChannel: FlutterMethodChannel?
   private var pathsChannel: FlutterMethodChannel?
+  private var prefsChannel: FlutterMethodChannel?
+  private var timezoneChannel: FlutterMethodChannel?
   private let synthesizer = AVSpeechSynthesizer()
 
   override func application(
@@ -60,5 +62,33 @@ import UIKit
       }
     }
     pathsChannel = paths
+
+    let prefsMessenger = engineBridge.pluginRegistry.registrar(forPlugin: "MedifyPrefs")!.messenger()
+    let prefs = FlutterMethodChannel(name: "medify/prefs", binaryMessenger: prefsMessenger)
+    prefs.setMethodCallHandler { call, result in
+      switch call.method {
+      case "clearLegacyPrefs":
+        let defaults = UserDefaults.standard
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("flutter.") {
+          defaults.removeObject(forKey: key)
+        }
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    prefsChannel = prefs
+
+    let tzMessenger = engineBridge.pluginRegistry.registrar(forPlugin: "MedifyTimezone")!.messenger()
+    let tz = FlutterMethodChannel(name: "medify/timezone", binaryMessenger: tzMessenger)
+    tz.setMethodCallHandler { call, result in
+      switch call.method {
+      case "getLocalTimezone":
+        result(TimeZone.current.identifier)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    timezoneChannel = tz
   }
 }

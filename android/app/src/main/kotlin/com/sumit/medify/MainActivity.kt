@@ -25,6 +25,25 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "medify/prefs")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "clearLegacyPrefs" -> {
+                        val cleared = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
+                            .edit().clear().commit()
+                        if (cleared) result.success(null)
+                        else result.error("PREFS_CLEAR_FAILED", "could not clear legacy prefs", null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "medify/timezone")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getLocalTimezone" -> result.success(java.util.TimeZone.getDefault().id)
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "medify/speech")
             .setMethodCallHandler { call, result ->
                 when (call.method) {

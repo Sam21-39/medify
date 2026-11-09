@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medify/core/database/medify_database.dart';
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/profiles/data/sqflite/profile_exceptions.dart';
 import 'package:medify/features/profiles/data/sqflite/profile_sqflite_repository.dart';
 import 'package:medify/features/profiles/domain/entities/user_profile.dart';
@@ -16,7 +17,7 @@ void main() {
 
   setUp(() async {
     db = await MedifyDatabase.open(path: inMemoryDatabasePath);
-    repo = ProfileSqfliteRepository(db);
+    repo = ProfileSqfliteRepository(db, FieldCipher(List.filled(32, 7)));
   });
 
   tearDown(() => db.close());
@@ -112,6 +113,21 @@ void main() {
       repo.setActiveProfile(999),
       throwsA(isA<ProfileNotFoundException>()),
     );
+  });
+
+  test('name and notes are stored as v1 values, other columns plain', () async {
+    final created = await repo.createProfile(profile(name: 'Ann'));
+    final row = (await db.query(
+      'profiles',
+      where: 'id = ?',
+      whereArgs: [created.id],
+    )).single;
+    expect(row['name'], startsWith('v1.'));
+    expect(row['name'], isNot('Ann'));
+    expect(row['notes'], startsWith('v1.'));
+    expect(row['relation'], 'Mom');
+    expect(row['role'], 'patient');
+    expect((await repo.getProfileById(created.id!))!.name, 'Ann');
   });
 
   test('search, count and name-exists ignore archived profiles', () async {

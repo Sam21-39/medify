@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medify/core/database/medify_database.dart';
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/medicines/data/sqflite/medicine_sqflite_repository.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/data/sqflite/medicine_log_exceptions.dart';
@@ -23,8 +24,9 @@ void main() {
 
   setUp(() async {
     db = await MedifyDatabase.open(path: inMemoryDatabasePath);
-    logs = SqfliteMedicineLogRepository(db);
-    final profiles = SqfliteMedicineRepository(db);
+    final cipher = FieldCipher(List.filled(32, 7));
+    logs = SqfliteMedicineLogRepository(db, cipher);
+    final profiles = SqfliteMedicineRepository(db, cipher);
     Future<int> profile(String name) => db.insert('profiles', {
       'name': name,
       'role': 'patient',

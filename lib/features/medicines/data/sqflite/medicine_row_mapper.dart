@@ -1,3 +1,4 @@
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 
 /// Maps `medicines` rows and their active `schedules` rows to [Medicine].
@@ -9,15 +10,18 @@ class MedicineRowMapper {
 
   static const everyDayMask = 127;
 
-  static Map<String, Object?> toRow(Medicine m) => {
+  static Future<Map<String, Object?>> toRow(
+    Medicine m,
+    FieldCipher cipher,
+  ) async => {
     'profile_id': m.profileId,
-    'name': m.name,
+    'name': await cipher.seal(m.name),
     'medicine_type': m.medicineType.name,
     'dose_amount': m.dosageAmount,
     'dose_unit': m.medicineType.unit,
     'dose_label': m.dosage,
     'intake_timing': m.intakeTiming.name,
-    'notes': m.notes,
+    'notes': m.notes == null ? null : await cipher.seal(m.notes!),
     'photo_path': m.photoPath,
     'voice_note_path': m.voiceNotePath,
     'total_quantity': m.totalQuantity,
@@ -53,10 +57,11 @@ class MedicineRowMapper {
     ];
   }
 
-  static Medicine fromRow(
+  static Future<Medicine> fromRow(
     Map<String, Object?> row,
     List<Map<String, Object?>> activeSchedules,
-  ) {
+    FieldCipher cipher,
+  ) async {
     final times = <int>{
       for (final s in activeSchedules) s['time_of_day_seconds']! as int,
     }.toList()..sort();
@@ -69,7 +74,7 @@ class MedicineRowMapper {
     return Medicine(
       id: row['id'] as int,
       profileId: row['profile_id'] as int,
-      name: row['name'] as String,
+      name: await cipher.open(row['name'] as String),
       medicineType: _byName(
         MedicineType.values,
         row['medicine_type'],
@@ -85,7 +90,9 @@ class MedicineRowMapper {
       ),
       // paused and finished both read back as inactive.
       isActive: state == _MedicineStateView.active,
-      notes: row['notes'] as String?,
+      notes: row['notes'] == null
+          ? null
+          : await cipher.open(row['notes']! as String),
       daysOfWeek: first == null
           ? const []
           : daysFromMask(first['weekdays_mask']! as int),

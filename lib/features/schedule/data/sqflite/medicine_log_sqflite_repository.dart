@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/schedule/data/sqflite/medicine_log_exceptions.dart';
 import 'package:medify/features/schedule/data/sqflite/medicine_log_row_mapper.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
@@ -20,9 +21,10 @@ import 'package:sqflite/sqflite.dart';
 /// Known limit: `actor_profile_id` is set at insert from the entity's
 /// `profileId`. Transitions do not record who acted.
 class SqfliteMedicineLogRepository implements MedicineLogRepository {
-  SqfliteMedicineLogRepository(this._db);
+  SqfliteMedicineLogRepository(this._db, this._cipher);
 
   final Database _db;
+  final FieldCipher _cipher;
 
   /// Message raised by the `occurrences_guard_insert` trigger in schema.dart.
   static const _guardMessage =
@@ -376,7 +378,7 @@ class SqfliteMedicineLogRepository implements MedicineLogRepository {
   }) async {
     final names = <int, String>{
       for (final row in await _db.query('medicines', columns: ['id', 'name']))
-        row['id']! as int: row['name']! as String,
+        row['id']! as int: await _cipher.open(row['name']! as String),
     };
     const colors = [
       0xFF14B8A6,
