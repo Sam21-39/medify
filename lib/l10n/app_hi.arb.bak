@@ -1,0 +1,93 @@
+{
+  "@@locale": "hi",
+  
+  "appName": "मेडिफाई",
+  "appTagline": "अपनी दवा कभी न भूलें",
+  
+  "yes": "हाँ",
+  "no": "नहीं",
+  "ok": "ठीक है",
+  "cancel": "रद्द करें",
+  "save": "सहेजें",
+  "delete": "हटाएं",
+  "edit": "संपादित करें",
+  "done": "पूर्ण",
+  "close": "बंद करें",
+  "retry": "पुनः प्रयास करें",
+  "loading": "लोड हो रहा है...",
+  "error": "त्रुटि",
+  "success": "सफलता",
+  "next": "आगे",
+  
+  "onboardingTitle1": "मेडिफाई में आपका स्वागत है",
+  "onboardingDesc1": "आपका व्यक्तिगत दवा अनुस्मारक और ट्रैकर",
+  "onboardingTitle2": "कभी भी खुराक न चूकें",
+  "onboardingDesc2": "अपनी सभी दवाओं के लिए समय पर अनुस्मारक प्राप्त करें",
+  "onboardingTitle3": "अपनी प्रगति को ट्रैक करें",
+  "onboardingDesc3": "अपनी दवा के इतिहास और पालन का ट्रैक रखें",
+  "getStarted": "शुरू करें",
+  
+  "medicines": "दवाएं",
+  "addMedicine": "दवा जोड़ें",
+  "editMedicine": "दवा संपादित करें",
+  "deleteMedicine": "दवा हटाएं",
+  "medicineName": "दवा का नाम",
+  "dosage": "खुराक",
+  "schedule": "अनुसूची",
+  "notes": "नोट्स",
+  "noMedicines": "अभी तक कोई दवा नहीं जोड़ी गई",
+  "addYourFirstMedicine": "अपनी पहली दवा जोड़ें",
+  
+  "reminders": "अनुस्मारक",
+  "todaysSchedule": "आज की अनुसूची",
+  "upcomingReminders": "आगामी अनुस्मारक",
+  "noReminders": "आज के लिए कोई अनुस्मारक नहीं",
+  "allCaughtUp": "आप सभी को पूरा कर चुके हैं!",
+  
+  "markAsTaken": "ली गई के रूप में चिह्नित करें",
+  "taken": "ली गई",
+  "snooze": "स्नूज़",
+  "skip": "छोड़ें",
+  "undo": "पूर्ववत करें",
+  
+  "morning": "सुबह",
+  "afternoon": "दोपहर",
+  "evening": "शाम",
+  "night": "रात",
+  "daily": "दैनिक",
+  "today": "आज",
+  "statistics": "सांख्यिकी",
+  
+  "pending": "लंबित",
+  "missed": "छूट गई",
+  "completed": "पूर्ण",
+  "snoozed": "स्नूज़ किया गया",
+  
+  "notificationPermission": "सूचना अनुमति",
+  "notificationPermissionDesc": "आपकी दवाओं के बारे में याद दिलाने के लिए हमें सूचना अनुमति की आवश्यकता है",
+  "grantPermission": "अनुमति दें",
+  "notificationTitle": "अपनी दवा लेने का समय",
+  
+  "errorGeneric": "कुछ गलत हुआ",
+  "errorNoInternet": "इंटरनेट कनेक्शन नहीं",
+  "errorInvalidInput": "कृपया अपना इनपुट जांचें",
+  "errorMedicineNameRequired": "दवा का नाम आवश्यक है",
+  "errorDosageRequired": "खुराक आवश्यक है",
+  "errorScheduleRequired": "कम से कम एक समय आवश्यक है",
+  
+  "snooze15min": "15 मिनट",
+  "snooze30min": "30 मिनट",
+  "snooze1hour": "1 घंटा",
+  
+  "deleteConfirmation": "हटाने की पुष्टि",
+  "deleteMedicineConfirmation": "क्या आप वाकई इस दवा को हटाना चाहते हैं?",
+  
+  "language": "भाषा",
+  "selectLanguage": "भाषा चुनें",
+  "english": "अंग्रेज़ी",
+  "hindi": "हिंदी",
+  "bengali": "बंगाली",
+  
+  "aboutDialogDesc": "मेडिफाई आपको समय पर अनुस्मारक और व्यापक ट्रैकिंग के माध्यम से अपनी दवाओं के साथ ट्रैक पर बने रहने में मदद करता है।",
+  "copyrightNotice": "© 2025 मेडिफाई। सर्वाधिकार सुरक्षित।"
+}
