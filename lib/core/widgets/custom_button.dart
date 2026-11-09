@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../constants/app_sizes.dart';
+import 'package:medify/core/constants/app_sizes.dart';
 
 /// Custom elevated button with consistent styling
 class CustomButton extends StatelessWidget {

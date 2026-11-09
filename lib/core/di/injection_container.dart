@@ -1,27 +1,27 @@
 import 'package:get_it/get_it.dart';
-import 'package:medify/core/services/permission_service.dart';
-import 'package:medify/core/services/system_service.dart';
+import 'package:medify/core/permissions/permission_service.dart';
+import 'package:medify/core/system/system_service.dart';
 
-import '../../data/datasources/objectbox_service.dart';
-import '../../data/repositories/medicine_repository_impl.dart';
-import '../../data/repositories/medicine_log_repository_impl.dart';
-// import '../../data/repositories/user_profile_repository_impl.dart';
-import '../../domain/repositories/medicine_repository.dart';
-import '../../domain/repositories/medicine_log_repository.dart';
-// import '../../domain/repositories/user_profile_repository.dart';
-import '../../presentation/blocs/medicine/medicine_cubit.dart';
-import '../../presentation/blocs/medicine_log/medicine_log_cubit.dart';
-import '../../presentation/blocs/settings/settings_cubit.dart';
-import '../../presentation/blocs/statistics/statistics_cubit.dart';
-import '../../presentation/blocs/history/history_cubit.dart';
-// import '../../presentation/blocs/profile/profile_cubit.dart';
-import '../services/notification_service.dart';
-import '../services/preferences_service.dart';
-import '../services/daily_log_service.dart';
-import '../services/refill_reminder_service.dart';
-import '../services/achievement_service.dart';
+import 'package:medify/core/database/objectbox_service.dart';
+import 'package:medify/features/medicines/data/repositories/medicine_repository_impl.dart';
+import 'package:medify/features/schedule/data/repositories/medicine_log_repository_impl.dart';
+// import 'package:medify/features/profiles/data/repositories/user_profile_repository_impl.dart';
+import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
+import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
+// import 'package:medify/features/profiles/domain/repositories/user_profile_repository.dart';
+import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
+import 'package:medify/features/schedule/presentation/cubit/medicine_log_cubit.dart';
+import 'package:medify/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:medify/features/statistics/presentation/cubit/statistics_cubit.dart';
+import 'package:medify/features/history/presentation/cubit/history_cubit.dart';
+// import 'package:medify/features/profiles/presentation/cubit/profile_cubit.dart';
+import 'package:medify/core/notifications/notification_service.dart';
+import 'package:medify/core/preferences/preferences_service.dart';
+import 'package:medify/features/schedule/data/services/daily_log_service.dart';
+import 'package:medify/features/schedule/data/services/refill_reminder_service.dart';
+import 'package:medify/features/achievements/data/services/achievement_service.dart';
 
-// import '../services/profile_service.dart';
+// import 'package:medify/features/profiles/data/services/profile_service.dart';
 
 /// Service locator instance
 final getIt = GetIt.instance;

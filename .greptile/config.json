@@ -8,7 +8,7 @@
   "includeConfidenceScore": true,
   "excludeAuthors": ["dependabot[bot]", "cursoragent"],
   "ignorePatterns": "build/**\n.dart_tool/**\n.fvm/**\n**/*.g.dart\n**/objectbox-model.json\n**/generated/**\nlib/gen/**\nlib/l10n/app_localizations*.dart\nios/Flutter/ephemeral/**\nandroid/.gradle/**\nandroid/app/build/**\npubspec.lock\n**/*.png\n**/*.jpg\n**/*.ttf\n**/*.mp3\n**/*.jks\n**/*.keystore\ndocs/**\n*.md",
-  "instructions": "Medify is an offline-first Flutter medicine reminder app (Clean Architecture, Cubit, GetIt, ObjectBox). Prefer correctness around scheduling, notifications, permissions, local DB, and adherence tracking. Avoid style nits covered by flutter_lints. Flag regressions that reintroduce CocoaPods, weaken privacy/offline guarantees, or break medicine/log state sync.",
+  "instructions": "Medify is an offline-first Flutter medicine reminder app (feature-based Clean Architecture under lib/features/*, Cubit, GetIt, ObjectBox). Prefer correctness around scheduling, notifications, permissions, local DB, and adherence tracking. Avoid style nits covered by flutter_lints. Flag regressions that reintroduce CocoaPods, flatten features back into layer-only folders, weaken privacy/offline guarantees, or break medicine/log state sync.",
   "rules": [
     {
       "id": "offline-first",

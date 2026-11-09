@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../constants/app_sizes.dart';
+import 'package:medify/core/constants/app_sizes.dart';
 
 /// Shimmer loading widget for skeleton screens
 class ShimmerLoading extends StatelessWidget {

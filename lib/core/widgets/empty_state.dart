@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../constants/app_sizes.dart';
+import 'package:medify/core/constants/app_sizes.dart';
 
 /// Empty state widget for displaying when no data is available
 class EmptyState extends StatelessWidget {

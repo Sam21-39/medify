@@ -2,9 +2,12 @@
 
 ## Architecture
 
-- Keep Clean Architecture layering: `domain` / `data` / `presentation` / `core`.
+- Feature-based modular Clean Architecture under `lib/features/<feature>/{domain,data,presentation}`.
+- Shared infra only in `lib/core/` (di, database, notifications, theme, widgets, constants).
+- App shell in `lib/app/` (`MyApp`, main navigation).
 - Prefer Cubits + GetIt patterns already used in the app.
 - Prefer imperative `MaterialPageRoute` navigation unless a full router migration is in scope.
+- Cubit → Repository is enough; do not invent use-case layers without need.
 
 ## Flutter / Dart
 

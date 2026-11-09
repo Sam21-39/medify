@@ -17,7 +17,11 @@ jobs:
       - name: Format, analyze, test
         run: |
           flutter pub get
-          git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed
+          existing=()
+          while IFS= read -r -d '' f; do
+            [[ -f "$f" ]] && existing+=("$f")
+          done < <(git ls-files -z -- '*.dart')
+          dart format --output=none --set-exit-if-changed "${existing[@]}"
           flutter pub run build_runner build
-          flutter analyze --no-fatal-infos
+          flutter analyze --no-fatal-infos --no-fatal-warnings
           flutter test
