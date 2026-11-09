@@ -31,17 +31,20 @@ class _AlarmPageState extends State<AlarmPage> {
   @override
   void initState() {
     super.initState();
-    final time = DateFormat.jm().format(
-      DateTimeUtils.secondsToDateTime(widget.scheduledSeconds),
-    );
-    final meds = context.read<MedicineCubit>().state;
-    String? name;
-    if (meds is MedicineLoaded) {
-      for (final medicine in meds.medicines) {
-        if (medicine.id == widget.medicineId) name = medicine.name;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final time = DateFormat.jm().format(
+        DateTimeUtils.secondsToDateTime(widget.scheduledSeconds),
+      );
+      final meds = context.read<MedicineCubit>().state;
+      String? name;
+      if (meds is MedicineLoaded) {
+        for (final medicine in meds.medicines) {
+          if (medicine.id == widget.medicineId) name = medicine.name;
+        }
       }
-    }
-    getIt<ReminderVoice>().speakDose(name: name ?? 'reminder', time: time);
+      getIt<ReminderVoice>().speakDose(name: name ?? 'reminder', time: time);
+    });
   }
 
   @override

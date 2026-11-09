@@ -7,16 +7,32 @@ import 'package:medify/features/profiles/data/repositories/care_link_repository.
 import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/features/profiles/domain/entities/user_profile.dart';
 
-class RolePage extends StatelessWidget {
+class RolePage extends StatefulWidget {
   const RolePage({super.key});
 
-  Future<void> _choose(BuildContext context, int role) async {
+  @override
+  State<RolePage> createState() => _RolePageState();
+}
+
+class _RolePageState extends State<RolePage> {
+  bool _busy = false;
+
+  Future<void> _retry() async {
+    setState(() => _busy = true);
+    await getIt<ProfileService>().initialize();
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _choose(int role) async {
     final profiles = getIt<ProfileService>();
     final active = profiles.active;
-    if (active == null) return;
+    if (active == null) {
+      await _retry();
+      return;
+    }
     await profiles.updateProfile(active.copyWith(role: role));
     await getIt<PreferencesService>().setRoleChosen();
-    if (!context.mounted) return;
+    if (!mounted) return;
     if (role == 1) await _pickPatient(context, active.copyWith(role: role));
     getIt<AppMessenger>().go('/today');
   }
@@ -50,28 +66,41 @@ class RolePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = MedifyTokens.of(context);
+    final active = getIt<ProfileService>().active;
     return Scaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Who is this phone for?', style: tokens.title1),
-              const SizedBox(height: 24),
-              _RoleCard(
-                title: 'Patient',
-                subtitle: 'Track my own doses',
-                onTap: () => _choose(context, 0),
-              ),
-              const SizedBox(height: 16),
-              _RoleCard(
-                title: 'Caregiver',
-                subtitle: 'Help someone else take their medicine',
-                onTap: () => _choose(context, 1),
-              ),
-            ],
-          ),
+          child: active == null
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('No profile yet.', style: tokens.title2),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: _busy ? null : _retry,
+                      child: Text(_busy ? 'Trying…' : 'Try again'),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Who is this phone for?', style: tokens.title1),
+                    const SizedBox(height: 24),
+                    _RoleCard(
+                      title: 'Patient',
+                      subtitle: 'Track my own doses',
+                      onTap: () => _choose(0),
+                    ),
+                    const SizedBox(height: 16),
+                    _RoleCard(
+                      title: 'Caregiver',
+                      subtitle: 'Help someone else take their medicine',
+                      onTap: () => _choose(1),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

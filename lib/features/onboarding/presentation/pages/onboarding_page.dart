@@ -62,8 +62,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
       } else {
         if (isNotificationEnabled) {
           await notificationService.requestPermissions();
-          await _completeOnboarding();
         }
+        await _completeOnboarding();
       }
     }
   }

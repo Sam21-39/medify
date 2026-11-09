@@ -166,16 +166,7 @@ class _SchedulePageState extends State<SchedulePage>
               },
               listener: (context, state) {
                 if (state is MedicineLogOperationSuccess) {
-                  // Cubit already reloads — snackbar only
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: AppColors.success,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  getIt<AppMessenger>().show(state.message);
                 }
               },
             ),

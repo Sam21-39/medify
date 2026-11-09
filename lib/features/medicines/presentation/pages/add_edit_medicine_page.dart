@@ -7,6 +7,7 @@ import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/core/notifications/notification_service.dart';
@@ -103,7 +104,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
         title: _isEditMode
             ? AppLocalizations.of(context)!.editMedicine
             : AppLocalizations.of(context)!.addMedicine,
-        useNativeToolbar: true,
+        useNativeToolbar: false,
       ),
       body: MedifyAdaptive.body(
         child: BlocListener<MedicineCubit, MedicineState>(
@@ -114,73 +115,28 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                 previous != current;
           },
           listener: (context, state) async {
+            final messenger = getIt<AppMessenger>();
             if (state is MedicineOperationSuccess) {
-              // Schedule notifications for the medicine if it was successfully saved
               try {
                 final notificationService = getIt<NotificationService>();
-
-                // Check permission first
                 final hasPermission = await notificationService
                     .areNotificationsEnabled();
                 if (!hasPermission) {
                   final granted = await notificationService
                       .requestPermissions();
-                  if (!granted && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Notification permission required for reminders',
-                        ),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                      ),
+                  if (!granted) {
+                    messenger.show(
+                      'Notification permission required for reminders',
+                      error: true,
                     );
                   }
                 }
-              } catch (e) {
-                // Silently handle permission errors
-              }
-
-              // Show success message
-              if (context.mounted) {
-                // Clear any existing snackbars first
-                ScaffoldMessenger.of(context).clearSnackBars();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-
-                // Wait a bit before navigating to ensure snackbar is visible
-                await Future.delayed(const Duration(milliseconds: 500));
-
-                // Navigate back with success result
-                if (context.mounted) {
-                  Navigator.of(context).pop(true);
-                }
-              }
+              } catch (_) {}
+              messenger.show(state.message);
+              messenger.pop(true);
             }
-
             if (state is MedicineError) {
-              // Clear any existing snackbars
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).clearSnackBars();
-              }
-
-              // Show error message
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
+              messenger.show(state.message, error: true);
             }
           },
           child: Form(
@@ -823,11 +779,6 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
     } else {
       getIt<MedicineCubit>().addMedicine(medicine);
     }
-
-    // Schedule notifications after saving
-    // The medicine will get an ID after being saved
-    // We'll schedule notifications after the state updates to MedicineOperationSuccess
-    Navigator.of(context).pop(true);
   }
 
   /// Get icon based on time of day

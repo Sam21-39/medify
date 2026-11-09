@@ -1,5 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:medify/app/main_navigation_page.dart';
+import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/ui/app_messenger.dart';
+import 'package:medify/features/achievements/presentation/pages/achievements_page.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/medicines/presentation/pages/add_edit_medicine_page.dart';
@@ -30,6 +34,10 @@ GoRouter buildRouter(PreferencesService prefs) {
         builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
+        path: '/achievements',
+        builder: (context, state) => const AchievementsPage(),
+      ),
+      GoRoute(
         path: '/alarm',
         builder: (context, state) => AlarmPage(
           medicineId:
@@ -44,8 +52,13 @@ GoRouter buildRouter(PreferencesService prefs) {
       ),
       GoRoute(
         path: '/medicine/edit',
-        builder: (context, state) =>
-            AddEditMedicinePage(medicine: state.extra as Medicine?),
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is! Medicine) {
+            return const _BadMedicineEdit();
+          }
+          return AddEditMedicinePage(medicine: extra);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => MainNavigationPage(shell: shell),
@@ -86,4 +99,26 @@ GoRouter buildRouter(PreferencesService prefs) {
       ),
     ],
   );
+}
+
+class _BadMedicineEdit extends StatefulWidget {
+  const _BadMedicineEdit();
+
+  @override
+  State<_BadMedicineEdit> createState() => _BadMedicineEditState();
+}
+
+class _BadMedicineEditState extends State<_BadMedicineEdit> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final messenger = getIt<AppMessenger>();
+      messenger.show('Could not open that medicine', error: true);
+      messenger.pop();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

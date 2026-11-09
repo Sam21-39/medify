@@ -81,32 +81,12 @@ class _MedicineListPageState extends State<MedicineListPage>
               previous != current;
         },
         listener: (context, state) {
-          // Cubit already reloads after success — snackbar only
-          ScaffoldMessenger.of(context).clearSnackBars();
-
+          final messenger = getIt<AppMessenger>();
           if (state is MedicineOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            messenger.show(state.message);
           }
-
           if (state is MedicineError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-                action: SnackBarAction(
-                  label: AppLocalizations.of(context)!.retry,
-                  textColor: Colors.white,
-                  onPressed: _loadMedicines,
-                ),
-              ),
-            );
+            messenger.show(state.message, error: true);
           }
         },
         builder: (context, state) {

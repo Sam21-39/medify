@@ -7,12 +7,12 @@ import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 // import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:medify/features/settings/presentation/cubit/settings_state.dart';
-import 'package:medify/features/achievements/presentation/pages/achievements_page.dart';
 
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import 'package:medify/features/profiles/presentation/pages/profiles_page.dart';
@@ -35,7 +35,7 @@ class _SettingsView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AdaptiveScaffold(
-      appBar: const AdaptiveAppBar(title: 'Settings', useNativeToolbar: true),
+      appBar: const AdaptiveAppBar(title: 'Settings', useNativeToolbar: false),
       body: MedifyAdaptive.body(
         child: BlocBuilder<SettingsCubit, SettingsState>(
           bloc: getIt<SettingsCubit>(),
@@ -685,11 +685,7 @@ class _SettingsView extends StatelessWidget {
           style: theme.textTheme.bodySmall,
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AchievementsPage()),
-          );
-        },
+        onTap: () => getIt<AppMessenger>().push('/achievements'),
       ),
     );
   }
@@ -791,9 +787,7 @@ class _SettingsView extends StatelessWidget {
             onPressed: () {
               getIt<SettingsCubit>().resetSettings();
               Navigator.of(dialogContext).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings reset to default')),
-              );
+              getIt<AppMessenger>().show('Settings reset to default');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
