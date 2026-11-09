@@ -1,9 +1,11 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/widgets/empty_state.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
@@ -65,34 +67,29 @@ class _MedicineListPageState extends State<MedicineListPage>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    return Scaffold(
-      appBar: AppBar(
-        // COMMENTED OUT FOR UPCOMING RELEASE
-        // leading: const Padding(
-        //   padding: EdgeInsets.only(left: 8.0),
-        //   child: ProfileSwitcher(),
-        // ),
-        title: const Text('Medify'), // Per spec: "Medify" (H2)
-        centerTitle: true,
+    return AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: 'Medify',
+        useNativeToolbar: true,
         actions: [
-          // Refresh button
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          MedifyAdaptive.action(
+            iosSymbol: 'arrow.clockwise',
+            icon: Icons.refresh,
+            label: 'Refresh',
             onPressed: () {
               _loadMedicines();
               _loadTodaysLogs();
             },
-            tooltip: 'Refresh',
           ),
-          // Settings button
-          IconButton(
-            icon: const Icon(Icons.settings),
+          MedifyAdaptive.action(
+            iosSymbol: 'gearshape',
+            icon: Icons.settings,
+            label: 'Settings',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const SettingsPage()),
               );
             },
-            tooltip: 'Settings',
           ),
         ],
       ),

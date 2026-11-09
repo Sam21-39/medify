@@ -1,3 +1,4 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -92,14 +93,12 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isEditMode
-              ? AppLocalizations.of(context)!.editMedicine
-              : AppLocalizations.of(context)!.addMedicine,
-        ),
-        centerTitle: true,
+    return AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: _isEditMode
+            ? AppLocalizations.of(context)!.editMedicine
+            : AppLocalizations.of(context)!.addMedicine,
+        useNativeToolbar: true,
       ),
       body: BlocListener<MedicineCubit, MedicineState>(
         listenWhen: (previous, current) {

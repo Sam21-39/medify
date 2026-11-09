@@ -62,6 +62,7 @@ class _AchievementsPageState extends State<AchievementsPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Material TabBar — keep Scaffold (AdaptiveAppBar has no bottom slot).
     return Scaffold(
       appBar: AppBar(
         title: const Text('Achievements'),

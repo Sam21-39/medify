@@ -1,449 +1,231 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:medify/core/constants/app_colors.dart';
-import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/design/medify_theme_extension.dart';
+import 'package:medify/core/design/tokens/color_tokens.dart';
+import 'package:medify/core/design/tokens/radius_tokens.dart';
+import 'package:medify/core/design/tokens/space_tokens.dart';
+import 'package:medify/core/design/tokens/type_tokens.dart';
 
-/// App theme configuration with Nunito font family (local fonts)
+/// Shared ThemeData — iOS chrome via adaptive_platform_ui (Liquid Glass);
+/// Android uses Material 3 tinted surfaces from these tokens.
 class AppTheme {
   AppTheme._();
 
-  // Base text style with Nunito font family
-  static const TextStyle _baseTextStyle = TextStyle(fontFamily: 'Nunito');
+  static const TextStyle _base = TextStyle(fontFamily: TypeTokens.fontFamily);
 
-  /// Light theme
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
+  static ThemeData get lightTheme =>
+      _build(ColorTokens.light, Brightness.light);
 
-      // Set default font family
-      fontFamily: 'Nunito',
+  static ThemeData get darkTheme => _build(ColorTokens.dark, Brightness.dark);
 
-      // Color scheme
-      colorScheme: ColorScheme.light(
-        primary: AppColors.primary,
-        primaryContainer: AppColors.primaryLight,
-        secondary: AppColors.secondary,
-        secondaryContainer: AppColors.secondaryLight,
-        surface: AppColors.surfaceLight,
-        error: AppColors.error,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: AppColors.textPrimaryLight,
-        onError: Colors.white,
+  static CupertinoThemeData get cupertinoLight => CupertinoThemeData(
+    brightness: Brightness.light,
+    primaryColor: ColorTokens.light.brand,
+    scaffoldBackgroundColor: ColorTokens.light.bgGrouped,
+    barBackgroundColor: ColorTokens.light.chromeGlassFill,
+    textTheme: CupertinoTextThemeData(
+      primaryColor: ColorTokens.light.labelPrimary,
+      textStyle: _base.copyWith(
+        fontSize: 17,
+        color: ColorTokens.light.labelPrimary,
       ),
+    ),
+  );
 
-      // Scaffold background
-      scaffoldBackgroundColor: AppColors.backgroundLight,
-
-      // App bar theme
-      appBarTheme: AppBarTheme(
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        titleTextStyle: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
+  static CupertinoThemeData get cupertinoDark => CupertinoThemeData(
+    brightness: Brightness.dark,
+    primaryColor: ColorTokens.dark.brand,
+    scaffoldBackgroundColor: ColorTokens.dark.bgGrouped,
+    barBackgroundColor: ColorTokens.dark.chromeGlassFill,
+    textTheme: CupertinoTextThemeData(
+      primaryColor: ColorTokens.dark.labelPrimary,
+      textStyle: _base.copyWith(
+        fontSize: 17,
+        color: ColorTokens.dark.labelPrimary,
       ),
+    ),
+  );
 
-      // Card theme (Border Radius: 16px per spec)
-      cardTheme: CardThemeData(
-        elevation: AppSizes.elevationS,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-        ),
-        color: AppColors.cardLight,
-      ),
-
-      // Text theme with Nunito font (following spec)
-      // H1: 28px Bold, H2: 24px SemiBold, H3: 20px SemiBold
-      // Body Large: 18px, Body Medium: 16px, Body Small: 14px, Caption: 12px
-      textTheme: TextTheme(
-        // H1: 28px, Nunito Bold (Page titles)
-        displayLarge: _baseTextStyle.copyWith(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimaryLight,
-        ),
-        // H2: 24px, Nunito SemiBold (Section headers)
-        displayMedium: _baseTextStyle.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryLight,
-        ),
-        // H3: 20px, Nunito SemiBold (Card titles)
-        displaySmall: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryLight,
-        ),
-        headlineMedium: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryLight,
-        ),
-        titleLarge: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryLight,
-        ),
-        titleMedium: _baseTextStyle.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryLight,
-        ),
-        // Body Large: 18px (Important text)
-        bodyLarge: _baseTextStyle.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textPrimaryLight,
-        ),
-        // Body Medium: 16px (Primary content)
-        bodyMedium: _baseTextStyle.copyWith(
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textPrimaryLight,
-        ),
-        // Body Small: 14px (Secondary text)
-        bodySmall: _baseTextStyle.copyWith(
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textSecondaryLight,
-        ),
-        // Caption: 12px (Labels, hints)
-        labelSmall: _baseTextStyle.copyWith(
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textSecondaryLight,
-        ),
-        labelLarge: _baseTextStyle.copyWith(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-
-      // Button themes (Border Radius: 12px per spec)
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: AppSizes.elevationS,
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(
-            AppSizes.buttonMinWidth,
-            AppSizes.buttonHeight,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusButton),
-          ),
-          textStyle: _baseTextStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          minimumSize: const Size(
-            AppSizes.buttonMinWidth,
-            AppSizes.buttonHeight,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusButton),
-          ),
-          side: const BorderSide(color: AppColors.primary, width: 2),
-          textStyle: _baseTextStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          minimumSize: const Size(
-            AppSizes.buttonMinWidth,
-            AppSizes.buttonHeight,
-          ),
-          textStyle: _baseTextStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-
-      // Input decoration theme (Border Radius: 8px per spec)
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.surfaceLight,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
-          vertical: AppSizes.paddingM,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.borderLight),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.borderLight),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.error),
-        ),
-        labelStyle: _baseTextStyle.copyWith(
-          fontSize: 16,
-          color: AppColors.textSecondaryLight,
-        ),
-        hintStyle: _baseTextStyle.copyWith(
-          fontSize: 16,
-          color: AppColors.textDisabledLight,
-        ),
-      ),
-
-      // Floating action button theme
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: AppSizes.elevationM,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-        ),
-      ),
-
-      // Icon theme
-      iconTheme: const IconThemeData(
-        color: AppColors.textPrimaryLight,
-        size: AppSizes.iconM,
-      ),
+  static ThemeData _build(ColorTokens c, Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final scheme = ColorScheme(
+      brightness: brightness,
+      primary: c.brand,
+      onPrimary: c.onBrand,
+      primaryContainer: c.brandSoft,
+      onPrimaryContainer: c.labelPrimary,
+      secondary: c.statusTaken,
+      onSecondary: Colors.white,
+      secondaryContainer: c.chromeTintSurface,
+      onSecondaryContainer: c.labelPrimary,
+      surface: c.bgSurface,
+      onSurface: c.labelPrimary,
+      surfaceContainerHighest: c.chromeTintSurface,
+      error: c.danger,
+      onError: Colors.white,
+      outline: c.separator,
     );
-  }
 
-  /// Dark theme
-  static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-
-      // Set default font family
-      fontFamily: 'Nunito',
-
-      // Color scheme
-      colorScheme: ColorScheme.dark(
-        primary: AppColors.primaryLight,
-        primaryContainer: AppColors.primaryDark,
-        secondary: AppColors.secondaryLight,
-        secondaryContainer: AppColors.secondaryDark,
-        surface: AppColors.surfaceDark,
-        error: AppColors.error,
-        onPrimary: Colors.black,
-        onSecondary: Colors.black,
-        onSurface: AppColors.textPrimaryDark,
-        onError: Colors.white,
-      ),
-
-      // Scaffold background
-      scaffoldBackgroundColor: AppColors.backgroundDark,
-
-      // App bar theme
+      brightness: brightness,
+      fontFamily: TypeTokens.fontFamily,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: c.bgGrouped,
+      extensions: <ThemeExtension<dynamic>>[
+        isDark ? MedifyTokens.dark : MedifyTokens.light,
+      ],
       appBarTheme: AppBarTheme(
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
-        backgroundColor: AppColors.surfaceDark,
-        foregroundColor: AppColors.textPrimaryDark,
-        titleTextStyle: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimaryDark,
-        ),
+        backgroundColor: c.chromeTintSurface,
+        foregroundColor: c.labelPrimary,
+        titleTextStyle: TypeTokens.title3(c.labelPrimary),
       ),
-
-      // Card theme (Border Radius: 16px per spec)
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: c.chromeTintSurface,
+        indicatorColor: c.brand.withValues(alpha: 0.18),
+        elevation: 0,
+        height: SpaceTokens.bottomNavHeight,
+        labelTextStyle: WidgetStatePropertyAll(
+          TypeTokens.caption(c.labelSecondary),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected ? c.brand : c.labelSecondary,
+            size: 24,
+          );
+        }),
+      ),
       cardTheme: CardThemeData(
-        elevation: AppSizes.elevationS,
+        elevation: 0,
+        color: c.bgSurface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+          borderRadius: BorderRadius.circular(RadiusTokens.card),
+          side: BorderSide(color: c.separator.withValues(alpha: 0.45)),
         ),
-        color: AppColors.cardDark,
+        margin: const EdgeInsets.symmetric(
+          horizontal: SpaceTokens.md,
+          vertical: SpaceTokens.xs,
+        ),
       ),
-
-      // Text theme with Nunito font (following spec)
+      dividerTheme: DividerThemeData(
+        color: c.separator,
+        thickness: 0.5,
+        space: 0.5,
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: c.brand,
+        textColor: c.labelPrimary,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: SpaceTokens.md,
+          vertical: SpaceTokens.xs,
+        ),
+      ),
       textTheme: TextTheme(
-        // H1: 28px, Nunito Bold (Page titles)
-        displayLarge: _baseTextStyle.copyWith(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimaryDark,
-        ),
-        // H2: 24px, Nunito SemiBold (Section headers)
-        displayMedium: _baseTextStyle.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryDark,
-        ),
-        // H3: 20px, Nunito SemiBold (Card titles)
-        displaySmall: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryDark,
-        ),
-        headlineMedium: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryDark,
-        ),
-        titleLarge: _baseTextStyle.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryDark,
-        ),
-        titleMedium: _baseTextStyle.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimaryDark,
-        ),
-        // Body Large: 18px (Important text)
-        bodyLarge: _baseTextStyle.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textPrimaryDark,
-        ),
-        // Body Medium: 16px (Primary content)
-        bodyMedium: _baseTextStyle.copyWith(
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textPrimaryDark,
-        ),
-        // Body Small: 14px (Secondary text)
-        bodySmall: _baseTextStyle.copyWith(
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textSecondaryDark,
-        ),
-        // Caption: 12px (Labels, hints)
-        labelSmall: _baseTextStyle.copyWith(
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: AppColors.textSecondaryDark,
-        ),
-        labelLarge: _baseTextStyle.copyWith(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
-        ),
+        displayLarge: TypeTokens.largeTitle(c.labelPrimary),
+        displayMedium: TypeTokens.title1(c.labelPrimary),
+        displaySmall: TypeTokens.title2(c.labelPrimary),
+        headlineMedium: TypeTokens.title3(c.labelPrimary),
+        titleLarge: TypeTokens.title3(c.labelPrimary),
+        titleMedium: TypeTokens.callout(c.labelPrimary),
+        bodyLarge: TypeTokens.body(c.labelPrimary),
+        bodyMedium: TypeTokens.body(c.labelPrimary),
+        bodySmall: TypeTokens.footnote(c.labelSecondary),
+        labelLarge: TypeTokens.callout(c.onBrand),
+        labelSmall: TypeTokens.caption(c.labelSecondary),
       ),
-
-      // Button themes (Border Radius: 12px per spec)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          elevation: AppSizes.elevationS,
-          backgroundColor: AppColors.primaryLight,
-          foregroundColor: Colors.black,
-          minimumSize: const Size(
-            AppSizes.buttonMinWidth,
-            AppSizes.buttonHeight,
-          ),
+          elevation: 0,
+          backgroundColor: c.brand,
+          foregroundColor: c.onBrand,
+          minimumSize: const Size(120, SpaceTokens.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusButton),
+            borderRadius: BorderRadius.circular(RadiusTokens.button),
           ),
-          textStyle: _baseTextStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: TypeTokens.callout(c.onBrand),
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryLight,
-          minimumSize: const Size(
-            AppSizes.buttonMinWidth,
-            AppSizes.buttonHeight,
-          ),
+          foregroundColor: c.brand,
+          minimumSize: const Size(120, SpaceTokens.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusButton),
+            borderRadius: BorderRadius.circular(RadiusTokens.button),
           ),
-          side: const BorderSide(color: AppColors.primaryLight, width: 2),
-          textStyle: _baseTextStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          side: BorderSide(color: c.brand, width: 1.5),
+          textStyle: TypeTokens.callout(c.brand),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primaryLight,
-          minimumSize: const Size(
-            AppSizes.buttonMinWidth,
-            AppSizes.buttonHeight,
-          ),
-          textStyle: _baseTextStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          foregroundColor: c.brand,
+          minimumSize: const Size(120, SpaceTokens.buttonHeightSm),
+          textStyle: TypeTokens.callout(c.brand),
         ),
       ),
-
-      // Input decoration theme (Border Radius: 8px per spec)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceDark,
+        fillColor: c.bgSurface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
-          vertical: AppSizes.paddingM,
+          horizontal: SpaceTokens.md,
+          vertical: SpaceTokens.md,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.borderDark),
+          borderRadius: BorderRadius.circular(RadiusTokens.input),
+          borderSide: BorderSide(color: c.separator),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.borderDark),
+          borderRadius: BorderRadius.circular(RadiusTokens.input),
+          borderSide: BorderSide(color: c.separator),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+          borderRadius: BorderRadius.circular(RadiusTokens.input),
+          borderSide: BorderSide(color: c.brand, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderRadius: BorderRadius.circular(RadiusTokens.input),
+          borderSide: BorderSide(color: c.danger),
         ),
-        labelStyle: _baseTextStyle.copyWith(
-          fontSize: 16,
-          color: AppColors.textSecondaryDark,
-        ),
-        hintStyle: _baseTextStyle.copyWith(
-          fontSize: 16,
-          color: AppColors.textDisabledDark,
-        ),
+        labelStyle: TypeTokens.body(c.labelSecondary),
+        hintStyle: TypeTokens.body(c.labelTertiary),
       ),
-
-      // Floating action button theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.black,
-        elevation: AppSizes.elevationM,
+        backgroundColor: c.brand,
+        foregroundColor: c.onBrand,
+        elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          borderRadius: BorderRadius.circular(RadiusTokens.card),
         ),
       ),
-
-      // Icon theme
-      iconTheme: const IconThemeData(
-        color: AppColors.textPrimaryDark,
-        size: AppSizes.iconM,
+      dialogTheme: DialogThemeData(
+        backgroundColor: c.bgSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RadiusTokens.sheet),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: c.labelPrimary,
+        contentTextStyle: TypeTokens.body(c.bgSurface),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RadiusTokens.button),
+        ),
+      ),
+      iconTheme: IconThemeData(color: c.labelPrimary, size: 24),
+      chipTheme: ChipThemeData(
+        backgroundColor: c.chromeTintSurface,
+        selectedColor: c.brand.withValues(alpha: 0.2),
+        labelStyle: TypeTokens.footnote(c.labelPrimary),
+        padding: const EdgeInsets.symmetric(
+          horizontal: SpaceTokens.sm,
+          vertical: SpaceTokens.xxs,
+        ),
+        shape: StadiumBorder(side: BorderSide(color: c.separator)),
       ),
     );
   }

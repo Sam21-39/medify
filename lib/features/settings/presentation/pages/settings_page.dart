@@ -1,3 +1,4 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:medify/core/system/system_service.dart';
@@ -32,8 +33,8 @@ class _SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
+    return AdaptiveScaffold(
+      appBar: const AdaptiveAppBar(title: 'Settings', useNativeToolbar: true),
       body: BlocBuilder<SettingsCubit, SettingsState>(
         bloc: getIt<SettingsCubit>(),
         builder: (context, state) {

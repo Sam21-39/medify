@@ -1,3 +1,4 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/widgets/empty_state.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
@@ -54,38 +56,24 @@ class _HistoryPageState extends State<HistoryPage>
     super.build(context);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        // COMMENTED OUT FOR UPCOMING RELEASE
-        // leading: const Padding(
-        //   padding: EdgeInsets.only(left: 8.0),
-        //   child: ProfileSwitcher(),
-        // ),
-        title: const Text('History'),
-        centerTitle: true,
+    return AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: 'History',
+        useNativeToolbar: true,
         actions: [
-          // Export button
-          // IconButton(
-          //   icon: const Icon(Icons.share),
-          //   onPressed: () {
-          //     getIt<HistoryCubit>().exportToCSV();
-          //   },
-          //   tooltip: 'Export to CSV',
-          // ),
-
-          // Refresh button
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          MedifyAdaptive.action(
+            iosSymbol: 'arrow.clockwise',
+            icon: Icons.refresh,
+            label: 'Refresh',
             onPressed: () {
               getIt<HistoryCubit>().refresh();
             },
-            tooltip: 'Refresh',
           ),
-          // Filter button
-          IconButton(
-            icon: const Icon(Icons.filter_list),
+          MedifyAdaptive.action(
+            iosSymbol: 'line.3.horizontal.decrease.circle',
+            icon: Icons.filter_list,
+            label: 'Filter',
             onPressed: () => _showFilterDialog(context),
-            tooltip: 'Filter',
           ),
         ],
       ),

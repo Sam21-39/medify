@@ -61,7 +61,12 @@ class _MedicineLogCardState extends State<MedicineLogCard> {
       children: [
         Card(
           margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
-          elevation: isPending ? AppSizes.elevationM : AppSizes.elevationS,
+          elevation: 0,
+          color: theme.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+            side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.45)),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(AppSizes.paddingM),
             child: Column(

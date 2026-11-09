@@ -1,3 +1,4 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:medify/core/permissions/permission_service.dart';
 
@@ -73,7 +74,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return AdaptiveScaffold(
       body: SafeArea(
         child: Column(
           children: [

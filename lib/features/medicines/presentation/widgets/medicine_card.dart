@@ -28,9 +28,15 @@ class MedicineCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
+      elevation: 0,
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.45)),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        borderRadius: BorderRadius.circular(AppSizes.radiusCard),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.paddingM),
           child: Column(

@@ -1,12 +1,16 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:medify/l10n/app_localizations.dart';
+import 'package:medify/core/design/adaptive.dart';
+import 'package:medify/core/design/medify_theme_extension.dart';
+import 'package:medify/features/history/presentation/pages/history_page.dart';
 import 'package:medify/features/medicines/presentation/pages/medicine_list_page.dart';
 import 'package:medify/features/schedule/presentation/pages/schedule_page.dart';
 import 'package:medify/features/statistics/presentation/pages/statistics_page.dart';
-import 'package:medify/features/history/presentation/pages/history_page.dart';
+import 'package:medify/l10n/app_localizations.dart';
 
-/// Main navigation page with bottom navigation bar
+/// Shell with adaptive tab bar — iOS 26 Liquid Glass, Material tint elsewhere.
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
 
@@ -27,35 +31,48 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final tokens = MedifyTokens.of(context);
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      enableBlur: true,
       body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: AdaptiveBottomNavigationBar(
+        useNativeBottomBar: true,
         selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.calendar_today_outlined),
-            selectedIcon: const Icon(Icons.calendar_today),
+        selectedItemColor: tokens.brand,
+        unselectedItemColor: tokens.labelSecondary,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: [
+          MedifyAdaptive.destination(
+            sf: 'calendar',
+            sfSelected: 'calendar',
+            cupertino: CupertinoIcons.calendar,
+            material: Icons.calendar_today_outlined,
+            materialSelected: Icons.calendar_today,
             label: l10n.today,
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.medication_outlined),
-            selectedIcon: const Icon(Icons.medication),
+          MedifyAdaptive.destination(
+            sf: 'pills',
+            sfSelected: 'pills.fill',
+            cupertino: CupertinoIcons.cube_box,
+            material: Icons.medication_outlined,
+            materialSelected: Icons.medication,
             label: l10n.medicines,
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.history_outlined),
-            selectedIcon: const Icon(Icons.history),
+          MedifyAdaptive.destination(
+            sf: 'clock.arrow.circlepath',
+            sfSelected: 'clock.arrow.circlepath',
+            cupertino: CupertinoIcons.clock,
+            material: Icons.history_outlined,
+            materialSelected: Icons.history,
             label: 'History',
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.bar_chart_outlined),
-            selectedIcon: const Icon(Icons.bar_chart),
+          MedifyAdaptive.destination(
+            sf: 'chart.bar',
+            sfSelected: 'chart.bar.fill',
+            cupertino: CupertinoIcons.chart_bar,
+            material: Icons.bar_chart_outlined,
+            materialSelected: Icons.bar_chart,
             label: l10n.statistics,
           ),
         ],

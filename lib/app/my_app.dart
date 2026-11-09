@@ -1,3 +1,4 @@
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -54,6 +55,21 @@ class MyAppState extends State<MyApp> {
     _locale = locale;
   }
 
+  ThemeData _resolveMaterialTheme(BuildContext context) {
+    final Brightness brightness;
+    switch (_themeMode) {
+      case ThemeMode.light:
+        brightness = Brightness.light;
+      case ThemeMode.dark:
+        brightness = Brightness.dark;
+      case ThemeMode.system:
+        brightness = MediaQuery.platformBrightnessOf(context);
+    }
+    return brightness == Brightness.dark
+        ? AppTheme.darkTheme
+        : AppTheme.lightTheme;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -74,13 +90,16 @@ class MyAppState extends State<MyApp> {
           create: (context) => getIt<SettingsCubit>(),
         ),
       ],
-      child: MaterialApp(
+      // iOS 26+ → native Liquid Glass via adaptive_platform_ui;
+      // Android → Material 3 tinted theme. Theme wrapper keeps MedifyTokens
+      // + ScaffoldMessenger available under CupertinoApp on iOS.
+      child: AdaptiveApp(
         title: 'Medify',
-        debugShowCheckedModeBanner: false,
-        navigatorKey: NavigationService().navigatorKey,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
         themeMode: _themeMode,
+        materialLightTheme: AppTheme.lightTheme,
+        materialDarkTheme: AppTheme.darkTheme,
+        cupertinoLightTheme: AppTheme.cupertinoLight,
+        cupertinoDarkTheme: AppTheme.cupertinoDark,
         locale: _locale,
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -88,11 +107,14 @@ class MyAppState extends State<MyApp> {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('en'),
-          // Locale('hi'), // Hindi - Commented out for now
-          // Locale('bn'), // Bengali - Commented out for now
-        ],
+        supportedLocales: const [Locale('en')],
+        navigatorKey: NavigationService().navigatorKey,
+        builder: (context, child) {
+          return Theme(
+            data: _resolveMaterialTheme(context),
+            child: ScaffoldMessenger(child: child ?? const SizedBox.shrink()),
+          );
+        },
         home: _prefsService.isFirstLaunch
             ? const OnboardingPage()
             : const MainNavigationPage(),

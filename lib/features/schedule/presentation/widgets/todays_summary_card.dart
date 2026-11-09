@@ -47,22 +47,9 @@ class TodaysSummaryCard extends StatelessWidget {
         margin: const EdgeInsets.all(AppSizes.spacing16),
         padding: const EdgeInsets.all(AppSizes.spacing24),
         decoration: BoxDecoration(
-          // Gradient background (Teal 500 for light, Teal 400 for dark)
-          gradient: LinearGradient(
-            colors: isDark
-                ? [AppColors.primaryLight, AppColors.primary]
-                : [AppColors.primary, AppColors.primaryDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          // Solid brand surface — chrome glass lives on bars, not content cards
+          color: isDark ? AppColors.primaryLight : AppColors.primary,
           borderRadius: BorderRadius.circular(AppSizes.radiusCard),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
