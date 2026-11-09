@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "description": "App overview, Flutter pin, architecture, and setup"
+    },
+    {
+      "path": "pubspec.yaml",
+      "description": "Dependencies, Dart SDK constraint, SPM config"
+    },
+    {
+      "path": "docs/PROJECT_STRUCTURE.md",
+      "description": "Folder layout and architecture notes"
+    },
+    {
+      "path": "android/settings.gradle.kts",
+      "description": "Android AGP and Kotlin plugin versions"
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "description": "App Android build, Java target, signing"
+    }
+  ]
+}
