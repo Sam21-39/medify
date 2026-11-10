@@ -85,6 +85,32 @@ void main() {
     expect(await repo.getProfileById(created.id!), isNull);
   });
 
+  test(
+    'archiving the active profile clears it; archived cannot be set',
+    () async {
+      final created = await repo.createProfile(profile());
+      await repo.setActiveProfile(created.id!);
+      await db.insert('medicines', {
+        'profile_id': created.id,
+        'name': 'M',
+        'medicine_type': 'tablet',
+        'dose_amount': 1.0,
+        'dose_unit': 'mg',
+        'dose_label': '1 mg',
+        'intake_timing': 'anytime',
+        'state': 'active',
+        'created_at': 0,
+        'updated_at': 0,
+      });
+      await repo.deleteProfile(created.id!);
+      expect(await repo.getActiveProfile(), isNull);
+      await expectLater(
+        repo.setActiveProfile(created.id!),
+        throwsA(isA<InvalidProfileException>()),
+      );
+    },
+  );
+
   test('delete archives a profile that has medicines', () async {
     final created = await repo.createProfile(profile());
     await db.insert('medicines', {

@@ -76,9 +76,114 @@ void main() {
     expect((await repo.toggleMedicineStatus(id)).unwrap().isActive, isTrue);
 
     expect((await repo.deleteMedicine(id)).isRight(), isTrue);
-    expect((await repo.getAllMedicines()).unwrap(), isEmpty);
-    expect(await schedules(id), isEmpty);
+    final archived = (await repo.getAllMedicines()).unwrap().single;
+    expect(archived.isActive, isFalse);
+    expect((await repo.toggleMedicineStatus(id)).isLeft(), isTrue);
   });
+
+  test('delete archives and keeps occurrence history', () async {
+    final added = (await repo.addMedicine(medicine())).unwrap();
+    final scheduleId = (await schedules(added.id!)).first['id']! as int;
+    await db.insert('occurrences', {
+      'profile_id': profileId,
+      'medicine_id': added.id,
+      'schedule_id': scheduleId,
+      'scheduled_at_utc': 1000,
+      'local_date': '2026-01-01',
+      'actor_profile_id': profileId,
+      'dose_snapshot_amount': 1.0,
+      'dose_snapshot_unit': 'mg',
+      'created_at': 0,
+      'updated_at': 0,
+    });
+
+    await repo.deleteMedicine(added.id!);
+
+    final state = (await db.query(
+      'medicines',
+      columns: ['state'],
+      where: 'id = ?',
+      whereArgs: [added.id],
+    )).single['state'];
+    expect(state, 'finished');
+    expect(
+      await db.query(
+        'occurrences',
+        where: 'medicine_id = ?',
+        whereArgs: [added.id],
+      ),
+      hasLength(1),
+    );
+  });
+
+  test('stale-entity update leaves stock unchanged', () async {
+    final added = (await repo.addMedicine(
+      medicine().copyWith(currentQuantity: 10),
+    )).unwrap();
+    // Stock decremented by a dose transition.
+    await db.update(
+      'medicines',
+      {'current_quantity': 7},
+      where: 'id = ?',
+      whereArgs: [added.id],
+    );
+
+    // `added` still carries currentQuantity 10 (stale).
+    await repo.updateMedicine(added.copyWith(name: 'Stale'));
+
+    final row = (await db.query(
+      'medicines',
+      where: 'id = ?',
+      whereArgs: [added.id],
+    )).single;
+    expect(row['current_quantity'], 7);
+  });
+
+  test('update keeps an archived medicine archived', () async {
+    final added = (await repo.addMedicine(medicine())).unwrap();
+    await repo.deleteMedicine(added.id!);
+    await repo.updateMedicine(added.copyWith(isActive: true));
+    final state = (await db.query(
+      'medicines',
+      columns: ['state'],
+      where: 'id = ?',
+      whereArgs: [added.id],
+    )).single['state'];
+    expect(state, 'finished');
+  });
+
+  test(
+    'changing reminder times drops future pending occurrences only',
+    () async {
+      final added = (await repo.addMedicine(medicine(times: const [28800])))
+          .unwrap();
+      final oldSchedule = (await schedules(added.id!)).single['id']! as int;
+      final future = DateTime.now()
+          .add(const Duration(days: 1))
+          .millisecondsSinceEpoch;
+      Map<String, Object?> occurrence(int at, String status) => {
+        'profile_id': profileId,
+        'medicine_id': added.id,
+        'schedule_id': oldSchedule,
+        'scheduled_at_utc': at,
+        'local_date': '2026-01-01',
+        'actor_profile_id': profileId,
+        'dose_snapshot_amount': 1.0,
+        'dose_snapshot_unit': 'mg',
+        'status': status,
+        'taken_at_utc': status == 'taken' ? at : null,
+        'created_at': 0,
+        'updated_at': 0,
+      };
+      await db.insert('occurrences', occurrence(future, 'scheduled'));
+      await db.insert('occurrences', occurrence(1000, 'taken'));
+
+      await repo.updateMedicine(added.copyWith(reminderTimes: const [32400]));
+
+      final remaining = await db.query('occurrences', columns: ['status']);
+      expect(remaining.map((r) => r['status']), ['taken']);
+    },
+  );
 
   test(
     'changing reminder times deactivates old schedules, keeps rows',

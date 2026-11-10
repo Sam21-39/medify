@@ -164,6 +164,29 @@ void main() {
     );
   });
 
+  test('updateLog away from taken throws and keeps taken', () async {
+    final added = await logs.addLog(log());
+    await logs.markAsTaken(added.id!);
+    await expectLater(
+      logs.updateLog(added.copyWith(status: MedicineLogStatus.pending)),
+      throwsA(isA<InvalidTransitionException>()),
+    );
+    expect((await logs.getLogById(added.id!))!.status, MedicineLogStatus.taken);
+  });
+
+  test('updateLog with missing id throws InvalidTransitionException', () async {
+    await expectLater(
+      logs.updateLog(log().copyWith(id: 999999)),
+      throwsA(isA<InvalidTransitionException>()),
+    );
+  });
+
+  test('statistics colours are opaque ARGB', () async {
+    await logs.addLog(log());
+    final details = await logs.getMedicineStatisticsDetails();
+    expect(details.single.colorValue >>> 24, 0xFF);
+  });
+
   test('addLog without scheduleId throws StateError', () async {
     expect(() => logs.addLog(log(noSchedule: true)), throwsStateError);
   });

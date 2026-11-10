@@ -19,13 +19,18 @@ class FieldCipher {
 
   final SecretKey _key;
 
-  Future<String> seal(String plain) async {
-    final box = await _algorithm.encrypt(utf8.encode(plain), secretKey: _key);
+  /// [aad] binds the value to its place, e.g. `medicines.name.<row id>`.
+  Future<String> seal(String plain, {required List<int> aad}) async {
+    final box = await _algorithm.encrypt(
+      utf8.encode(plain),
+      secretKey: _key,
+      aad: aad,
+    );
     final body = [...box.cipherText, ...box.mac.bytes];
     return '$_prefix${base64Encode(box.nonce)}.${base64Encode(body)}';
   }
 
-  Future<String> open(String stored) async {
+  Future<String> open(String stored, {required List<int> aad}) async {
     if (!stored.startsWith(_prefix)) {
       throw const CorruptField('missing v1 prefix');
     }
@@ -46,7 +51,9 @@ class FieldCipher {
       mac: Mac(body.sublist(body.length - _tagLength)),
     );
     try {
-      return utf8.decode(await _algorithm.decrypt(box, secretKey: _key));
+      return utf8.decode(
+        await _algorithm.decrypt(box, secretKey: _key, aad: aad),
+      );
     } on SecretBoxAuthenticationError {
       throw const CorruptField('authentication failed');
     }

@@ -32,11 +32,20 @@ class ProfileSqfliteRepository implements UserProfileRepository {
 
   @override
   Future<UserProfile> createProfile(UserProfile profile) async {
-    final id = await _db.insert(
-      'profiles',
-      await ProfileRowMapper.toRow(profile, _cipher),
-    );
-    return (await _byId(_db, id))!;
+    return _db.transaction<UserProfile>((txn) async {
+      // Encrypted columns need the row id as AAD, so insert, then re-seal.
+      final id = await txn.insert(
+        'profiles',
+        await ProfileRowMapper.toRow(profile, _cipher, id: 0),
+      );
+      await txn.update(
+        'profiles',
+        await ProfileRowMapper.toRow(profile, _cipher, id: id),
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return (await _byId(txn, id))!;
+    });
   }
 
   @override
@@ -47,7 +56,7 @@ class ProfileSqfliteRepository implements UserProfileRepository {
       if (await _byId(txn, id) == null) throw ProfileNotFoundException(id);
       await txn.update(
         'profiles',
-        await ProfileRowMapper.toRow(profile, _cipher),
+        await ProfileRowMapper.toRow(profile, _cipher, id: id),
         where: 'id = ?',
         whereArgs: [id],
       );
@@ -59,30 +68,39 @@ class ProfileSqfliteRepository implements UserProfileRepository {
   /// (`is_archived = 1`). Medicines, occurrences (as patient or actor) and
   /// achievements all block a hard delete.
   @override
-  Future<void> deleteProfile(int id) => _db.transaction<void>((txn) async {
-    if (await _byId(txn, id) == null) throw ProfileNotFoundException(id);
-    final refs = Sqflite.firstIntValue(
-      await txn.rawQuery(
-        '''
-        SELECT (SELECT COUNT(*) FROM medicines WHERE profile_id = ?1)
-             + (SELECT COUNT(*) FROM occurrences
-                  WHERE profile_id = ?1 OR actor_profile_id = ?1)
-             + (SELECT COUNT(*) FROM achievements WHERE profile_id = ?1)
-        ''',
-        [id],
-      ),
-    )!;
-    if (refs == 0) {
-      await txn.delete('profiles', where: 'id = ?', whereArgs: [id]);
-    } else {
-      await txn.update(
-        'profiles',
-        {'is_archived': 1, 'updated_at': DateTime.now().millisecondsSinceEpoch},
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+  Future<void> deleteProfile(int id) async {
+    await _db.transaction<void>((txn) async {
+      if (await _byId(txn, id) == null) throw ProfileNotFoundException(id);
+      final refs = Sqflite.firstIntValue(
+        await txn.rawQuery(
+          '''
+          SELECT (SELECT COUNT(*) FROM medicines WHERE profile_id = ?1)
+               + (SELECT COUNT(*) FROM occurrences
+                    WHERE profile_id = ?1 OR actor_profile_id = ?1)
+               + (SELECT COUNT(*) FROM achievements WHERE profile_id = ?1)
+          ''',
+          [id],
+        ),
+      )!;
+      if (refs == 0) {
+        await txn.delete('profiles', where: 'id = ?', whereArgs: [id]);
+      } else {
+        await txn.update(
+          'profiles',
+          {
+            'is_archived': 1,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+    });
+    // Runs after the transaction: SettingsStore writes through _db.
+    if (await _settings.getInt(_activeKey, defaultValue: 0) == id) {
+      await _settings.setInt(_activeKey, 0);
     }
-  });
+  }
 
   @override
   Future<UserProfile?> getActiveProfile() async {
@@ -94,6 +112,9 @@ class ProfileSqfliteRepository implements UserProfileRepository {
   Future<void> setActiveProfile(int profileId) async {
     final profile = await _byId(_db, profileId);
     if (profile == null) throw ProfileNotFoundException(profileId);
+    if (!profile.isActive) {
+      throw const InvalidProfileException('profile is archived');
+    }
     await _settings.setInt(_activeKey, profileId);
   }
 

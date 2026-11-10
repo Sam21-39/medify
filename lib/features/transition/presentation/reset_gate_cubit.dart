@@ -34,7 +34,7 @@ class ResetGateCubit {
   ResetGateCubit({required this.reset, required this.onComplete});
 
   final LegacyReset reset;
-  final VoidCallback onComplete;
+  final Future<void> Function() onComplete;
   final ValueNotifier<ResetGateState> state = ValueNotifier(
     const ResetGateChecking(),
   );
@@ -45,7 +45,7 @@ class ResetGateCubit {
       if (await reset.needsReset()) {
         state.value = const ResetGateNotice();
       } else {
-        onComplete();
+        await onComplete();
       }
     } catch (error) {
       state.value = ResetGateFailed(error, start);
@@ -56,7 +56,7 @@ class ResetGateCubit {
     state.value = const ResetGateRunning();
     try {
       await reset.run();
-      onComplete();
+      await onComplete();
     } catch (error) {
       state.value = ResetGateFailed(error, continueReset);
     }

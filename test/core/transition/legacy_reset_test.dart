@@ -33,11 +33,13 @@ void main() {
     await root.delete(recursive: true);
   });
 
-  LegacyReset reset({Future<void> Function()? cancel}) => LegacyReset(
-    documentsDir: root.path,
-    v2DatabasePath: p.join(root.path, v2DatabaseFileName),
-    cancelReminders: cancel ?? () async {},
-  );
+  LegacyReset reset({Future<void> Function()? cancel, String? legacyDir}) =>
+      LegacyReset(
+        documentsDir: root.path,
+        legacyDocumentsDir: legacyDir ?? p.join(root.path, 'app_flutter'),
+        v2DatabasePath: p.join(root.path, v2DatabaseFileName),
+        cancelReminders: cancel ?? () async {},
+      );
 
   Future<Directory> legacyStore() async {
     final dir = Directory(p.join(root.path, legacyStoreDirName));
@@ -68,6 +70,13 @@ void main() {
     await Directory(p.join(root.path, 'app_flutter', legacyStoreDirName))
         .create(recursive: true);
     expect(await reset().needsReset(), isTrue);
+  });
+
+  test('probes the legacy documents dir when it is elsewhere', () async {
+    final elsewhere = await Directory.systemTemp.createTemp('legacy_dir');
+    addTearDown(() => elsewhere.delete(recursive: true));
+    await Directory(p.join(elsewhere.path, legacyStoreDirName)).create();
+    expect(await reset(legacyDir: elsewhere.path).needsReset(), isTrue);
   });
 
   test('Not now path: detection alone changes no files', () async {

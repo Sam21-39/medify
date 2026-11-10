@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:medify/core/security/field_cipher.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 
@@ -10,18 +12,22 @@ class MedicineRowMapper {
 
   static const everyDayMask = 127;
 
+  /// [id] is the medicines row id, used as AAD for the encrypted columns.
   static Future<Map<String, Object?>> toRow(
     Medicine m,
-    FieldCipher cipher,
-  ) async => {
+    FieldCipher cipher, {
+    required int id,
+  }) async => {
     'profile_id': m.profileId,
-    'name': await cipher.seal(m.name),
+    'name': await cipher.seal(m.name, aad: aad('name', id)),
     'medicine_type': m.medicineType.name,
     'dose_amount': m.dosageAmount,
     'dose_unit': m.medicineType.unit,
     'dose_label': m.dosage,
     'intake_timing': m.intakeTiming.name,
-    'notes': m.notes == null ? null : await cipher.seal(m.notes!),
+    'notes': m.notes == null
+        ? null
+        : await cipher.seal(m.notes!, aad: aad('notes', id)),
     'photo_path': m.photoPath,
     'voice_note_path': m.voiceNotePath,
     'total_quantity': m.totalQuantity,
@@ -74,7 +80,10 @@ class MedicineRowMapper {
     return Medicine(
       id: row['id'] as int,
       profileId: row['profile_id'] as int,
-      name: await cipher.open(row['name'] as String),
+      name: await cipher.open(
+        row['name'] as String,
+        aad: aad('name', row['id'] as int),
+      ),
       medicineType: _byName(
         MedicineType.values,
         row['medicine_type'],
@@ -92,7 +101,10 @@ class MedicineRowMapper {
       isActive: state == _MedicineStateView.active,
       notes: row['notes'] == null
           ? null
-          : await cipher.open(row['notes']! as String),
+          : await cipher.open(
+              row['notes']! as String,
+              aad: aad('notes', row['id'] as int),
+            ),
       daysOfWeek: first == null
           ? const []
           : daysFromMask(first['weekdays_mask']! as int),
@@ -129,6 +141,10 @@ class MedicineRowMapper {
         if (mask & (1 << (day - 1)) != 0) day,
     ];
   }
+
+  /// AAD for an encrypted column: `medicines.<column>.<row id>`.
+  static List<int> aad(String column, int id) =>
+      utf8.encode('medicines.$column.$id');
 
   static T _byName<T extends Enum>(List<T> values, Object? raw, String column) {
     for (final value in values) {

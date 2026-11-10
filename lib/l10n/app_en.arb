@@ -18,6 +18,18 @@
   "error": "Error",
   "success": "Success",
   "next": "Next",
+
+  "noProfileYet": "No profile yet.",
+  "tryAgain": "Try again",
+  "tryingAgain": "Trying…",
+  "whoIsPhoneFor": "Who is this phone for?",
+  "rolePatient": "Patient",
+  "rolePatientDesc": "Track my own doses",
+  "roleCaregiver": "Caregiver",
+  "roleCaregiverDesc": "Help someone else take their medicine",
+  "whoAreYouHelping": "Who are you helping?",
+  "medicineOpenFailed": "Could not open that medicine",
+  "addPatientProfileFirst": "Add a patient profile first",
   
   "onboardingTitle1": "Welcome to Medify",
   "onboardingDesc1": "Your personal medicine reminder and tracker",

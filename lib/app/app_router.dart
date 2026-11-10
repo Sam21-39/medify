@@ -10,6 +10,7 @@ import 'package:medify/features/medicines/presentation/pages/add_edit_medicine_p
 import 'package:medify/features/medicines/presentation/pages/medicine_list_page.dart';
 import 'package:medify/features/history/presentation/pages/history_page.dart';
 import 'package:medify/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/features/profiles/presentation/pages/role_page.dart';
 import 'package:medify/features/schedule/presentation/pages/alarm_page.dart';
 import 'package:medify/features/schedule/presentation/pages/schedule_page.dart';
@@ -114,7 +115,10 @@ class _BadMedicineEditState extends State<_BadMedicineEdit> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final messenger = getIt<AppMessenger>();
-      messenger.show('Could not open that medicine', error: true);
+      messenger.show(
+        AppLocalizations.of(context)!.medicineOpenFailed,
+        error: true,
+      );
       messenger.pop();
     });
   }

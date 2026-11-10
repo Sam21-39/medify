@@ -42,9 +42,16 @@ class SqfliteMedicineRepository implements MedicineRepository {
   Future<Either<Failure, Medicine>> addMedicine(Medicine medicine) {
     return _write<Medicine>(() async {
       final saved = await _db.transaction<Medicine>((txn) async {
+        // Encrypted columns need the row id as AAD, so insert, then re-seal.
         final id = await txn.insert(
           'medicines',
-          await MedicineRowMapper.toRow(medicine, _cipher),
+          await MedicineRowMapper.toRow(medicine, _cipher, id: 0),
+        );
+        await txn.update(
+          'medicines',
+          await MedicineRowMapper.toRow(medicine, _cipher, id: id),
+          where: 'id = ?',
+          whereArgs: [id],
         );
         for (final row in MedicineRowMapper.toScheduleRows(medicine, id)) {
           await txn.insert('schedules', row);
@@ -68,13 +75,19 @@ class SqfliteMedicineRepository implements MedicineRepository {
       final result = await _db.transaction<Either<Failure, Medicine>>((
         txn,
       ) async {
-        final changed = await txn.update(
+        final stored = await txn.query(
           'medicines',
-          await MedicineRowMapper.toRow(medicine, _cipher),
+          columns: ['state'],
           where: 'id = ?',
           whereArgs: [id],
         );
-        if (changed == 0) return const Left(Failure('Medicine not found'));
+        if (stored.isEmpty) return const Left(Failure('Medicine not found'));
+        final row = await MedicineRowMapper.toRow(medicine, _cipher, id: id);
+        // Stock moves only through dose transitions, never from an entity.
+        row.remove('current_quantity');
+        // Archived (finished) is sticky here; nothing in this repo reactivates.
+        if (stored.single['state'] == 'finished') row['state'] = 'finished';
+        await txn.update('medicines', row, where: 'id = ?', whereArgs: [id]);
         await _syncSchedules(txn, medicine, id);
         return Right((await _byId(txn, id))!);
       });
@@ -85,22 +98,17 @@ class SqfliteMedicineRepository implements MedicineRepository {
 
   @override
   Future<Either<Failure, void>> deleteMedicine(int id) {
+    // Archive, not delete: occurrences keep the history. Hard purge is later.
     return _write<void>(() async {
-      // Occurrences reference medicines and schedules without cascade, so they
-      // go first. Schedules cascade from medicines but are deleted explicitly.
-      await _db.transaction((txn) async {
-        await txn.delete(
-          'occurrences',
-          where: 'medicine_id = ?',
-          whereArgs: [id],
-        );
-        await txn.delete(
-          'schedules',
-          where: 'medicine_id = ?',
-          whereArgs: [id],
-        );
-        await txn.delete('medicines', where: 'id = ?', whereArgs: [id]);
-      });
+      await _db.update(
+        'medicines',
+        {
+          'state': 'finished',
+          'updated_at': DateTime.now().millisecondsSinceEpoch,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
       _refresh();
       return const Right(null);
     });
@@ -112,8 +120,17 @@ class SqfliteMedicineRepository implements MedicineRepository {
       final result = await _db.transaction<Either<Failure, Medicine>>((
         txn,
       ) async {
-        final current = await _byId(txn, id);
-        if (current == null) return const Left(Failure('Medicine not found'));
+        final stored = await txn.query(
+          'medicines',
+          columns: ['state'],
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+        if (stored.isEmpty) return const Left(Failure('Medicine not found'));
+        if (stored.single['state'] == 'finished') {
+          return const Left(Failure('Medicine is archived'));
+        }
+        final current = (await _byId(txn, id))!;
         await txn.update(
           'medicines',
           {
@@ -155,6 +172,18 @@ class SqfliteMedicineRepository implements MedicineRepository {
     final desiredKeys = desired.map(key).toList()..sort();
     if (currentKeys.join(',') == desiredKeys.join(',')) return;
 
+    // Future pending occurrences of the replaced schedules are dropped; taken
+    // and past rows stay.
+    await txn.delete(
+      'occurrences',
+      where:
+          "schedule_id IN (${List.filled(current.length, '?').join(',')}) "
+          "AND status = 'scheduled' AND scheduled_at_utc > ?",
+      whereArgs: [
+        ...current.map((row) => row['id']),
+        DateTime.now().toUtc().millisecondsSinceEpoch,
+      ],
+    );
     await txn.update(
       'schedules',
       {'is_active': 0},

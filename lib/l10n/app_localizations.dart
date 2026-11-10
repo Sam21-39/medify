@@ -190,6 +190,72 @@ abstract class AppLocalizations {
   /// **'Next'**
   String get next;
 
+  /// No description provided for @noProfileYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No profile yet.'**
+  String get noProfileYet;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @tryingAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying…'**
+  String get tryingAgain;
+
+  /// No description provided for @whoIsPhoneFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is this phone for?'**
+  String get whoIsPhoneFor;
+
+  /// No description provided for @rolePatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient'**
+  String get rolePatient;
+
+  /// No description provided for @rolePatientDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Track my own doses'**
+  String get rolePatientDesc;
+
+  /// No description provided for @roleCaregiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Caregiver'**
+  String get roleCaregiver;
+
+  /// No description provided for @roleCaregiverDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Help someone else take their medicine'**
+  String get roleCaregiverDesc;
+
+  /// No description provided for @whoAreYouHelping.
+  ///
+  /// In en, this message translates to:
+  /// **'Who are you helping?'**
+  String get whoAreYouHelping;
+
+  /// No description provided for @medicineOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open that medicine'**
+  String get medicineOpenFailed;
+
+  /// No description provided for @addPatientProfileFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a patient profile first'**
+  String get addPatientProfileFirst;
+
   /// No description provided for @onboardingTitle1.
   ///
   /// In en, this message translates to:

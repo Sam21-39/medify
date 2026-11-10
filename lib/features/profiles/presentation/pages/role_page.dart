@@ -4,8 +4,10 @@ import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/features/profiles/data/sqflite/care_link_sqflite_repository.dart';
+import 'package:medify/features/profiles/data/sqflite/profile_exceptions.dart';
 import 'package:medify/features/profiles/data/services/profile_service.dart';
 import 'package:medify/features/profiles/domain/entities/user_profile.dart';
+import 'package:medify/l10n/app_localizations.dart';
 
 class RolePage extends StatefulWidget {
   const RolePage({super.key});
@@ -23,18 +25,52 @@ class _RolePageState extends State<RolePage> {
     if (mounted) setState(() => _busy = false);
   }
 
+  void _showError() => getIt<AppMessenger>().show(
+    AppLocalizations.of(context)!.errorGeneric,
+    error: true,
+  );
+
   Future<void> _choose(int role) async {
-    final profiles = getIt<ProfileService>();
-    final active = profiles.active;
-    if (active == null) {
-      await _retry();
-      return;
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final profiles = getIt<ProfileService>();
+      final active = profiles.active;
+      if (active == null) {
+        await _retry();
+        return;
+      }
+      if (role == 1) {
+        final hasPatient = (await profiles.getAllProfiles()).any(
+          (profile) => profile.role == 0 && profile.id != active.id,
+        );
+        if (!hasPatient) {
+          if (!mounted) return;
+          getIt<AppMessenger>().show(
+            AppLocalizations.of(context)!.addPatientProfileFirst,
+            error: true,
+          );
+          return;
+        }
+      }
+      await profiles.updateProfile(active.copyWith(role: role));
+      try {
+        await getIt<PreferencesService>().setRoleChosen();
+      } catch (e) {
+        _showError();
+      }
+      if (!mounted) return;
+      if (role == 1) {
+        try {
+          await _pickPatient(context, active.copyWith(role: role));
+        } catch (e) {
+          _showError();
+        }
+      }
+      getIt<AppMessenger>().go('/today');
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    await profiles.updateProfile(active.copyWith(role: role));
-    await getIt<PreferencesService>().setRoleChosen();
-    if (!mounted) return;
-    if (role == 1) await _pickPatient(context, active.copyWith(role: role));
-    getIt<AppMessenger>().go('/today');
   }
 
   Future<void> _pickPatient(BuildContext context, UserProfile caregiver) async {
@@ -45,7 +81,7 @@ class _RolePageState extends State<RolePage> {
     final picked = await showDialog<UserProfile>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Who are you helping?'),
+        title: Text(AppLocalizations.of(context)!.whoAreYouHelping),
         children: [
           for (final patient in patients)
             SimpleDialogOption(
@@ -56,16 +92,21 @@ class _RolePageState extends State<RolePage> {
       ),
     );
     if (picked?.id == null) return;
-    await getIt<CareLinkSqfliteRepository>().link(
-      caregiverId: caregiver.id!,
-      patientId: picked!.id!,
-    );
-    await getIt<PreferencesService>().setActingPatientId(picked.id!);
+    try {
+      await getIt<CareLinkSqfliteRepository>().link(
+        caregiverId: caregiver.id!,
+        patientId: picked!.id!,
+      );
+    } on InvalidProfileException {
+      // Care link already exists: treat as success
+    }
+    await getIt<PreferencesService>().setActingPatientId(picked!.id!);
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = MedifyTokens.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final active = getIt<ProfileService>().active;
     return Scaffold(
       body: SafeArea(
@@ -75,29 +116,29 @@ class _RolePageState extends State<RolePage> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('No profile yet.', style: tokens.title2),
+                    Text(l10n.noProfileYet, style: tokens.title2),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: _busy ? null : _retry,
-                      child: Text(_busy ? 'Trying…' : 'Try again'),
+                      child: Text(_busy ? l10n.tryingAgain : l10n.tryAgain),
                     ),
                   ],
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Who is this phone for?', style: tokens.title1),
+                    Text(l10n.whoIsPhoneFor, style: tokens.title1),
                     const SizedBox(height: 24),
                     _RoleCard(
-                      title: 'Patient',
-                      subtitle: 'Track my own doses',
-                      onTap: () => _choose(0),
+                      title: l10n.rolePatient,
+                      subtitle: l10n.rolePatientDesc,
+                      onTap: _busy ? null : () => _choose(0),
                     ),
                     const SizedBox(height: 16),
                     _RoleCard(
-                      title: 'Caregiver',
-                      subtitle: 'Help someone else take their medicine',
-                      onTap: () => _choose(1),
+                      title: l10n.roleCaregiver,
+                      subtitle: l10n.roleCaregiverDesc,
+                      onTap: _busy ? null : () => _choose(1),
                     ),
                   ],
                 ),
@@ -116,7 +157,7 @@ class _RoleCard extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

@@ -15,12 +15,19 @@ class MainActivity : FlutterActivity() {
         tts = TextToSpeech(this) { status -> ttsReady = status == TextToSpeech.SUCCESS }
     }
 
+    override fun onDestroy() {
+        tts?.shutdown()
+        tts = null
+        super.onDestroy()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "medify/paths")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "documentsDirectory" -> result.success(applicationContext.filesDir.absolutePath)
+                    "legacyDocumentsDirectory" -> result.success(applicationContext.getDir("flutter", MODE_PRIVATE).absolutePath)
                     "temporaryDirectory" -> result.success(applicationContext.cacheDir.absolutePath)
                     else -> result.notImplemented()
                 }
@@ -48,11 +55,15 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "speak" -> {
+                        val text = call.argument<String>("text")
+                        if (text == null) {
+                            result.error("BAD_ARGS", "text is required", null)
+                            return@setMethodCallHandler
+                        }
                         if (!ttsReady) {
                             result.error("TTS_UNAVAILABLE", "TextToSpeech not ready", null)
                             return@setMethodCallHandler
                         }
-                        val text = call.argument<String>("text") ?: ""
                         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, System.currentTimeMillis().toString())
                         result.success(null)
                     }

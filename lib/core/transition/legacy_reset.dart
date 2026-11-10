@@ -21,20 +21,24 @@ Future<void> _cancelAllReminders() =>
 class LegacyReset {
   LegacyReset({
     required this.documentsDir,
+    required this.legacyDocumentsDir,
     required this.v2DatabasePath,
     this.cancelReminders = _cancelAllReminders,
   });
 
   final String documentsDir;
+  final String legacyDocumentsDir;
   final String v2DatabasePath;
   final Future<void> Function() cancelReminders;
 
   /// Both 1.x layouts: the documents dir may be `filesDir` or
-  /// `filesDir/app_flutter` on Android. Probed on device, not assumed.
-  List<String> get legacyCandidates => [
+  /// `filesDir/app_flutter` on Android. The legacy documents dir is the
+  /// authoritative location; the others are kept as fallbacks.
+  List<String> get legacyCandidates => {
     p.join(documentsDir, legacyStoreDirName),
     p.join(documentsDir, 'app_flutter', legacyStoreDirName),
-  ];
+    p.join(legacyDocumentsDir, legacyStoreDirName),
+  }.toList();
 
   Future<List<String>> _existingLegacy() async {
     final found = <String>[];
@@ -65,9 +69,11 @@ class LegacyReset {
 /// [LegacyReset] wired to the device paths.
 Future<LegacyReset> deviceLegacyReset() async {
   final documents = await MedifyPaths.documentsDirectory();
+  final legacy = await MedifyPaths.legacyDocumentsDirectory();
   final databases = await getDatabasesPath();
   return LegacyReset(
     documentsDir: documents,
+    legacyDocumentsDir: legacy,
     v2DatabasePath: p.join(databases, v2DatabaseFileName),
   );
 }

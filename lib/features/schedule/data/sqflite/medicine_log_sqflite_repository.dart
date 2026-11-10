@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:medify/core/error/failure.dart';
 import 'package:medify/core/security/field_cipher.dart';
+import 'package:medify/features/medicines/data/sqflite/medicine_row_mapper.dart';
 import 'package:medify/features/schedule/data/sqflite/medicine_log_exceptions.dart';
 import 'package:medify/features/schedule/data/sqflite/medicine_log_row_mapper.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
@@ -109,16 +110,26 @@ class SqfliteMedicineLogRepository implements MedicineLogRepository {
         where: 'id = ?',
         whereArgs: [id],
       );
-      final current = rows.isEmpty ? null : rows.first['status'];
+      if (rows.isEmpty) {
+        throw InvalidTransitionException('log $id not found');
+      }
+      final current = rows.first['status'];
+      if (current == 'taken' && target != 'taken') {
+        throw InvalidTransitionException(
+          'taken is final; cannot change to $target',
+        );
+      }
       if (target != current && target != 'scheduled') {
         throw InvalidTransitionException(
           'status change to $target is not allowed here; '
           'use markAsTaken, markAsSkipped or markAsMissed',
         );
       }
+      final columns = MedicineLogRowMapper.statusColumns(log);
+      if (target != 'taken') columns['taken_at_utc'] = null;
       await txn.update(
         'occurrences',
-        MedicineLogRowMapper.statusColumns(log),
+        columns,
         where: 'id = ?',
         whereArgs: [id],
       );
@@ -378,15 +389,18 @@ class SqfliteMedicineLogRepository implements MedicineLogRepository {
   }) async {
     final names = <int, String>{
       for (final row in await _db.query('medicines', columns: ['id', 'name']))
-        row['id']! as int: await _cipher.open(row['name']! as String),
+        row['id']! as int: await _cipher.open(
+          row['name']! as String,
+          aad: MedicineRowMapper.aad('name', row['id']! as int),
+        ),
     };
     const colors = [
       0xFF14B8A6,
       0xFF10B981,
       0xFFF59E0B,
-      0xEF4444,
-      0x3B82F6,
-      0x8B5CF6,
+      0xFFEF4444,
+      0xFF3B82F6,
+      0xFF8B5CF6,
     ];
     final details = <MedicineStatisticsDetail>[];
     var colorIndex = 0;

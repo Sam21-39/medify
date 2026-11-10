@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:medify/core/di/injection_container.dart';
@@ -9,6 +8,7 @@ import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/features/schedule/data/sqflite/occurrence_sqflite_generator.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_state.dart';
@@ -106,38 +106,26 @@ class MedicineCubit extends Cubit<MedicineState> {
     try {
       emit(MedicineLoading());
 
-      // CRITICAL FIX: Get old medicine to check if reminder times changed
-      final oldMedicine = (await _medicineRepository.getMedicineById(
-        medicine.id!,
-      )).unwrap();
-
       final updatedMedicine = (await _medicineRepository.updateMedicine(
         medicine,
       )).unwrap();
 
-      // Check if reminder times changed
-      final timesChanged =
-          oldMedicine != null &&
-          !listEquals(oldMedicine.reminderTimes, updatedMedicine.reminderTimes);
-
-      if (timesChanged) {
-        // Delete today's logs for this medicine to prevent duplicates
-        try {
-          final logRepository = getIt<MedicineLogRepository>();
-          final todayLogs = await logRepository.getTodayLogs();
-          final medicineLogsToday = todayLogs
-              .where((log) => log.medicineId == medicine.id!)
-              .toList();
-
-          for (final log in medicineLogsToday) {
+      // Replace pending future occurrences; taken/skipped history is kept
+      try {
+        final logRepository = getIt<MedicineLogRepository>();
+        final now = DateTime.now();
+        final logs = await logRepository.getLogsByMedicineId(medicine.id!);
+        for (final log in logs) {
+          if (log.status == MedicineLogStatus.pending &&
+              log.scheduledTime.isAfter(now)) {
             await logRepository.deleteLog(log.id!);
           }
-
-          // Regenerate occurrences from the updated schedules
-          await _generateOccurrences();
-        } catch (e) {
-          // Silently handle log regeneration errors
         }
+
+        // Regenerate occurrences from the updated schedules
+        await _generateOccurrences();
+      } catch (e) {
+        // Silently handle log regeneration errors
       }
 
       // Reschedule notifications for the updated medicine
@@ -169,7 +157,9 @@ class MedicineCubit extends Cubit<MedicineState> {
     try {
       emit(MedicineLoading());
 
-      // Cancel notifications for this medicine before deleting
+      (await _medicineRepository.deleteMedicine(id)).unwrap();
+
+      // Cancel notifications only once the delete succeeded
       try {
         final notificationService = getIt<NotificationService>();
         await notificationService.cancelMedicineReminders(id);
@@ -177,7 +167,6 @@ class MedicineCubit extends Cubit<MedicineState> {
         // Silently handle notification errors
       }
 
-      (await _medicineRepository.deleteMedicine(id)).unwrap();
       emit(const MedicineOperationSuccess('Medicine deleted successfully'));
       // For delete, we can reload immediately since we're not navigating
       await loadMedicines();
@@ -191,6 +180,15 @@ class MedicineCubit extends Cubit<MedicineState> {
     try {
       final medicine = (await _medicineRepository.toggleMedicineStatus(id))
           .unwrap();
+
+      // Resumed: regenerate occurrences so upcoming doses exist again
+      if (medicine.isActive) {
+        try {
+          await _generateOccurrences();
+        } catch (e) {
+          // Silently handle occurrence generation errors
+        }
+      }
 
       // Update notifications based on active status
       // COMMENTED OUT FOR UPCOMING RELEASE - profile name support

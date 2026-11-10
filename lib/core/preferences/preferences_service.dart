@@ -63,20 +63,20 @@ class PreferencesService {
   }
 
   Future<bool> _setBool(String key, bool value) async {
-    _cache[key] = value;
     await _store.setBool(key, value);
+    _cache[key] = value;
     return true;
   }
 
   Future<bool> _setInt(String key, int value) async {
-    _cache[key] = value;
     await _store.setInt(key, value);
+    _cache[key] = value;
     return true;
   }
 
   Future<bool> _setString(String key, String value) async {
-    _cache[key] = value;
     await _store.setString(key, value);
+    _cache[key] = value;
     return true;
   }
 

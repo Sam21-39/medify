@@ -58,6 +58,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get next => 'Next';
 
   @override
+  String get noProfileYet => 'No profile yet.';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get tryingAgain => 'Trying…';
+
+  @override
+  String get whoIsPhoneFor => 'Who is this phone for?';
+
+  @override
+  String get rolePatient => 'Patient';
+
+  @override
+  String get rolePatientDesc => 'Track my own doses';
+
+  @override
+  String get roleCaregiver => 'Caregiver';
+
+  @override
+  String get roleCaregiverDesc => 'Help someone else take their medicine';
+
+  @override
+  String get whoAreYouHelping => 'Who are you helping?';
+
+  @override
+  String get medicineOpenFailed => 'Could not open that medicine';
+
+  @override
+  String get addPatientProfileFirst => 'Add a patient profile first';
+
+  @override
   String get onboardingTitle1 => 'Welcome to Medify';
 
   @override

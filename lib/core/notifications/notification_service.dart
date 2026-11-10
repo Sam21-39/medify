@@ -31,6 +31,8 @@ class NotificationService {
 
   bool _isInitialized = false;
   String? _installationId;
+  Future<String>? _installationIdLoad;
+  Future<void> _rescheduleChain = Future.value();
 
   // Notification channel constants
   static const String _channelId = 'medicine_reminders';
@@ -180,8 +182,14 @@ class NotificationService {
       if (response.actionId == 'snooze') {
         await _handleSnoozeAction(log);
       } else if (response.actionId == 'skip') {
-        await logRepository.markAsSkipped(occurrenceId);
-        _log('Marked occurrence $occurrenceId as skipped');
+        final result = await logRepository.markAsSkipped(occurrenceId);
+        result.fold(
+          (failure) => _log(
+            'Skip failed for occurrence $occurrenceId: ${failure.message}',
+            isError: true,
+          ),
+          (_) => _log('Marked occurrence $occurrenceId as skipped'),
+        );
       } else {
         final seconds = DateTimeUtils.dateTimeToSeconds(log.scheduledTime);
         getIt<AppMessenger>().go(
@@ -219,9 +227,19 @@ class NotificationService {
   }
 
   /// Installation ID: random, created once, stored in installation_metadata.
+  /// Concurrent callers share one in-flight load.
   Future<String> _installationIdFor() async {
     final cached = _installationId;
     if (cached != null) return cached;
+    final load = _installationIdLoad ??= _loadInstallationId();
+    try {
+      return await load;
+    } finally {
+      _installationIdLoad = null;
+    }
+  }
+
+  Future<String> _loadInstallationId() async {
     final db = getIt<Database>();
     final rows = await db.query(
       'installation_metadata',
@@ -354,12 +372,11 @@ class NotificationService {
     }
     _log('Scheduling reminders for medicine: ${medicine.name}');
 
-    await cancelMedicineReminders(medicine.id!);
-
     final now = DateTime.now();
     final logs = await getIt<MedicineLogRepository>().getLogsByMedicineId(
       medicine.id!,
     );
+    await _cancelForReschedule(logs);
     for (final log in logs) {
       if (log.id == null ||
           log.status != MedicineLogStatus.pending ||
@@ -463,9 +480,9 @@ class NotificationService {
         AndroidNotificationAction(
           'snooze',
           'Snooze (5 min)',
-          showsUserInterface: false,
+          showsUserInterface: true,
         ),
-        AndroidNotificationAction('skip', 'Skip', showsUserInterface: false),
+        AndroidNotificationAction('skip', 'Skip', showsUserInterface: true),
       ],
       fullScreenIntent: true,
       visibility: NotificationVisibility.public,
@@ -479,6 +496,21 @@ class NotificationService {
       interruptionLevel: InterruptionLevel.critical,
     );
     return NotificationDetails(android: androidDetails, iOS: iosDetails);
+  }
+
+  /// Cancel only what is about to be rescheduled: reminder and prior notice for
+  /// pending occurrences. A snooze stays scheduled while its occurrence is
+  /// pending; it is cancelled once the occurrence leaves pending.
+  Future<void> _cancelForReschedule(List<MedicineLog> logs) async {
+    for (final log in logs) {
+      if (log.id == null) continue;
+      if (log.status == MedicineLogStatus.pending) {
+        await _notifications.cancel(id: _mainId(log.id!));
+        await _notifications.cancel(id: _priorId(log.id!));
+      } else {
+        await _notifications.cancel(id: _snoozeId(log.id!));
+      }
+    }
   }
 
   /// Cancel the reminder, prior notice and snooze for every occurrence of a medicine
@@ -502,11 +534,17 @@ class NotificationService {
 
   /// Cancel all reminders, then schedule pending occurrences of active medicines.
   /// Run after the occurrence window is generated (startup, resume).
-  Future<void> rescheduleUpcoming() async {
+  /// Runs are queued, so overlapping calls never interleave.
+  Future<void> rescheduleUpcoming() {
+    final next = _rescheduleChain.then((_) => _rescheduleOnce());
+    _rescheduleChain = next;
+    return next;
+  }
+
+  Future<void> _rescheduleOnce() async {
     try {
       final medicines = (await getIt<MedicineRepository>().getActiveMedicines())
           .unwrap();
-      await cancelAllNotifications();
       for (final medicine in medicines) {
         await scheduleMedicineReminders(medicine);
       }
@@ -578,7 +616,7 @@ class NotificationService {
       );
 
       await _notifications.show(
-        id: DateTime.now().millisecondsSinceEpoch % 100000, // Random ID
+        id: 0x40000000 + (DateTime.now().millisecondsSinceEpoch % 0x0FFFFFFF),
         title: title,
         body: body,
         notificationDetails: details,

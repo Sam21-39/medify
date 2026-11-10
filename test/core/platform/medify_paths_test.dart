@@ -19,6 +19,14 @@ void main() {
     expect(await MedifyPaths.documentsDirectory(), '/docs');
   });
 
+  test('legacyDocumentsDirectory returns the native path', () async {
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'legacyDocumentsDirectory');
+      return '/legacy';
+    });
+    expect(await MedifyPaths.legacyDocumentsDirectory(), '/legacy');
+  });
+
   test('temporaryDirectory returns the native path', () async {
     messenger.setMockMethodCallHandler(channel, (call) async {
       expect(call.method, 'temporaryDirectory');

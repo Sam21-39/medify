@@ -8,6 +8,10 @@ class MedifyPaths {
 
   static Future<String> documentsDirectory() => _invoke('documentsDirectory');
 
+  /// Where the 1.x build kept its files (path_provider documents dir).
+  static Future<String> legacyDocumentsDirectory() =>
+      _invoke('legacyDocumentsDirectory');
+
   static Future<String> temporaryDirectory() => _invoke('temporaryDirectory');
 
   static Future<String> _invoke(String method) async {

@@ -47,7 +47,7 @@ import UIKit
     let paths = FlutterMethodChannel(name: "medify/paths", binaryMessenger: pathsMessenger)
     paths.setMethodCallHandler { call, result in
       switch call.method {
-      case "documentsDirectory":
+      case "documentsDirectory", "legacyDocumentsDirectory":
         guard let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first else {
           result(FlutterError(code: "NO_DIRECTORY", message: "documents directory unavailable", details: nil))
           return

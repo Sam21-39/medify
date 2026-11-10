@@ -33,10 +33,11 @@ void main() {
     final cubit = ResetGateCubit(
       reset: LegacyReset(
         documentsDir: root.path,
+        legacyDocumentsDir: root.path,
         v2DatabasePath: p.join(root.path, v2DatabaseFileName),
         cancelReminders: () async {},
       ),
-      onComplete: () {},
+      onComplete: () async {},
     );
     await tester.pumpWidget(ResetGateApp(cubit: cubit));
     await tester.runAsync(cubit.start);
