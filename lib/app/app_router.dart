@@ -6,8 +6,10 @@ import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/features/achievements/presentation/pages/achievements_page.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/features/medicines/domain/voice/medicine_draft_parser.dart';
 import 'package:medify/features/medicines/presentation/pages/add_edit_medicine_page.dart';
 import 'package:medify/features/medicines/presentation/pages/medicine_list_page.dart';
+import 'package:medify/features/medicines/presentation/pages/voice_capture_page.dart';
 import 'package:medify/features/history/presentation/pages/history_page.dart';
 import 'package:medify/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:medify/l10n/app_localizations.dart';
@@ -49,7 +51,16 @@ GoRouter buildRouter(PreferencesService prefs) {
       ),
       GoRoute(
         path: '/medicine/add',
-        builder: (context, state) => const AddEditMedicinePage(),
+        builder: (context, state) {
+          final extra = state.extra;
+          return AddEditMedicinePage(
+            draft: extra is MedicineDraft ? extra : null,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/medicine/add/voice',
+        builder: (context, state) => const VoiceCapturePage(),
       ),
       GoRoute(
         path: '/medicine/edit',

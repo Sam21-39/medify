@@ -358,6 +358,96 @@ abstract class AppLocalizations {
   /// **'Add your first medicine'**
   String get addYourFirstMedicine;
 
+  /// No description provided for @tapPlusToAddMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add your first medicine'**
+  String get tapPlusToAddMedicine;
+
+  /// No description provided for @addMenuManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual entry'**
+  String get addMenuManual;
+
+  /// No description provided for @addMenuVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input'**
+  String get addMenuVoice;
+
+  /// No description provided for @voiceInputTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input'**
+  String get voiceInputTitle;
+
+  /// No description provided for @voiceTapToSpeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the microphone and say your medicine'**
+  String get voiceTapToSpeak;
+
+  /// No description provided for @voiceListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening… tap the microphone when you are done'**
+  String get voiceListening;
+
+  /// No description provided for @voiceExample.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: Paracetamol 500 mg twice a day after food for 5 days'**
+  String get voiceExample;
+
+  /// No description provided for @voicePermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone or speech permission is off. Turn it on in Settings, or enter the medicine manually.'**
+  String get voicePermissionDenied;
+
+  /// No description provided for @voiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input is not available on this device. Enter the medicine manually.'**
+  String get voiceUnavailable;
+
+  /// No description provided for @voiceNoSpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'We did not catch that. Tap the microphone to try again.'**
+  String get voiceNoSpeech;
+
+  /// No description provided for @voiceEnterManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter manually'**
+  String get voiceEnterManually;
+
+  /// No description provided for @voiceReviewBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Review voice entry. Nothing saved yet.'**
+  String get voiceReviewBanner;
+
+  /// No description provided for @voiceDurationDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration (days)'**
+  String get voiceDurationDays;
+
+  /// No description provided for @voiceStartListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Start listening'**
+  String get voiceStartListening;
+
+  /// No description provided for @voiceStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get voiceStop;
+
   /// No description provided for @reminders.
   ///
   /// In en, this message translates to:
@@ -615,6 +705,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'© 2025 Medify. All rights reserved.'**
   String get copyrightNotice;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @appSection.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get appSection;
+
+  /// No description provided for @notificationsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsSection;
+
+  /// No description provided for @aboutSection.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutSection;
+
+  /// No description provided for @speakReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak reminder'**
+  String get speakReminder;
+
+  /// No description provided for @speakReminderDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine name and time, up to 3 times'**
+  String get speakReminderDesc;
+
+  /// No description provided for @resetAllSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset All Settings'**
+  String get resetAllSettings;
+
+  /// No description provided for @theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get theme;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @selectTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Theme'**
+  String get selectTheme;
+
+  /// No description provided for @themeLightDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Bright and clean'**
+  String get themeLightDesc;
+
+  /// No description provided for @themeDarkDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy on the eyes'**
+  String get themeDarkDesc;
+
+  /// No description provided for @themeSystemDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow device settings'**
+  String get themeSystemDesc;
+
+  /// No description provided for @snoozeDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze Duration'**
+  String get snoozeDuration;
+
+  /// No description provided for @selectSnoozeDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Snooze Duration'**
+  String get selectSnoozeDuration;
+
+  /// No description provided for @snoozeMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} minutes'**
+  String snoozeMinutes(int count);
+
+  /// No description provided for @snoozeOneHour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get snoozeOneHour;
+
+  /// No description provided for @snoozeQuick.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick reminder'**
+  String get snoozeQuick;
+
+  /// No description provided for @snoozeStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard delay'**
+  String get snoozeStandard;
+
+  /// No description provided for @snoozeLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Longer break'**
+  String get snoozeLong;
+
+  /// No description provided for @achievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements'**
+  String get achievements;
+
+  /// No description provided for @achievementsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View your unlocked badges and progress'**
+  String get achievementsDesc;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
+
+  /// No description provided for @resetSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Settings'**
+  String get resetSettings;
+
+  /// No description provided for @resetSettingsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reset all settings to default values?'**
+  String get resetSettingsConfirm;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @settingsResetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings reset to default'**
+  String get settingsResetDone;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filter;
+
+  /// No description provided for @historyExported.
+  ///
+  /// In en, this message translates to:
+  /// **'History exported successfully!'**
+  String get historyExported;
+
+  /// No description provided for @exporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting...'**
+  String get exporting;
+
+  /// No description provided for @historyLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading history'**
+  String get historyLoadError;
+
+  /// No description provided for @noLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'No Logs'**
+  String get noLogs;
+
+  /// No description provided for @noLogsMatchFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs match your filters'**
+  String get noLogsMatchFilters;
+
+  /// No description provided for @noMedicinesForDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No medicines scheduled for this date'**
+  String get noMedicinesForDate;
+
+  /// No description provided for @activeFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Filters:'**
+  String get activeFilters;
+
+  /// No description provided for @clearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get clearAll;
+
+  /// No description provided for @takenAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken at {time}'**
+  String takenAt(String time);
+
+  /// No description provided for @filterHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter History'**
+  String get filterHistory;
+
+  /// No description provided for @medicineFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine:'**
+  String get medicineFilterLabel;
+
+  /// No description provided for @allMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'All Medicines'**
+  String get allMedicines;
+
+  /// No description provided for @statusFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status:'**
+  String get statusFilterLabel;
+
+  /// No description provided for @allStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All Statuses'**
+  String get allStatuses;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @skipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get skipped;
 }
 
 class _AppLocalizationsDelegate

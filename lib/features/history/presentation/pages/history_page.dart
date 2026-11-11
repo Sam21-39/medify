@@ -9,11 +9,14 @@ import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/widgets/empty_state.dart';
+import 'package:medify/core/widgets/medify_icon.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
+import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/history/presentation/cubit/history_cubit.dart';
 import 'package:medify/features/history/presentation/cubit/history_state.dart';
+import 'package:medify/l10n/app_localizations.dart';
 
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../widgets/profile_switcher.dart';
@@ -49,13 +52,13 @@ class _HistoryPageState extends State<HistoryPage>
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
-        title: 'History',
+        title: AppLocalizations.of(context)!.historyTitle,
         useNativeToolbar: true,
         actions: [
           MedifyAdaptive.action(
             iosSymbol: 'arrow.clockwise',
             icon: Icons.refresh,
-            label: 'Refresh',
+            label: AppLocalizations.of(context)!.refresh,
             onPressed: () {
               getIt<HistoryCubit>().refresh();
             },
@@ -63,7 +66,7 @@ class _HistoryPageState extends State<HistoryPage>
           MedifyAdaptive.action(
             iosSymbol: 'line.3.horizontal.decrease.circle',
             icon: Icons.filter_list,
-            label: 'Filter',
+            label: AppLocalizations.of(context)!.filter,
             onPressed: () => _showFilterDialog(context),
           ),
         ],
@@ -84,8 +87,8 @@ class _HistoryPageState extends State<HistoryPage>
 
             if (state is HistoryExportSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('History exported successfully!'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.historyExported),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -94,7 +97,7 @@ class _HistoryPageState extends State<HistoryPage>
 
             if (state is HistoryExporting) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Row(
                     children: [
                       SizedBox(
@@ -103,7 +106,7 @@ class _HistoryPageState extends State<HistoryPage>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       SizedBox(width: 16),
-                      Text('Exporting...'),
+                      Text(AppLocalizations.of(context)!.exporting),
                     ],
                   ),
                   duration: Duration(seconds: 2),
@@ -129,7 +132,7 @@ class _HistoryPageState extends State<HistoryPage>
                     Icon(Icons.error_outline, size: 64, color: AppColors.error),
                     const SizedBox(height: AppSizes.spacing16),
                     Text(
-                      'Error loading history',
+                      AppLocalizations.of(context)!.historyLoadError,
                       style: theme.textTheme.titleLarge,
                     ),
                     const SizedBox(height: AppSizes.spacing8),
@@ -144,7 +147,7 @@ class _HistoryPageState extends State<HistoryPage>
                         getIt<HistoryCubit>().refresh();
                       },
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      label: Text(AppLocalizations.of(context)!.retry),
                     ),
                   ],
                 ),
@@ -174,11 +177,11 @@ class _HistoryPageState extends State<HistoryPage>
                     // Logs list
                     if (state.logs.isEmpty)
                       EmptyState(
-                        icon: Icons.history,
-                        title: 'No Logs',
+                        svg: Assets.icons.history,
+                        title: AppLocalizations.of(context)!.noLogs,
                         message: state.filter.hasActiveFilters
-                            ? 'No logs match your filters'
-                            : 'No medicines scheduled for this date',
+                            ? AppLocalizations.of(context)!.noLogsMatchFilters
+                            : AppLocalizations.of(context)!.noMedicinesForDate,
                       )
                     else
                       ..._buildLogsList(context, state),
@@ -296,7 +299,7 @@ class _HistoryPageState extends State<HistoryPage>
 
     return Row(
       children: [
-        Icon(Icons.calendar_today, color: theme.colorScheme.primary),
+        MedifyIcon(Assets.icons.calendar, color: theme.colorScheme.primary),
         const SizedBox(width: AppSizes.spacing8),
         Expanded(
           child: Text(
@@ -328,7 +331,7 @@ class _HistoryPageState extends State<HistoryPage>
         Row(
           children: [
             Text(
-              'Active Filters:',
+              AppLocalizations.of(context)!.activeFilters,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -339,7 +342,7 @@ class _HistoryPageState extends State<HistoryPage>
                 getIt<HistoryCubit>().clearFilters();
               },
               icon: const Icon(Icons.clear, size: 16),
-              label: const Text('Clear All'),
+              label: Text(AppLocalizations.of(context)!.clearAll),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
@@ -362,7 +365,7 @@ class _HistoryPageState extends State<HistoryPage>
             if (state.filter.status != null)
               _buildFilterChip(
                 context,
-                _getStatusString(state.filter.status!),
+                _getStatusString(context, state.filter.status!),
                 Icons.info,
               ),
           ],
@@ -421,7 +424,8 @@ class _HistoryPageState extends State<HistoryPage>
             if (log.takenTime != null) ...[
               const SizedBox(height: 2),
               Text(
-                'Taken at ${DateTimeUtils.formatTime(log.takenTime!)}',
+                AppLocalizations.of(context)!
+                    .takenAt(DateTimeUtils.formatTime(log.takenTime!)),
                 style: TextStyle(color: AppColors.success, fontSize: 12),
               ),
             ],
@@ -437,7 +441,7 @@ class _HistoryPageState extends State<HistoryPage>
             borderRadius: BorderRadius.circular(AppSizes.radiusXL),
           ),
           child: Text(
-            _getStatusString(log.status),
+            _getStatusString(context, log.status),
             style: TextStyle(
               color: statusColor,
               fontWeight: FontWeight.bold,
@@ -458,100 +462,85 @@ class _HistoryPageState extends State<HistoryPage>
     int? selectedMedicineId = state.filter.medicineId;
     MedicineLogStatus? selectedStatus = state.filter.status;
 
-    showDialog(
+    showMedifyDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Filter History'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Medicine filter
-                const Text(
-                  'Medicine:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+      title: AppLocalizations.of(context)!.filterHistory,
+      cancelLabel: AppLocalizations.of(context)!.cancel,
+      confirmLabel: AppLocalizations.of(context)!.apply,
+      onConfirm: () => cubit.applyFilter(
+        HistoryFilter(medicineId: selectedMedicineId, status: selectedStatus),
+      ),
+      content: StatefulBuilder(
+        builder: (context, setState) => SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Medicine filter
+              Text(
+                AppLocalizations.of(context)!.medicineFilterLabel,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<int?>(
+                initialValue: selectedMedicineId,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.allMedicines,
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<int?>(
-                  value: selectedMedicineId,
-                  decoration: const InputDecoration(
-                    hintText: 'All Medicines',
-                    border: OutlineInputBorder(),
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(AppLocalizations.of(context)!.allMedicines),
                   ),
-                  items: [
-                    const DropdownMenuItem(
-                      value: null,
-                      child: Text('All Medicines'),
-                    ),
-                    ...state.medicines.map((medicine) {
-                      return DropdownMenuItem(
-                        value: medicine.id,
-                        child: Text(medicine.name),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedMedicineId = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
+                  ...state.medicines.map((medicine) {
+                    return DropdownMenuItem(
+                      value: medicine.id,
+                      child: Text(medicine.name),
+                    );
+                  }),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedMedicineId = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
 
-                // Status filter
-                const Text(
-                  'Status:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+              // Status filter
+              Text(
+                AppLocalizations.of(context)!.statusFilterLabel,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<MedicineLogStatus?>(
+                initialValue: selectedStatus,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.allStatuses,
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<MedicineLogStatus?>(
-                  value: selectedStatus,
-                  decoration: const InputDecoration(
-                    hintText: 'All Statuses',
-                    border: OutlineInputBorder(),
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(AppLocalizations.of(context)!.allStatuses),
                   ),
-                  items: [
-                    const DropdownMenuItem(
-                      value: null,
-                      child: Text('All Statuses'),
-                    ),
-                    ...MedicineLogStatus.values.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(_getStatusString(status)),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedStatus = value;
-                    });
-                  },
-                ),
-              ],
-            ),
+                  ...MedicineLogStatus.values.map((status) {
+                    return DropdownMenuItem(
+                      value: status,
+                      child: Text(_getStatusString(context, status)),
+                    );
+                  }),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedStatus = value;
+                  });
+                },
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                cubit.applyFilter(
-                  HistoryFilter(
-                    medicineId: selectedMedicineId,
-                    status: selectedStatus,
-                  ),
-                );
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Apply'),
-            ),
-          ],
         ),
       ),
     );
@@ -590,18 +579,19 @@ class _HistoryPageState extends State<HistoryPage>
   }
 
   /// Get status string
-  String _getStatusString(MedicineLogStatus status) {
+  String _getStatusString(BuildContext context, MedicineLogStatus status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case MedicineLogStatus.taken:
-        return 'Taken';
+        return l10n.taken;
       case MedicineLogStatus.pending:
-        return 'Pending';
+        return l10n.pending;
       case MedicineLogStatus.missed:
-        return 'Missed';
+        return l10n.missed;
       case MedicineLogStatus.skipped:
-        return 'Skipped';
+        return l10n.skipped;
       case MedicineLogStatus.snoozed:
-        return 'Snoozed';
+        return l10n.snoozed;
     }
   }
 }

@@ -116,7 +116,12 @@ class MyAppState extends State<MyApp> {
         builder: (context, child) {
           return Theme(
             data: _resolveMaterialTheme(context),
-            child: child ?? const SizedBox.shrink(),
+            // CupertinoApp (iOS) has no Material ancestor; Material widgets
+            // (TextField, ListTile) assert without one.
+            child: Material(
+              type: MaterialType.transparency,
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
         },
       ),

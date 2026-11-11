@@ -17,15 +17,20 @@ import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/core/utils/validators.dart';
 import 'package:medify/core/widgets/custom_button.dart';
 import 'package:medify/core/widgets/custom_text_field.dart';
+import 'package:medify/core/widgets/medify_icon.dart';
+import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/features/medicines/domain/voice/medicine_draft_parser.dart';
+import 'package:medify/features/medicines/presentation/widgets/medicine_card.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_state.dart';
 
 /// Page for adding or editing a medicine
 class AddEditMedicinePage extends StatefulWidget {
   final Medicine? medicine; // null for add, non-null for edit
+  final MedicineDraft? draft; // voice entry to review before saving
 
-  const AddEditMedicinePage({super.key, this.medicine});
+  const AddEditMedicinePage({super.key, this.medicine, this.draft});
 
   @override
   State<AddEditMedicinePage> createState() => _AddEditMedicinePageState();
@@ -38,6 +43,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
   final _notesController = TextEditingController();
   final _totalQuantityController = TextEditingController();
   final _refillRemindDaysController = TextEditingController();
+  final _durationController = TextEditingController();
 
   // List to store selected reminder times (as seconds since midnight)
   final List<int> _reminderTimes = [];
@@ -60,6 +66,29 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
     if (_isEditMode) {
       _loadMedicineData();
     }
+    if (widget.draft != null) {
+      _loadDraft(widget.draft!);
+    }
+  }
+
+  /// Seeds only the fields the voice entry stated. Unstated fields stay empty.
+  void _loadDraft(MedicineDraft draft) {
+    if (draft.name != null) _nameController.text = draft.name!;
+    if (draft.dosageAmount != null) {
+      final amount = draft.dosageAmount!;
+      _dosageAmountController.text = amount == amount.toInt()
+          ? amount.toInt().toString()
+          : amount.toString();
+    }
+    if (draft.medicineType != null) _selectedMedicineType = draft.medicineType!;
+    if (draft.intakeTiming != null) _selectedIntakeTiming = draft.intakeTiming!;
+    if (draft.reminderTimes != null) {
+      _reminderTimes.addAll(draft.reminderTimes!);
+    }
+    if (draft.durationDays != null) {
+      _durationController.text = '${draft.durationDays}';
+    }
+    if (draft.notes != null) _notesController.text = draft.notes!;
   }
 
   void _loadMedicineData() {
@@ -94,6 +123,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
     _notesController.dispose();
     _totalQuantityController.dispose();
     _refillRemindDaysController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
@@ -144,6 +174,29 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
             child: ListView(
               padding: const EdgeInsets.all(AppSizes.paddingM),
               children: [
+                // Voice entry banner. Voice drafts always carry the transcript in notes.
+                if (widget.draft?.notes != null) ...[
+                  Card(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.paddingM),
+                      child: Row(
+                        children: [
+                          MedifyIcon(Assets.icons.voiceNote),
+                          const SizedBox(width: AppSizes.paddingM),
+                          Expanded(
+                            child: Text(
+                              AppLocalizations.of(context)!.voiceReviewBanner,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingM),
+                ],
+
                 // Instructions
                 Card(
                   child: Padding(
@@ -200,8 +253,8 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                       initialValue: _selectedMedicineType,
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        prefixIcon: Icon(
-                          _getMedicineTypeIcon(_selectedMedicineType),
+                        prefixIcon: MedifyIcon(
+                          _selectedMedicineType.icon,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
@@ -304,7 +357,20 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                       false, // Optional field, no validation indicator
                   semanticLabel: 'Additional notes input field, optional',
                 ),
-                const SizedBox(height: AppSizes.paddingL),
+                const SizedBox(height: AppSizes.paddingM),
+
+                // Duration from voice entry, shown only when the voice said it
+                if (widget.draft?.durationDays != null) ...[
+                  CustomTextField(
+                    label: AppLocalizations.of(context)!.voiceDurationDays,
+                    controller: _durationController,
+                    prefixIcon: MedifyIcon(Assets.icons.calendar),
+                    keyboardType: TextInputType.number,
+                    showValidationIndicator: false,
+                  ),
+                  const SizedBox(height: AppSizes.paddingM),
+                ],
+                const SizedBox(height: AppSizes.paddingS),
 
                 // Refill Tracking Section
                 // Row(
@@ -565,15 +631,9 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
 
   /// Show time picker and add selected time
   Future<void> _addReminderTime() async {
-    final TimeOfDay? picked = await showTimePicker(
+    final TimeOfDay? picked = await showMedifyTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -750,6 +810,17 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
       dosageString = '$dosageAmount ${_selectedMedicineType.unit}';
     }
 
+    // Voice-stated duration becomes an end date counted from today.
+    // Without the duration field, keep the existing end date (edit mode).
+    DateTime? endDate = widget.medicine?.endDate;
+    if (widget.draft?.durationDays != null) {
+      final durationDays = int.tryParse(_durationController.text.trim());
+      if (durationDays != null && durationDays > 0) {
+        final now = DateTime.now();
+        endDate = DateTime(now.year, now.month, now.day + durationDays);
+      }
+    }
+
     // Create medicine object
     final medicine = Medicine(
       id: _isEditMode ? widget.medicine!.id : null,
@@ -761,6 +832,7 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
       reminderTimes: _reminderTimes,
       daysOfWeek: List<int>.from(_daysOfWeek),
       intakeTiming: _selectedIntakeTiming,
+      endDate: endDate,
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
@@ -812,30 +884,6 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
         return Icons.bedtime;
       case MedicineIntakeTiming.anytime:
         return Icons.schedule;
-    }
-  }
-
-  /// Get icon for medicine type
-  IconData _getMedicineTypeIcon(MedicineType type) {
-    switch (type) {
-      case MedicineType.tablet:
-        return Icons.medication;
-      case MedicineType.capsule:
-        return Icons.medication_liquid;
-      case MedicineType.syrup:
-        return Icons.local_drink;
-      case MedicineType.drops:
-        return Icons.water_drop;
-      case MedicineType.injection:
-        return Icons.vaccines;
-      case MedicineType.inhaler:
-        return Icons.air;
-      case MedicineType.ointment:
-        return Icons.healing;
-      case MedicineType.patch:
-        return Icons.label;
-      case MedicineType.other:
-        return Icons.medical_services;
     }
   }
 

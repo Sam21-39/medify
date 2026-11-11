@@ -9,7 +9,9 @@ import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/widgets/empty_state.dart';
+import 'package:medify/core/widgets/medify_icon.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
+import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
@@ -105,11 +107,9 @@ class _MedicineListPageState extends State<MedicineListPage>
               return MedifyAdaptive.body(
                 tabShell: true,
                 child: EmptyState(
-                  icon: Icons.medication,
+                  svg: Assets.icons.medicine,
                   title: AppLocalizations.of(context)!.noMedicines,
-                  message: AppLocalizations.of(context)!.addYourFirstMedicine,
-                  actionText: AppLocalizations.of(context)!.addMedicine,
-                  onAction: () => _navigateToAddMedicine(),
+                  message: AppLocalizations.of(context)!.tapPlusToAddMedicine,
                 ),
               );
             }
@@ -209,12 +209,12 @@ class _MedicineListPageState extends State<MedicineListPage>
                                               AppSizes.radiusCard,
                                             ),
                                           ),
-                                          child: const Column(
+                                          child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
-                                              Icon(
-                                                Icons.delete,
+                                              MedifyIcon(
+                                                Assets.icons.delete,
                                                 color: Colors.white,
                                                 size: AppSizes.iconL,
                                               ),
@@ -268,26 +268,10 @@ class _MedicineListPageState extends State<MedicineListPage>
           return MedifyAdaptive.body(
             tabShell: true,
             child: EmptyState(
-              icon: Icons.medication,
+              svg: Assets.icons.medicine,
               title: AppLocalizations.of(context)!.noMedicines,
-              message: AppLocalizations.of(context)!.addYourFirstMedicine,
-              actionText: AppLocalizations.of(context)!.addMedicine,
-              onAction: () => _navigateToAddMedicine(),
+              message: AppLocalizations.of(context)!.tapPlusToAddMedicine,
             ),
-          );
-        },
-      ),
-      floatingActionButton: BlocBuilder<MedicineCubit, MedicineState>(
-        bloc: getIt<MedicineCubit>(), // Explicitly use singleton instance
-        builder: (context, state) {
-          // Hide FAB when list is empty (empty state has its own button)
-          if (state is MedicineLoaded && state.medicines.isEmpty) {
-            return const SizedBox.shrink();
-          }
-          return FloatingActionButton(
-            tooltip: AppLocalizations.of(context)!.addMedicine,
-            onPressed: _navigateToAddMedicine,
-            child: const Icon(Icons.add),
           );
         },
       ),
@@ -320,17 +304,6 @@ class _MedicineListPageState extends State<MedicineListPage>
         );
       },
     );
-  }
-
-  /// Navigate to add medicine page
-  Future<void> _navigateToAddMedicine() async {
-    final result = await getIt<AppMessenger>().push<bool>('/medicine/add');
-
-    // Reload medicines if a medicine was added
-    if (result == true && mounted) {
-      _loadMedicines();
-      _loadTodaysLogs();
-    }
   }
 
   /// Navigate to edit medicine page

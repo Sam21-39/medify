@@ -16,6 +16,7 @@ dependencies:
   # UI & Icons
   cupertino_icons: ^2.0.0
   adaptive_platform_ui: ^1.0.2
+  flutter_svg: ^2.0.0
 
   # State Management
   flutter_bloc: ^9.1.1
@@ -147,6 +148,6 @@ flutter_gen:
   output: lib/gen/
   line_length: 80
   integrations:
-    flutter_svg: false
+    flutter_svg: true
   assets:
     enabled: true

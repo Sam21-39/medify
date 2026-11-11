@@ -3,8 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:medify/app/add_medicine_fab.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/design/medify_theme_extension.dart';
+import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/l10n/app_localizations.dart';
 
 class MainNavigationPage extends StatelessWidget {
@@ -19,7 +21,14 @@ class MainNavigationPage extends StatelessWidget {
 
     return AdaptiveScaffold(
       enableBlur: true,
-      body: shell,
+      // FAB overlays the shell, above the native tab bar (R2: overlay, not a Scaffold FAB).
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          shell,
+          AddMedicineFab(tabIndex: shell.currentIndex),
+        ],
+      ),
       bottomNavigationBar: AdaptiveBottomNavigationBar(
         useNativeBottomBar: true,
         selectedIndex: shell.currentIndex,
@@ -35,6 +44,7 @@ class MainNavigationPage extends StatelessWidget {
             material: Icons.calendar_today_outlined,
             materialSelected: Icons.calendar_today,
             label: l10n.today,
+            svg: Assets.icons.home,
           ),
           MedifyAdaptive.destination(
             sf: 'pills',
@@ -43,6 +53,7 @@ class MainNavigationPage extends StatelessWidget {
             material: Icons.medication_outlined,
             materialSelected: Icons.medication,
             label: l10n.medicines,
+            svg: Assets.icons.medicine,
           ),
           MedifyAdaptive.destination(
             sf: 'clock.arrow.circlepath',
@@ -50,7 +61,8 @@ class MainNavigationPage extends StatelessWidget {
             cupertino: CupertinoIcons.clock,
             material: Icons.history_outlined,
             materialSelected: Icons.history,
-            label: 'History',
+            label: l10n.historyTitle,
+            svg: Assets.icons.history,
           ),
           MedifyAdaptive.destination(
             sf: 'chart.bar',
@@ -59,6 +71,7 @@ class MainNavigationPage extends StatelessWidget {
             material: Icons.bar_chart_outlined,
             materialSelected: Icons.bar_chart,
             label: l10n.statistics,
+            svg: Assets.icons.statistics,
           ),
         ],
       ),

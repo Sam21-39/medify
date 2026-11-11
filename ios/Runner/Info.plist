@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Medify uses the microphone to add a medicine by voice. Audio is processed on your device.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Medify converts your spoken medicine details to text on your device so you can review them before saving.</string>
 	<key>NSUserNotificationAlertStyleKey</key>
 	<string>alert</string>
 	<key>UIApplicationSceneManifest</key>

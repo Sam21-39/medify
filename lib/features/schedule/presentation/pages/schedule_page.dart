@@ -13,6 +13,7 @@ import 'package:medify/l10n/app_localizations.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/core/widgets/empty_state.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
+import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
@@ -200,7 +201,7 @@ class _SchedulePageState extends State<SchedulePage>
 
                       if (_logs.isEmpty) {
                         return EmptyState(
-                          icon: Icons.calendar_today,
+                          svg: Assets.icons.calendar,
                           title: AppLocalizations.of(context)!.noReminders,
                           message: AppLocalizations.of(context)!.allCaughtUp,
                         );
@@ -280,7 +281,7 @@ class _SchedulePageState extends State<SchedulePage>
                     }
 
                     return EmptyState(
-                      icon: Icons.calendar_today,
+                      svg: Assets.icons.calendar,
                       title: AppLocalizations.of(context)!.noReminders,
                       message: 'Add some medicines to see your schedule',
                     );

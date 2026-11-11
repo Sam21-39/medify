@@ -8,6 +8,7 @@ import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/ui/app_messenger.dart';
+import 'package:medify/core/widgets/medify_icon.dart';
 // import 'package:medify/core/notifications/notification_service.dart';
 import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/l10n/app_localizations.dart';
@@ -35,7 +36,10 @@ class _SettingsView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AdaptiveScaffold(
-      appBar: const AdaptiveAppBar(title: 'Settings', useNativeToolbar: false),
+      appBar: AdaptiveAppBar(
+        title: AppLocalizations.of(context)!.settingsTitle,
+        useNativeToolbar: false,
+      ),
       body: MedifyAdaptive.body(
         child: BlocBuilder<SettingsCubit, SettingsState>(
           bloc: getIt<SettingsCubit>(),
@@ -45,7 +49,10 @@ class _SettingsView extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSizes.spacing16),
                 children: [
                   // App Section
-                  _buildSectionHeader('App', theme),
+                  _buildSectionHeader(
+                    AppLocalizations.of(context)!.appSection,
+                    theme,
+                  ),
                   _buildThemeSetting(context, state, theme),
 
                   // const SizedBox(height: AppSizes.spacing8),
@@ -53,24 +60,32 @@ class _SettingsView extends StatelessWidget {
                   const SizedBox(height: AppSizes.spacing24),
 
                   // Notifications Section
-                  _buildSectionHeader('Notifications', theme),
+                  _buildSectionHeader(
+                    AppLocalizations.of(context)!.notificationsSection,
+                    theme,
+                  ),
                   // _buildNotificationsSetting(context, state, theme),
                   const SizedBox(height: AppSizes.spacing8),
                   _buildSnoozeDurationSetting(context, state, theme),
-                  SwitchListTile(
-                    title: const Text('Speak reminder'),
-                    subtitle: const Text(
-                      'Medicine name and time, up to 3 times',
+                  ListTile(
+                    title: Text(AppLocalizations.of(context)!.speakReminder),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.speakReminderDesc,
                     ),
-                    value: state.speakReminder,
-                    onChanged: (value) =>
-                        getIt<SettingsCubit>().updateSpeakReminder(value),
+                    trailing: AdaptiveSwitch(
+                      value: state.speakReminder,
+                      onChanged: (value) =>
+                          getIt<SettingsCubit>().updateSpeakReminder(value),
+                    ),
                   ),
 
                   const SizedBox(height: AppSizes.spacing24),
 
                   // About Section
-                  _buildSectionHeader('About', theme),
+                  _buildSectionHeader(
+                    AppLocalizations.of(context)!.aboutSection,
+                    theme,
+                  ),
                   // COMMENTED OUT FOR UPCOMING RELEASE
                   // _buildProfilesCard(context, theme),
                   // const SizedBox(height: AppSizes.spacing8),
@@ -80,7 +95,7 @@ class _SettingsView extends StatelessWidget {
                   // const SizedBox(height: AppSizes.spacing8),
                   _buildAboutCard(context, theme),
                   const SizedBox(height: AppSizes.spacing8),
-                  _buildVersionCard(theme),
+                  _buildVersionCard(context, theme),
 
                   const SizedBox(height: AppSizes.spacing24),
 
@@ -88,9 +103,12 @@ class _SettingsView extends StatelessWidget {
                   Center(
                     child: TextButton.icon(
                       onPressed: () => _showResetDialog(context),
-                      icon: const Icon(Icons.restore, color: AppColors.error),
-                      label: const Text(
-                        'Reset All Settings',
+                      icon: MedifyIcon(
+                        Assets.icons.refresh,
+                        color: AppColors.error,
+                      ),
+                      label: Text(
+                        AppLocalizations.of(context)!.resetAllSettings,
                         style: TextStyle(color: AppColors.error),
                       ),
                     ),
@@ -130,11 +148,11 @@ class _SettingsView extends StatelessWidget {
     String getThemeLabel(ThemeMode mode) {
       switch (mode) {
         case ThemeMode.light:
-          return 'Light';
+          return AppLocalizations.of(context)!.themeLight;
         case ThemeMode.dark:
-          return 'Dark';
+          return AppLocalizations.of(context)!.themeDark;
         case ThemeMode.system:
-          return 'System';
+          return AppLocalizations.of(context)!.themeSystem;
       }
     }
 
@@ -152,7 +170,10 @@ class _SettingsView extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Icon(getThemeIcon(state.themeMode), color: AppColors.primary),
-        title: Text('Theme', style: theme.textTheme.titleMedium),
+        title: Text(
+          AppLocalizations.of(context)!.theme,
+          style: theme.textTheme.titleMedium,
+        ),
         subtitle: Text(
           getThemeLabel(state.themeMode),
           style: theme.textTheme.bodySmall?.copyWith(
@@ -202,7 +223,7 @@ class _SettingsView extends StatelessWidget {
                     vertical: AppSizes.spacing8,
                   ),
                   child: Text(
-                    'Select Theme',
+                    AppLocalizations.of(modalContext)!.selectTheme,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -213,24 +234,24 @@ class _SettingsView extends StatelessWidget {
                   modalContext,
                   currentState,
                   ThemeMode.light,
-                  'Light',
-                  'Bright and clean',
+                  AppLocalizations.of(modalContext)!.themeLight,
+                  AppLocalizations.of(modalContext)!.themeLightDesc,
                   Icons.light_mode,
                 ),
                 _buildThemeOption(
                   modalContext,
                   currentState,
                   ThemeMode.dark,
-                  'Dark',
-                  'Easy on the eyes',
+                  AppLocalizations.of(modalContext)!.themeDark,
+                  AppLocalizations.of(modalContext)!.themeDarkDesc,
                   Icons.dark_mode,
                 ),
                 _buildThemeOption(
                   modalContext,
                   currentState,
                   ThemeMode.system,
-                  'System',
-                  'Follow device settings',
+                  AppLocalizations.of(modalContext)!.themeSystem,
+                  AppLocalizations.of(modalContext)!.themeSystemDesc,
                   Icons.settings_brightness,
                 ),
                 const SizedBox(height: AppSizes.spacing16),
@@ -269,7 +290,7 @@ class _SettingsView extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(
@@ -438,7 +459,7 @@ class _SettingsView extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(
@@ -493,16 +514,18 @@ class _SettingsView extends StatelessWidget {
     ThemeData theme,
   ) {
     String getSnoozeDurationLabel(int duration) {
-      if (duration == 15) return '15 minutes';
-      if (duration == 30) return '30 minutes';
-      if (duration == 60) return '1 hour';
-      return '$duration minutes';
+      final l10n = AppLocalizations.of(context)!;
+      if (duration == 60) return l10n.snoozeOneHour;
+      return l10n.snoozeMinutes(duration);
     }
 
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.snooze, color: AppColors.primary),
-        title: Text('Snooze Duration', style: theme.textTheme.titleMedium),
+        leading: MedifyIcon(Assets.icons.snooze, color: AppColors.primary),
+        title: Text(
+          AppLocalizations.of(context)!.snoozeDuration,
+          style: theme.textTheme.titleMedium,
+        ),
         subtitle: Text(
           getSnoozeDurationLabel(state.snoozeDuration),
           style: theme.textTheme.bodySmall?.copyWith(
@@ -552,7 +575,7 @@ class _SettingsView extends StatelessWidget {
                     vertical: AppSizes.spacing8,
                   ),
                   child: Text(
-                    'Select Snooze Duration',
+                    AppLocalizations.of(modalContext)!.selectSnoozeDuration,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -563,22 +586,22 @@ class _SettingsView extends StatelessWidget {
                   modalContext,
                   currentState,
                   15,
-                  '15 minutes',
-                  'Quick reminder',
+                  AppLocalizations.of(modalContext)!.snoozeMinutes(15),
+                  AppLocalizations.of(modalContext)!.snoozeQuick,
                 ),
                 _buildSnoozeDurationOption(
                   modalContext,
                   currentState,
                   30,
-                  '30 minutes',
-                  'Standard delay',
+                  AppLocalizations.of(modalContext)!.snoozeMinutes(30),
+                  AppLocalizations.of(modalContext)!.snoozeStandard,
                 ),
                 _buildSnoozeDurationOption(
                   modalContext,
                   currentState,
                   60,
-                  '1 hour',
-                  'Longer break',
+                  AppLocalizations.of(modalContext)!.snoozeOneHour,
+                  AppLocalizations.of(modalContext)!.snoozeLong,
                 ),
                 const SizedBox(height: AppSizes.spacing16),
               ],
@@ -615,13 +638,13 @@ class _SettingsView extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.timer,
+            MedifyIcon(
+              Assets.icons.time,
               color: isSelected ? AppColors.primary : Colors.grey[600],
               size: 28,
             ),
@@ -679,9 +702,12 @@ class _SettingsView extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.emoji_events, color: AppColors.warning),
-        title: Text('Achievements', style: theme.textTheme.titleMedium),
+        title: Text(
+          AppLocalizations.of(context)!.achievements,
+          style: theme.textTheme.titleMedium,
+        ),
         subtitle: Text(
-          'View your unlocked badges and progress',
+          AppLocalizations.of(context)!.achievementsDesc,
           style: theme.textTheme.bodySmall,
         ),
         trailing: const Icon(Icons.chevron_right),
@@ -726,7 +752,7 @@ class _SettingsView extends StatelessWidget {
     );
   }
 
-  Widget _buildVersionCard(ThemeData theme) {
+  Widget _buildVersionCard(BuildContext context, ThemeData theme) {
     final systemService = getIt<SystemService>();
     return Card(
       child: ListTile(
@@ -734,7 +760,10 @@ class _SettingsView extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Assets.icons.medifyIcon.image(width: 32, height: 32),
         ),
-        title: Text('Version', style: theme.textTheme.titleMedium),
+        title: Text(
+          AppLocalizations.of(context)!.version,
+          style: theme.textTheme.titleMedium,
+        ),
         subtitle: FutureBuilder(
           future: systemService.getVersionCode(),
           builder: (context, app) {
@@ -771,32 +800,27 @@ class _SettingsView extends StatelessWidget {
   }
 
   void _showResetDialog(BuildContext context) {
-    showDialog(
+    AdaptiveAlertDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Reset Settings'),
-        content: const Text(
-          'Are you sure you want to reset all settings to default values?',
+      title: AppLocalizations.of(context)!.resetSettings,
+      message: AppLocalizations.of(context)!.resetSettingsConfirm,
+      actions: [
+        AlertAction(
+          title: AppLocalizations.of(context)!.cancel,
+          style: AlertActionStyle.cancel,
+          onPressed: () {},
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(AppLocalizations.of(context)!.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              getIt<SettingsCubit>().resetSettings();
-              Navigator.of(dialogContext).pop();
-              getIt<AppMessenger>().show('Settings reset to default');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
+        AlertAction(
+          title: AppLocalizations.of(context)!.reset,
+          style: AlertActionStyle.destructive,
+          onPressed: () {
+            getIt<SettingsCubit>().resetSettings();
+            getIt<AppMessenger>().show(
+              AppLocalizations.of(context)!.settingsResetDone,
+            );
+          },
+        ),
+      ],
     );
   }
 }

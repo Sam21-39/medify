@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/widgets/medify_icon.dart';
+import 'package:medify/gen/assets.gen.dart';
 
 /// Empty state widget for displaying when no data is available
 class EmptyState extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final SvgGenImage? svg;
   final String title;
   final String? message;
   final String? actionText;
@@ -12,7 +15,8 @@ class EmptyState extends StatelessWidget {
 
   const EmptyState({
     super.key,
-    required this.icon,
+    this.icon,
+    this.svg,
     required this.title,
     this.message,
     this.actionText,
@@ -27,12 +31,20 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: AppSizes.iconXL * 2,
-              color: Theme.of(context).colorScheme.primary
-                  .withValues(alpha: 0.5),
-            ),
+            if (svg != null)
+              MedifyIcon(
+                svg!,
+                size: AppSizes.iconXL * 2,
+                color: Theme.of(context).colorScheme.primary
+                    .withValues(alpha: 0.5),
+              )
+            else
+              Icon(
+                icon,
+                size: AppSizes.iconXL * 2,
+                color: Theme.of(context).colorScheme.primary
+                    .withValues(alpha: 0.5),
+              ),
             const SizedBox(height: AppSizes.paddingL),
             Text(
               title,

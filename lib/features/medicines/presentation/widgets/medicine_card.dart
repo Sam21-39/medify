@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
+import 'package:medify/core/widgets/medify_icon.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/gen/assets.gen.dart';
+
+/// Bundled icon for each medicine type.
+extension MedicineTypeIcon on MedicineType {
+  SvgGenImage get icon => switch (this) {
+    MedicineType.tablet => Assets.icons.tablets,
+    MedicineType.capsule => Assets.icons.capsule,
+    MedicineType.syrup => Assets.icons.drop,
+    MedicineType.drops => Assets.icons.drop,
+    MedicineType.injection => Assets.icons.injection,
+    MedicineType.inhaler => Assets.icons.otherMedicine,
+    MedicineType.ointment => Assets.icons.ointment,
+    MedicineType.patch => Assets.icons.pills,
+    MedicineType.other => Assets.icons.otherMedicine,
+  };
+}
 
 /// Card widget to display medicine information
 class MedicineCard extends StatelessWidget {
@@ -54,8 +69,8 @@ class MedicineCard extends StatelessWidget {
                           : AppColors.textDisabledLight.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
-                    child: Icon(
-                      Icons.medication,
+                    child: MedifyIcon(
+                      medicine.medicineType.icon,
                       color: medicine.isActive
                           ? AppColors.primary
                           : AppColors.textDisabledLight,
@@ -147,8 +162,8 @@ class MedicineCard extends StatelessWidget {
                 // Reminder times label
                 Row(
                   children: [
-                    Icon(
-                      Icons.access_time,
+                    MedifyIcon(
+                      Assets.icons.time,
                       size: AppSizes.iconS,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

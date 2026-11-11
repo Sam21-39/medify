@@ -137,10 +137,12 @@ class HistoryCubit extends Cubit<HistoryState> {
       await file.writeAsString(csvData);
 
       // Share file
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        subject: 'Medicine History',
-        text: 'My medicine tracking history',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(filePath)],
+          subject: 'Medicine History',
+          text: 'My medicine tracking history',
+        ),
       );
 
       emit(HistoryExportSuccess(filePath));

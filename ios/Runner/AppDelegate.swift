@@ -1,10 +1,14 @@
 import AVFoundation
 import Flutter
+import Speech
 import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var speechChannel: FlutterMethodChannel?
+  private var sttChannel: FlutterMethodChannel?
+  private var sttEventChannel: FlutterEventChannel?
+  private var speechToText: SpeechToText?
   private var pathsChannel: FlutterMethodChannel?
   private var prefsChannel: FlutterMethodChannel?
   private var timezoneChannel: FlutterMethodChannel?
@@ -42,6 +46,29 @@ import UIKit
       }
     }
     speechChannel = channel
+
+    let stt = SpeechToText()
+    let sttMessenger = engineBridge.pluginRegistry.registrar(forPlugin: "MedifyStt")!.messenger()
+    let sttMethods = FlutterMethodChannel(name: "medify/stt", binaryMessenger: sttMessenger)
+    sttMethods.setMethodCallHandler { call, result in
+      switch call.method {
+      case "start":
+        stt.start(result: result)
+      case "stop":
+        stt.stop()
+        result(nil)
+      case "cancel":
+        stt.cancel()
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    let sttEvents = FlutterEventChannel(name: "medify/stt/events", binaryMessenger: sttMessenger)
+    sttEvents.setStreamHandler(stt)
+    sttChannel = sttMethods
+    sttEventChannel = sttEvents
+    speechToText = stt
 
     let pathsMessenger = engineBridge.pluginRegistry.registrar(forPlugin: "MedifyPaths")!.messenger()
     let paths = FlutterMethodChannel(name: "medify/paths", binaryMessenger: pathsMessenger)
@@ -90,5 +117,139 @@ import UIKit
       }
     }
     timezoneChannel = tz
+  }
+}
+
+/// On-device speech recognition for voice medicine entry.
+/// Emits {type: partial|final, text} on the medify/stt/events stream.
+private final class SpeechToText: NSObject, FlutterStreamHandler {
+  private struct Unavailable: Error {}
+
+  private let recognizer = SFSpeechRecognizer(locale: Locale.current)
+  private let audioEngine = AVAudioEngine()
+  private var request: SFSpeechAudioBufferRecognitionRequest?
+  private var task: SFSpeechRecognitionTask?
+  private var lastText = ""
+  private var eventSink: FlutterEventSink?
+  // Bumped by stop/cancel/start so a start still waiting on permissions is dropped.
+  private var generation = 0
+
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    eventSink = events
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    eventSink = nil
+    return nil
+  }
+
+  func start(result: @escaping FlutterResult) {
+    cancel()
+    let session = generation
+    let superseded = FlutterError(code: "cancelled", message: "start superseded", details: nil)
+    SFSpeechRecognizer.requestAuthorization { status in
+      guard status == .authorized else {
+        DispatchQueue.main.async {
+          guard session == self.generation else { result(superseded); return }
+          result(FlutterError(code: "permission_denied", message: "speech recognition not authorized", details: nil))
+        }
+        return
+      }
+      self.requestMicrophone { granted in
+        DispatchQueue.main.async {
+          guard session == self.generation else { result(superseded); return }
+          guard granted else {
+            result(FlutterError(code: "permission_denied", message: "microphone not authorized", details: nil))
+            return
+          }
+          do {
+            try self.begin()
+            result(nil)
+          } catch {
+            self.finish()
+            result(FlutterError(code: "unavailable", message: "speech recognition unavailable", details: nil))
+          }
+        }
+      }
+    }
+  }
+
+  func stop() {
+    guard request != nil else {
+      // Stop before begin() finished: drop the pending start.
+      generation += 1
+      return
+    }
+    audioEngine.stop()
+    audioEngine.inputNode.removeTap(onBus: 0)
+    // Recognizer delivers the final result after endAudio, handled in begin().
+    request?.endAudio()
+  }
+
+  /// Ends the session now, without a final result, and drops any pending start.
+  func cancel() {
+    generation += 1
+    lastText = ""
+    finish()
+  }
+
+  private func requestMicrophone(_ completion: @escaping (Bool) -> Void) {
+    if #available(iOS 17.0, *) {
+      AVAudioApplication.requestRecordPermission(completionHandler: completion)
+    } else {
+      AVAudioSession.sharedInstance().requestRecordPermission(completion)
+    }
+  }
+
+  private func begin() throws {
+    // On-device only: audio never leaves the phone. No model means no voice entry.
+    guard let recognizer = recognizer, recognizer.isAvailable, recognizer.supportsOnDeviceRecognition else {
+      throw Unavailable()
+    }
+    finish()
+
+    let session = AVAudioSession.sharedInstance()
+    try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+    try session.setActive(true, options: .notifyOthersOnDeactivation)
+
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.shouldReportPartialResults = true
+    request.requiresOnDeviceRecognition = true
+    self.request = request
+    lastText = ""
+
+    let input = audioEngine.inputNode
+    input.installTap(onBus: 0, bufferSize: 1024, format: input.outputFormat(forBus: 0)) { buffer, _ in
+      request.append(buffer)
+    }
+    audioEngine.prepare()
+    try audioEngine.start()
+
+    task = recognizer.recognitionTask(with: request) { [weak self] result, _ in
+      DispatchQueue.main.async {
+        // Ignore callbacks from a session that was stopped, cancelled or replaced.
+        guard let self = self, self.request === request else { return }
+        if let result = result {
+          self.lastText = result.bestTranscription.formattedString
+          if !result.isFinal {
+            self.eventSink?(["type": "partial", "text": self.lastText])
+            return
+          }
+        }
+        // Final result, or an error after the user stopped: deliver what we heard.
+        self.eventSink?(["type": "final", "text": self.lastText])
+        self.finish()
+      }
+    }
+  }
+
+  private func finish() {
+    audioEngine.stop()
+    audioEngine.inputNode.removeTap(onBus: 0)
+    request = nil
+    task?.cancel()
+    task = nil
+    try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
   }
 }

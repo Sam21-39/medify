@@ -119,7 +119,7 @@ class _AddEditProfilePageState extends State<AddEditProfilePage> {
 
                   // Relationship dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedRelationship,
+                    initialValue: _selectedRelationship,
                     decoration: const InputDecoration(
                       labelText: 'Relationship',
                       prefixIcon: Icon(Icons.family_restroom),
@@ -187,7 +187,7 @@ class _AddEditProfilePageState extends State<AddEditProfilePage> {
       children: [
         Text('Avatar', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: AppSizes.paddingM),
-        Container(
+        SizedBox(
           height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,

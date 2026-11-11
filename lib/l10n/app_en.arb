@@ -49,7 +49,22 @@
   "notes": "Notes",
   "noMedicines": "No medicines added yet",
   "addYourFirstMedicine": "Add your first medicine",
-  
+  "tapPlusToAddMedicine": "Tap + to add your first medicine",
+  "addMenuManual": "Manual entry",
+  "addMenuVoice": "Voice input",
+  "voiceInputTitle": "Voice input",
+  "voiceTapToSpeak": "Tap the microphone and say your medicine",
+  "voiceListening": "Listening… tap the microphone when you are done",
+  "voiceExample": "For example: Paracetamol 500 mg twice a day after food for 5 days",
+  "voicePermissionDenied": "Microphone or speech permission is off. Turn it on in Settings, or enter the medicine manually.",
+  "voiceUnavailable": "Voice input is not available on this device. Enter the medicine manually.",
+  "voiceNoSpeech": "We did not catch that. Tap the microphone to try again.",
+  "voiceEnterManually": "Enter manually",
+  "voiceReviewBanner": "Review voice entry. Nothing saved yet.",
+  "voiceDurationDays": "Duration (days)",
+  "voiceStartListening": "Start listening",
+  "voiceStop": "Stop",
+
   "reminders": "Reminders",
   "todaysSchedule": "Today's Schedule",
   "upcomingReminders": "Upcoming Reminders",
@@ -101,5 +116,68 @@
   "bengali": "Bengali",
   
   "aboutDialogDesc": "Medify helps you stay on track with your medications through timely reminders and comprehensive tracking.",
-  "copyrightNotice": "© 2025 Medify. All rights reserved."
+  "copyrightNotice": "© 2025 Medify. All rights reserved.",
+
+    "settingsTitle": "Settings",
+    "appSection": "App",
+    "notificationsSection": "Notifications",
+    "aboutSection": "About",
+    "speakReminder": "Speak reminder",
+    "speakReminderDesc": "Medicine name and time, up to 3 times",
+    "resetAllSettings": "Reset All Settings",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "selectTheme": "Select Theme",
+    "themeLightDesc": "Bright and clean",
+    "themeDarkDesc": "Easy on the eyes",
+    "themeSystemDesc": "Follow device settings",
+    "snoozeDuration": "Snooze Duration",
+    "selectSnoozeDuration": "Select Snooze Duration",
+    "snoozeMinutes": "{count} minutes",
+    "@snoozeMinutes": {
+      "placeholders": {
+          "count": {
+              "type": "int"
+          }
+      }
+  },
+    "snoozeOneHour": "1 hour",
+    "snoozeQuick": "Quick reminder",
+    "snoozeStandard": "Standard delay",
+    "snoozeLong": "Longer break",
+    "achievements": "Achievements",
+    "achievementsDesc": "View your unlocked badges and progress",
+    "version": "Version",
+    "resetSettings": "Reset Settings",
+    "resetSettingsConfirm": "Are you sure you want to reset all settings to default values?",
+    "reset": "Reset",
+    "settingsResetDone": "Settings reset to default",
+    "historyTitle": "History",
+    "refresh": "Refresh",
+    "filter": "Filter",
+    "historyExported": "History exported successfully!",
+    "exporting": "Exporting...",
+    "historyLoadError": "Error loading history",
+    "noLogs": "No Logs",
+    "noLogsMatchFilters": "No logs match your filters",
+    "noMedicinesForDate": "No medicines scheduled for this date",
+    "activeFilters": "Active Filters:",
+    "clearAll": "Clear All",
+    "takenAt": "Taken at {time}",
+    "@takenAt": {
+      "placeholders": {
+          "time": {
+              "type": "String"
+          }
+      }
+  },
+    "filterHistory": "Filter History",
+    "medicineFilterLabel": "Medicine:",
+    "allMedicines": "All Medicines",
+    "statusFilterLabel": "Status:",
+    "allStatuses": "All Statuses",
+    "apply": "Apply",
+    "skipped": "Skipped"
 }
