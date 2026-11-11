@@ -29,6 +29,7 @@ class VoiceCapturePage extends StatefulWidget {
 class _VoiceCapturePageState extends State<VoiceCapturePage> {
   StreamSubscription<SttEvent>? _subscription;
   Timer? _stopTimer;
+  final _gate = SttSessionGate();
   _VoiceStatus _status = _VoiceStatus.idle;
   String _transcript = '';
   bool _heardNothing = false;
@@ -44,17 +45,20 @@ class _VoiceCapturePageState extends State<VoiceCapturePage> {
   void dispose() {
     _stopTimer?.cancel();
     _subscription?.cancel();
+    _gate.close();
     NativeSttChannel.cancelQuietly();
     super.dispose();
   }
 
   Future<void> _start() async {
+    _stopTimer?.cancel();
     final l10n = AppLocalizations.of(context)!;
     setState(() {
       _status = _VoiceStatus.listening;
       _transcript = '';
       _heardNothing = false;
     });
+    _gate.open();
     try {
       await NativeSttChannel.start();
       // Left the page while the permission prompt was up.
@@ -62,6 +66,7 @@ class _VoiceCapturePageState extends State<VoiceCapturePage> {
     } on PlatformException catch (e) {
       if (e.code == 'cancelled') {
         // Stopped before it began: back to idle, nothing to report.
+        _gate.close();
         if (mounted) setState(() => _status = _VoiceStatus.idle);
         return;
       }
@@ -79,6 +84,7 @@ class _VoiceCapturePageState extends State<VoiceCapturePage> {
   }
 
   void _setFailed(_VoiceStatus status, String message) {
+    _gate.close();
     if (!mounted) return;
     setState(() => _status = status);
     getIt<AppMessenger>().show(message, error: true);
@@ -90,6 +96,8 @@ class _VoiceCapturePageState extends State<VoiceCapturePage> {
       // No final or error after stop: stop waiting and return to idle.
       _stopTimer?.cancel();
       _stopTimer = Timer(const Duration(seconds: 3), () {
+        _gate.close();
+        NativeSttChannel.cancelQuietly();
         if (mounted) setState(() => _status = _VoiceStatus.idle);
       });
     } else {
@@ -98,8 +106,10 @@ class _VoiceCapturePageState extends State<VoiceCapturePage> {
   }
 
   void _onEvent(SttEvent event) {
+    if (!_gate.accepting || !mounted) return;
     _stopTimer?.cancel();
-    if (!mounted) return;
+    // Terminal events end the session: a duplicate final is dropped.
+    if (event.isFinal || event.errorCode != null) _gate.close();
     if (event.errorCode != null) {
       _setFailed(
         _VoiceStatus.unavailable,
@@ -219,6 +229,7 @@ class _VoiceCapturePageState extends State<VoiceCapturePage> {
               ],
               TextButton(
                 onPressed: () {
+                  _gate.close();
                   NativeSttChannel.cancelQuietly();
                   getIt<AppMessenger>().pop<MedicineDraft>();
                 },

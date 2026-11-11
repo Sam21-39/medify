@@ -53,7 +53,12 @@ class MainActivity : FlutterActivity() {
         val result = pendingSttStart ?: return
         pendingSttStart = null
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-            beginStt(result)
+            // This callback can run on any API level, so re-check the API 33 requirement before beginStt.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                beginStt(result)
+            } else {
+                result.error("unavailable", "on-device speech recognition needs Android 13", null)
+            }
         } else {
             result.error("permission_denied", "microphone not authorized", null)
         }

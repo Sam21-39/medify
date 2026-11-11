@@ -47,3 +47,18 @@ abstract final class NativeSttChannel {
         );
       });
 }
+
+/// Tracks whether a native session is live. Native events carry no session id,
+/// so events are accepted only while a session is open: closed on cancel or
+/// timeout, so late finals are dropped.
+// ponytail: a late final from a cancelled session is accepted if a new session
+// opens first. Fix: tag events with a session id from native.
+class SttSessionGate {
+  bool _open = false;
+
+  bool get accepting => _open;
+
+  void open() => _open = true;
+
+  void close() => _open = false;
+}
