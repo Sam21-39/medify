@@ -104,6 +104,7 @@ Future<void> initializeDependencies() async {
     () => RefillReminderService(
       getIt<NotificationService>(),
       getIt<MedicineRepository>(),
+      getIt<SettingsStore>(),
     ),
   );
 

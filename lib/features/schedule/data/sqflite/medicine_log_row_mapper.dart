@@ -71,6 +71,7 @@ class MedicineLogRowMapper {
       scheduledTime: _fromMs(row['scheduled_at_utc'] as int),
       takenTime: takenAt == null ? null : _fromMs(takenAt),
       status: status,
+      skipReason: row['skip_reason'] as String?,
       snoozedUntil: snoozedUntil == null ? null : _fromMs(snoozedUntil),
       actorProfileId: row['actor_profile_id'] as int,
       createdAt: _fromMs(row['created_at'] as int),

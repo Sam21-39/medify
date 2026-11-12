@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/notifications/notification_service.dart';
 
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
@@ -73,34 +75,30 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Mark log as taken
   Future<void> markAsTaken(int id) async {
     try {
-      // Get the log to find medicine ID
-      final log = await _medicineLogRepository.getLogById(id);
+      // The repo lowers stock in the same transaction; the returned log gives the medicine ID.
+      final log = (await _medicineLogRepository.markAsTaken(id)).unwrap();
+      await getIt<NotificationService>().cancelOccurrence(id);
 
-      // Mark as taken
-      (await _medicineLogRepository.markAsTaken(id)).unwrap();
-
-      // Decrement medicine quantity if refill service is available
-      if (_refillReminderService != null && log != null) {
-        await _refillReminderService.decrementMedicineQuantity(log.medicineId);
-      }
+      await _refillReminderService?.checkMedicine(log.medicineId);
 
       // Check for new achievements
       if (_achievementService != null) {
         await _achievementService.checkAndAwardAchievements();
       }
 
-      emit(const MedicineLogOperationSuccess('Marked as taken'));
+      emit(MedicineLogOperationSuccess('Marked as taken', undoId: id));
       await loadTodayLogs();
     } catch (e) {
       emit(MedicineLogError('Failed to mark as taken: ${e.toString()}'));
     }
   }
 
-  /// Mark log as skipped
-  Future<void> markAsSkipped(int id) async {
+  /// Mark log as skipped, with an optional preset reason key
+  Future<void> markAsSkipped(int id, {String? reason}) async {
     try {
-      (await _medicineLogRepository.markAsSkipped(id)).unwrap();
-      emit(const MedicineLogOperationSuccess('Marked as skipped'));
+      (await _medicineLogRepository.markAsSkipped(id, reason: reason)).unwrap();
+      await getIt<NotificationService>().cancelOccurrence(id);
+      emit(MedicineLogOperationSuccess('Marked as skipped', undoId: id));
       await loadTodayLogs();
     } catch (e) {
       emit(MedicineLogError('Failed to mark as skipped: ${e.toString()}'));
@@ -110,11 +108,22 @@ class MedicineLogCubit extends Cubit<MedicineLogState> {
   /// Snooze log
   Future<void> snoozeLog(int id, int minutes) async {
     try {
-      (await _medicineLogRepository.snoozeLog(id, minutes)).unwrap();
+      await getIt<NotificationService>().snooze(id, minutes);
       emit(MedicineLogOperationSuccess('Snoozed for $minutes minutes'));
       await loadTodayLogs();
     } catch (e) {
       emit(MedicineLogError('Failed to snooze: ${e.toString()}'));
+    }
+  }
+
+  /// Undo a Taken or Skipped back to scheduled, and reschedule its reminders
+  Future<void> undo(int id) async {
+    try {
+      (await _medicineLogRepository.revertToScheduled(id)).unwrap();
+      await getIt<NotificationService>().rescheduleUpcoming();
+      await loadTodayLogs();
+    } catch (e) {
+      emit(MedicineLogError('Failed to undo: ${e.toString()}'));
     }
   }
 

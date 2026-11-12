@@ -9,11 +9,11 @@ import 'package:medify/core/design/adaptive.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/widgets/empty_state.dart';
-import 'package:medify/core/widgets/medify_icon.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
 import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/l10n/app_localizations.dart';
+import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_state.dart';
 import 'package:medify/features/schedule/presentation/cubit/medicine_log_cubit.dart';
@@ -186,17 +186,16 @@ class _MedicineListPageState extends State<MedicineListPage>
                                       ),
                                       child: Dismissible(
                                         key: Key(medicine.id.toString()),
-                                        direction: DismissDirection.endToStart,
+                                        direction: medicine.isStopped
+                                            ? DismissDirection.none
+                                            : DismissDirection.endToStart,
+                                        // Stop keeps the card (as Stopped), so it snaps back.
                                         confirmDismiss: (direction) async {
-                                          return await _showDeleteConfirmation(
+                                          await _stopMedicine(
                                             context,
-                                            medicine.name,
+                                            medicine,
                                           );
-                                        },
-                                        onDismissed: (direction) {
-                                          getIt<MedicineCubit>().deleteMedicine(
-                                            medicine.id!,
-                                          );
+                                          return false;
                                         },
                                         background: Container(
                                           alignment: Alignment.centerRight,
@@ -213,14 +212,15 @@ class _MedicineListPageState extends State<MedicineListPage>
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
-                                              MedifyIcon(
-                                                Assets.icons.delete,
+                                              Icon(
+                                                Icons.stop_circle_outlined,
                                                 color: Colors.white,
                                                 size: AppSizes.iconL,
                                               ),
                                               SizedBox(height: 4),
                                               Text(
-                                                'Delete',
+                                                AppLocalizations.of(context)!
+                                                    .stopMedicine,
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.bold,
@@ -241,6 +241,8 @@ class _MedicineListPageState extends State<MedicineListPage>
                                                   medicine.id!,
                                                 );
                                           },
+                                          onStop: () =>
+                                              _stopMedicine(context, medicine),
                                         ),
                                       ),
                                     ),
@@ -278,31 +280,13 @@ class _MedicineListPageState extends State<MedicineListPage>
     );
   }
 
-  /// Show delete confirmation dialog
-  Future<bool?> _showDeleteConfirmation(
-    BuildContext context,
-    String medicineName,
-  ) async {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        final l10n = AppLocalizations.of(context)!;
-        return AlertDialog(
-          title: Text(l10n.deleteConfirmation),
-          content: Text('Are you sure you want to delete "$medicineName"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: Text(l10n.delete),
-            ),
-          ],
-        );
-      },
+  /// Asks for the optional reason, then stops. Cancelled dialog does nothing.
+  Future<void> _stopMedicine(BuildContext context, Medicine medicine) async {
+    final result = await showStopMedicineDialog(context);
+    if (result == null || !context.mounted) return;
+    await getIt<MedicineCubit>().stopMedicine(
+      medicine.id!,
+      reason: result.reason,
     );
   }
 

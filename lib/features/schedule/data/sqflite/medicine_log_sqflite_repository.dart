@@ -172,7 +172,10 @@ class SqfliteMedicineLogRepository implements MedicineLogRepository {
   );
 
   @override
-  Future<Either<Failure, MedicineLog>> markAsSkipped(int id) => _eitherWrite(
+  Future<Either<Failure, MedicineLog>> markAsSkipped(
+    int id, {
+    String? reason,
+  }) => _eitherWrite(
     () => _transition(id, (txn, row) async {
       final status = row['status'];
       if (status == 'skipped') return Right(MedicineLogRowMapper.fromRow(row));
@@ -183,7 +186,7 @@ class SqfliteMedicineLogRepository implements MedicineLogRepository {
         'occurrences',
         {
           'status': 'skipped',
-          'skip_reason': null,
+          'skip_reason': reason,
           'updated_at': DateTime.now().toUtc().millisecondsSinceEpoch,
         },
         where: 'id = ?',
@@ -192,6 +195,48 @@ class SqfliteMedicineLogRepository implements MedicineLogRepository {
       return Right(await _reread(txn, id));
     }),
   );
+
+  @override
+  Future<Either<Failure, MedicineLog>> revertToScheduled(int id) =>
+      _eitherWrite(
+        () => _transition(id, (txn, row) async {
+          final status = row['status'];
+          final snoozed = row['snoozed_until_utc'] != null;
+          if (status == 'scheduled' && !snoozed) {
+            return Right(MedicineLogRowMapper.fromRow(row));
+          }
+          if (status != 'taken' &&
+              status != 'skipped' &&
+              status != 'scheduled') {
+            return Left(Failure('cannot undo: status is $status'));
+          }
+          final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+          final wasTaken = status == 'taken';
+          // A dose whose time has passed comes back as missed, not pending.
+          final overdue = (row['scheduled_at_utc']! as int) < now;
+          await txn.update(
+            'occurrences',
+            {
+              'status': overdue ? 'missed' : 'scheduled',
+              'taken_at_utc': null,
+              'skip_reason': null,
+              'snoozed_until_utc': null,
+              'updated_at': now,
+            },
+            where: 'id = ?',
+            whereArgs: [id],
+          );
+          if (wasTaken) {
+            // ponytail: if the taken decrement was clamped at 0, this restore over-credits; store the applied delta if that matters.
+            await txn.rawUpdate(
+              'UPDATE medicines SET current_quantity = current_quantity + ? '
+              'WHERE id = ? AND current_quantity IS NOT NULL',
+              [row['dose_snapshot_amount'], row['medicine_id']],
+            );
+          }
+          return Right(await _reread(txn, id));
+        }),
+      );
 
   @override
   Future<MedicineLog> markAsMissed(int id) async {

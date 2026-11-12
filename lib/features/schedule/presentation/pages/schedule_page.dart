@@ -1,4 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,6 +16,7 @@ import 'package:medify/core/widgets/empty_state.dart';
 import 'package:medify/core/widgets/shimmer_loading.dart';
 import 'package:medify/gen/assets.gen.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/features/medicines/presentation/widgets/medicine_card.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
 import 'package:medify/features/medicines/presentation/cubit/medicine_state.dart';
@@ -167,7 +169,16 @@ class _SchedulePageState extends State<SchedulePage>
               },
               listener: (context, state) {
                 if (state is MedicineLogOperationSuccess) {
-                  getIt<AppMessenger>().show(state.message);
+                  final undoId = state.undoId;
+                  getIt<AppMessenger>().show(
+                    state.message,
+                    actionLabel: undoId == null
+                        ? null
+                        : AppLocalizations.of(context)!.undo,
+                    onAction: undoId == null
+                        ? null
+                        : () => getIt<MedicineLogCubit>().undo(undoId),
+                  );
                 }
               },
             ),
@@ -240,7 +251,9 @@ class _SchedulePageState extends State<SchedulePage>
                             ),
                             const SizedBox(height: AppSizes.paddingM),
                           ],
-                          if (_medicines.any((m) => m.isLowStock))
+                          if (_medicines.any(
+                            (m) => m.isLowStock || m.isOutOfStock,
+                          ))
                             Padding(
                               padding: const EdgeInsets.only(
                                 bottom: AppSizes.paddingM,
@@ -248,9 +261,36 @@ class _SchedulePageState extends State<SchedulePage>
                               child: Material(
                                 color: AppColors.error.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(12),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: Text('Refill soon'),
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    4,
+                                    4,
+                                    4,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Text('Refill soon'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          final medicine = _medicines
+                                              .firstWhereOrNull(
+                                                (m) =>
+                                                    m.isLowStock ||
+                                                    m.isOutOfStock,
+                                              );
+                                          if (medicine == null) return;
+                                          showRefillDialog(context, medicine);
+                                        },
+                                        child: Text(
+                                          AppLocalizations.of(context)!
+                                              .refillButton,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -446,7 +486,7 @@ class _SchedulePageState extends State<SchedulePage>
                 medicine: medicine,
                 log: log,
                 onTaken: () => _markAsTaken(log.id!),
-                onSkip: () => _markAsSkipped(log.id!),
+                onSkip: (reason) => _markAsSkipped(log.id!, reason),
                 onSnooze: (minutes) => _snoozeLog(log.id!, minutes),
               ),
             );
@@ -478,8 +518,8 @@ class _SchedulePageState extends State<SchedulePage>
   }
 
   /// Mark log as skipped
-  void _markAsSkipped(int logId) {
-    getIt<MedicineLogCubit>().markAsSkipped(logId);
+  void _markAsSkipped(int logId, String? reason) {
+    getIt<MedicineLogCubit>().markAsSkipped(logId, reason: reason);
   }
 
   /// Snooze log

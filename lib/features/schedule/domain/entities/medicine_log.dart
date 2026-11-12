@@ -13,6 +13,7 @@ class MedicineLog extends Equatable {
   final DateTime? takenTime;
   final MedicineLogStatus status;
   final String? notes;
+  final String? skipReason;
   final DateTime? snoozedUntil;
   final int actorProfileId;
   final DateTime createdAt;
@@ -27,6 +28,7 @@ class MedicineLog extends Equatable {
     this.takenTime,
     required this.status,
     this.notes,
+    this.skipReason,
     this.snoozedUntil,
     this.actorProfileId = 0,
     required this.createdAt,
@@ -43,6 +45,7 @@ class MedicineLog extends Equatable {
     DateTime? takenTime,
     MedicineLogStatus? status,
     String? notes,
+    String? skipReason,
     DateTime? snoozedUntil,
     int? actorProfileId,
     DateTime? createdAt,
@@ -57,6 +60,7 @@ class MedicineLog extends Equatable {
       takenTime: takenTime ?? this.takenTime,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      skipReason: skipReason ?? this.skipReason,
       snoozedUntil: snoozedUntil ?? this.snoozedUntil,
       actorProfileId: actorProfileId ?? this.actorProfileId,
       createdAt: createdAt ?? this.createdAt,
@@ -91,6 +95,7 @@ class MedicineLog extends Equatable {
     takenTime,
     status,
     notes,
+    skipReason,
     snoozedUntil,
     actorProfileId,
     createdAt,

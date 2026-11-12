@@ -11,6 +11,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:medify/core/database/enums.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/error/failure.dart';
+import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
@@ -18,6 +19,7 @@ import 'package:medify/features/medicines/domain/repositories/medicine_repositor
 import 'package:medify/features/schedule/domain/engine/notification_payload.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
 import 'package:medify/features/schedule/domain/repositories/medicine_log_repository.dart';
+import 'package:medify/features/schedule/presentation/cubit/medicine_log_cubit.dart';
 
 /// Service for managing local notifications
 /// Handles foreground, background, and terminated app states
@@ -33,10 +35,12 @@ class NotificationService {
   String? _installationId;
   Future<String>? _installationIdLoad;
   Future<void> _rescheduleChain = Future.value();
+  static bool _launchHandled = false;
 
   // Notification channel constants
   static const String _channelId = 'medicine_reminders';
   static const String _channelName = 'Medicine Reminders';
+  static const String _doseCategory = 'dose';
   static const String _channelDescription =
       'Notifications for medicine reminders';
 
@@ -64,7 +68,10 @@ class NotificationService {
       );
 
       // iOS initialization settings
-      const iosSettings = DarwinInitializationSettings(
+      // Every dose action opens the app (foreground), so it runs in the main
+      // isolate with DI. Without it iOS would run the action in the background.
+      final doseActionOptions = {DarwinNotificationActionOption.foreground};
+      final iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
@@ -73,9 +80,31 @@ class NotificationService {
         defaultPresentAlert: true,
         defaultPresentSound: true,
         defaultPresentBadge: true,
+        notificationCategories: [
+          DarwinNotificationCategory(
+            _doseCategory,
+            actions: [
+              DarwinNotificationAction.plain(
+                'taken',
+                'Taken',
+                options: doseActionOptions,
+              ),
+              DarwinNotificationAction.plain(
+                'snooze',
+                'Snooze',
+                options: doseActionOptions,
+              ),
+              DarwinNotificationAction.plain(
+                'skip',
+                'Skip',
+                options: doseActionOptions,
+              ),
+            ],
+          ),
+        ],
       );
 
-      const initSettings = InitializationSettings(
+      final initSettings = InitializationSettings(
         android: androidSettings,
         iOS: iosSettings,
       );
@@ -145,6 +174,21 @@ class NotificationService {
     }
   }
 
+  /// Handle a cold start from a notification. Call after runApp.
+  Future<void> handleLaunchDetails() async {
+    if (_launchHandled) return;
+    _launchHandled = true;
+    try {
+      final details = await _notifications.getNotificationAppLaunchDetails();
+      final response = details?.notificationResponse;
+      if (details?.didNotificationLaunchApp == true && response != null) {
+        await _handleResponse(response);
+      }
+    } catch (e) {
+      _log('Error reading launch details: $e', isError: true);
+    }
+  }
+
   /// Handle notification tap (foreground and background). Only a well-formed
   /// payload for this installation is acted on.
   void _onNotificationTapped(NotificationResponse response) =>
@@ -179,51 +223,75 @@ class NotificationService {
         return;
       }
 
-      if (response.actionId == 'snooze') {
-        await _handleSnoozeAction(log);
-      } else if (response.actionId == 'skip') {
-        final result = await logRepository.markAsSkipped(occurrenceId);
-        result.fold(
-          (failure) => _log(
-            'Skip failed for occurrence $occurrenceId: ${failure.message}',
-            isError: true,
-          ),
-          (_) => _log('Marked occurrence $occurrenceId as skipped'),
-        );
-      } else {
-        final seconds = DateTimeUtils.dateTimeToSeconds(log.scheduledTime);
-        getIt<AppMessenger>().go(
-          '/alarm?medicineId=${log.medicineId}&seconds=$seconds',
-        );
+      switch (response.actionId) {
+        case 'taken':
+          // Same routine as the in-app Taken button: stock, cancel, refill, achievements.
+          await getIt<MedicineLogCubit>().markAsTaken(occurrenceId);
+        case 'snooze':
+          await snooze(
+            occurrenceId,
+            getIt<PreferencesService>().snoozeDuration,
+          );
+          await getIt<MedicineLogCubit>().loadTodayLogs();
+        case 'skip':
+          (await logRepository.markAsSkipped(occurrenceId)).unwrap();
+          await cancelOccurrence(occurrenceId);
+          await getIt<MedicineLogCubit>().loadTodayLogs();
+        default:
+          final seconds = DateTimeUtils.dateTimeToSeconds(log.scheduledTime);
+          getIt<AppMessenger>().go(
+            '/alarm?medicineId=${log.medicineId}&seconds=$seconds',
+          );
       }
     } catch (e) {
       _log('Error handling notification tap: $e', isError: true);
     }
   }
 
-  /// Handle "Snooze" action: one-off reminder in 5 minutes for the same occurrence
-  Future<void> _handleSnoozeAction(MedicineLog log) async {
+  /// Cancel the reminder, prior notice and snooze for one occurrence.
+  /// Queued behind any running reschedule, so a reschedule cannot re-add it.
+  Future<void> cancelOccurrence(int occurrenceId) {
+    final next = _rescheduleChain.then(
+      (_) => _cancelOccurrenceNow(occurrenceId),
+    );
+    _rescheduleChain = next;
+    return next;
+  }
+
+  Future<void> _cancelOccurrenceNow(int occurrenceId) async {
     try {
-      final when = DateTime.now().add(const Duration(minutes: 5));
-      final payload = encodeNotificationPayload(
-        installationId: await _installationIdFor(),
-        occurrenceId: log.id!,
-      );
-      await _notifications.zonedSchedule(
-        id: _snoozeId(log.id!),
-        title: '💊 Reminder: Time to take your medicine',
-        body: 'Snoozed reminder',
-        scheduledDate: tz.TZDateTime.from(when, tz.local),
-        notificationDetails: _reminderDetails(
-          bigText: 'Don\'t forget to take your medicine!',
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        payload: payload,
-      );
-      _log('Snoozed notification scheduled for $when');
+      await _notifications.cancel(id: _mainId(occurrenceId));
+      await _notifications.cancel(id: _priorId(occurrenceId));
+      await _notifications.cancel(id: _snoozeId(occurrenceId));
     } catch (e) {
-      _log('Error handling snooze action: $e', isError: true);
+      _log('Error canceling occurrence $occurrenceId: $e', isError: true);
     }
+  }
+
+  /// Snooze one occurrence: store snoozed_until_utc and schedule one reminder
+  /// at now + [minutes]. Throws if the repo rejects the snooze.
+  Future<void> snooze(int occurrenceId, int minutes) async {
+    (await getIt<MedicineLogRepository>().snoozeLog(
+      occurrenceId,
+      minutes,
+    )).unwrap();
+    final when = DateTime.now().add(Duration(minutes: minutes));
+    final payload = encodeNotificationPayload(
+      installationId: await _installationIdFor(),
+      occurrenceId: occurrenceId,
+    );
+    await _notifications.zonedSchedule(
+      id: _snoozeId(occurrenceId),
+      title: '💊 Reminder: Time to take your medicine',
+      body: 'Snoozed reminder',
+      scheduledDate: tz.TZDateTime.from(when, tz.local),
+      notificationDetails: _reminderDetails(
+        bigText: 'Don\'t forget to take your medicine!',
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
+    );
+    _log('Snoozed notification scheduled for $when');
   }
 
   /// Installation ID: random, created once, stored in installation_metadata.
@@ -404,6 +472,11 @@ class NotificationService {
     String? profileName,
   }) async {
     final occurrenceId = log.id!;
+    // Re-read: the caller's snapshot may be stale (taken or skipped meanwhile).
+    final current = await getIt<MedicineLogRepository>().getLogById(
+      occurrenceId,
+    );
+    if (current == null || current.status != MedicineLogStatus.pending) return;
     final when = tz.TZDateTime.from(log.scheduledTime, tz.local);
     final payload = encodeNotificationPayload(
       installationId: await _installationIdFor(),
@@ -477,11 +550,8 @@ class NotificationService {
       enableVibration: true,
       styleInformation: BigTextStyleInformation(bigText),
       actions: const <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'snooze',
-          'Snooze (5 min)',
-          showsUserInterface: true,
-        ),
+        AndroidNotificationAction('taken', 'Taken', showsUserInterface: true),
+        AndroidNotificationAction('snooze', 'Snooze', showsUserInterface: true),
         AndroidNotificationAction('skip', 'Skip', showsUserInterface: true),
       ],
       fullScreenIntent: true,
@@ -494,6 +564,7 @@ class NotificationService {
       sound: 'notification_sound.mp3',
       badgeNumber: 1,
       interruptionLevel: InterruptionLevel.critical,
+      categoryIdentifier: _doseCategory,
     );
     return NotificationDetails(android: androidDetails, iOS: iosDetails);
   }
@@ -504,7 +575,8 @@ class NotificationService {
   Future<void> _cancelForReschedule(List<MedicineLog> logs) async {
     for (final log in logs) {
       if (log.id == null) continue;
-      if (log.status == MedicineLogStatus.pending) {
+      if (log.status == MedicineLogStatus.pending ||
+          log.status == MedicineLogStatus.snoozed) {
         await _notifications.cancel(id: _mainId(log.id!));
         await _notifications.cancel(id: _priorId(log.id!));
       } else {
@@ -528,13 +600,18 @@ class NotificationService {
       }
       _log('Canceled reminders for medicine ID $medicineId');
     } catch (e) {
+      // Rethrown: callers must not change the DB when reminders could not be canceled.
       _log('Error canceling medicine reminders $e', isError: true);
+      rethrow;
     }
   }
 
   /// Cancel all reminders, then schedule pending occurrences of active medicines.
   /// Run after the occurrence window is generated (startup, resume).
   /// Runs are queued, so overlapping calls never interleave.
+  /// Waits for queued reschedules and cancels to finish. Errors are ignored.
+  Future<void> drainReschedules() => _rescheduleChain.catchError((_) {});
+
   Future<void> rescheduleUpcoming() {
     final next = _rescheduleChain.then((_) => _rescheduleOnce());
     _rescheduleChain = next;

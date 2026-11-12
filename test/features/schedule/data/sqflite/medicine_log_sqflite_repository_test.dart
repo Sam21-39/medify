@@ -102,6 +102,15 @@ void main() {
     expect(await stock(), 0);
   });
 
+  test('skip and missed leave stock unchanged', () async {
+    final skipped = await logs.addLog(log());
+    await logs.markAsSkipped(skipped.id!);
+    final missed = await logs.addLog(log(at: DateTime(2026, 3, 1, 9)));
+    await logs.markAsMissed(missed.id!);
+
+    expect(await stock(), 10);
+  });
+
   test('markAsSkipped after taken returns Left and leaves state', () async {
     final added = await logs.addLog(log());
     await logs.markAsTaken(added.id!);
@@ -189,5 +198,83 @@ void main() {
 
   test('addLog without scheduleId throws StateError', () async {
     expect(() => logs.addLog(log(noSchedule: true)), throwsStateError);
+  });
+
+  test('undo taken restores stock once; a second undo does nothing', () async {
+    final added = await logs.addLog(log());
+    await logs.markAsTaken(added.id!);
+    expect(await stock(), 8);
+
+    // The dose is in the past, so undo returns it to missed, not pending.
+    final first = (await logs.revertToScheduled(added.id!)).unwrap();
+    expect(first.status, MedicineLogStatus.missed);
+    expect(await stock(), 10);
+
+    final second = await logs.revertToScheduled(added.id!);
+    expect(second.isLeft(), isTrue);
+    expect(await stock(), 10);
+  });
+
+  test(
+    'undo skipped on a past dose returns to missed and clears the reason',
+    () async {
+      final added = await logs.addLog(log());
+      await logs.markAsSkipped(added.id!, reason: 'felt_unwell');
+
+      final reverted = (await logs.revertToScheduled(added.id!)).unwrap();
+
+      expect(reverted.status, MedicineLogStatus.missed);
+      expect(reverted.skipReason, isNull);
+      expect(await stock(), 10);
+    },
+  );
+
+  test('undo of missed returns Left and leaves the row unchanged', () async {
+    final added = await logs.addLog(log());
+    await logs.markAsMissed(added.id!);
+    final before = (await logs.getLogById(added.id!))!;
+
+    final result = await logs.revertToScheduled(added.id!);
+
+    expect(result.isLeft(), isTrue);
+    expect((await logs.getLogById(added.id!))!, before);
+  });
+
+  test('undo taken with null stock leaves stock null', () async {
+    await db.update(
+      'medicines',
+      {'current_quantity': null},
+      where: 'id = ?',
+      whereArgs: [medicineId],
+    );
+    final added = await logs.addLog(log());
+    await logs.markAsTaken(added.id!);
+    expect(await stock(), isNull);
+
+    await logs.revertToScheduled(added.id!);
+
+    expect(await stock(), isNull);
+  });
+
+  test('undo of snoozed clears snoozed_until_utc', () async {
+    final added = await logs.addLog(
+      log(at: DateTime.now().add(const Duration(days: 1))),
+    );
+    await logs.snoozeLog(added.id!, 30);
+    expect((await logs.getLogById(added.id!))!.snoozedUntil, isNotNull);
+
+    final reverted = (await logs.revertToScheduled(added.id!)).unwrap();
+
+    expect(reverted.snoozedUntil, isNull);
+    expect(reverted.status, MedicineLogStatus.pending);
+  });
+
+  test('markAsSkipped stores the reason and reads it back', () async {
+    final added = await logs.addLog(log());
+    await logs.markAsSkipped(added.id!, reason: 'x');
+
+    final read = (await logs.getLogById(added.id!))!;
+    expect(read.status, MedicineLogStatus.skipped);
+    expect(read.skipReason, 'x');
   });
 }

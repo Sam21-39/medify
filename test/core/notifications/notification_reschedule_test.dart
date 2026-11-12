@@ -49,10 +49,19 @@ class _Medicines implements MedicineRepository {
 }
 
 class _Logs implements MedicineLogRepository {
+  _Logs({this.readStatus = MedicineLogStatus.pending});
+
+  /// Status returned by getLogById, i.e. what the DB says at schedule time.
+  final MedicineLogStatus readStatus;
+
   @override
   Future<List<MedicineLog>> getLogsByMedicineId(int medicineId) async => [
     _pendingLog,
   ];
+
+  @override
+  Future<MedicineLog?> getLogById(int id) async =>
+      _pendingLog.copyWith(status: readStatus);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>
@@ -96,6 +105,18 @@ void main() {
       if (c.method == 'cancel') (c.arguments as Map)['id'] as int,
   ];
 
+  List<int> scheduledIds() => [
+    for (final c in calls)
+      if (c.method == 'zonedSchedule') (c.arguments as Map)['id'] as int,
+  ];
+
+  void useLogRepo(MedicineLogStatus readStatus) {
+    GetIt.instance.unregister<MedicineLogRepository>();
+    GetIt.instance.registerSingleton<MedicineLogRepository>(
+      _Logs(readStatus: readStatus),
+    );
+  }
+
   test(
     'resume cancels only pending main and prior ids, keeps snooze',
     () async {
@@ -104,6 +125,20 @@ void main() {
       expect(calls.map((c) => c.method), isNot(contains('cancelAll')));
       expect(cancelledIds(), containsAll([4, 5]));
       expect(cancelledIds(), isNot(contains(6)), reason: 'live snooze id');
+    },
+  );
+
+  test(
+    'reschedule skips an occurrence taken after its snapshot was read',
+    () async {
+      useLogRepo(MedicineLogStatus.pending);
+      await NotificationService().rescheduleUpcoming();
+      expect(scheduledIds(), contains(4), reason: 'control: pending schedules');
+
+      calls.clear();
+      useLogRepo(MedicineLogStatus.taken);
+      await NotificationService().rescheduleUpcoming();
+      expect(scheduledIds(), isEmpty);
     },
   );
 }

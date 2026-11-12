@@ -143,6 +143,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addYourFirstMedicine => 'Add your first medicine';
 
   @override
+  String get firstMedicineAddAction => 'Add a medicine';
+
+  @override
+  String get firstMedicineLaterAction => 'Later';
+
+  @override
   String get tapPlusToAddMedicine => 'Tap + to add your first medicine';
 
   @override
@@ -472,4 +478,125 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get skipped => 'Skipped';
+
+  @override
+  String get trackStock => 'Track stock';
+
+  @override
+  String get trackStockHint => 'Track medicine stock and get refill reminders';
+
+  @override
+  String get stockTakenHelper => 'Stock goes down when you mark a dose Taken.';
+
+  @override
+  String get stockEditHelper =>
+      'Stock changes only through Taken and I refilled, not here.';
+
+  @override
+  String get refillButton => 'I refilled';
+
+  @override
+  String get refillDialogTitle => 'Refill stock';
+
+  @override
+  String get refillQuantityLabel => 'Quantity in stock';
+
+  @override
+  String get refillInvalidQuantity => 'Enter a quantity of 0 or more.';
+
+  @override
+  String get refillSaved => 'Stock updated.';
+
+  @override
+  String get refillFailed => 'Could not update stock.';
+
+  @override
+  String get skipReasonTitle => 'Why skip this dose?';
+
+  @override
+  String get skipReasonFeltUnwell => 'Felt unwell';
+
+  @override
+  String get skipReasonSideEffects => 'Side effects';
+
+  @override
+  String get skipReasonRanOut => 'Ran out';
+
+  @override
+  String get skipReasonDoctorAdvised => 'Doctor advised';
+
+  @override
+  String get skipReasonOther => 'Other';
+
+  @override
+  String get skipWithoutReason => 'Skip without reason';
+
+  @override
+  String get pauseMedicine => 'Pause';
+
+  @override
+  String get resumeMedicine => 'Resume';
+
+  @override
+  String get stopMedicine => 'Stop';
+
+  @override
+  String get stoppedLabel => 'Stopped';
+
+  @override
+  String get stopMedicineTitle => 'Stop this medicine?';
+
+  @override
+  String get stopMedicineBody =>
+      'Future doses and reminders are removed. Past history is kept.';
+
+  @override
+  String get stopReasonTitle => 'Why? (optional)';
+
+  @override
+  String get stopReasonCourseFinished => 'Course finished';
+
+  @override
+  String get stopReasonDoctorStopped => 'Doctor stopped it';
+
+  @override
+  String get stopReasonSideEffects => 'Side effects';
+
+  @override
+  String get stopReasonOther => 'Other';
+
+  @override
+  String get stopMedicineButton => 'Stop medicine';
+
+  @override
+  String get deleteAllData => 'Delete all data';
+
+  @override
+  String get deleteExportTitle => 'Export your history first?';
+
+  @override
+  String get deleteExportBody =>
+      'Deleting removes all medicines, doses, history and settings from this phone. Medify has no cloud copy, so this cannot be undone.';
+
+  @override
+  String get exportHistory => 'Export history';
+
+  @override
+  String get continueWithoutExport => 'Continue without export';
+
+  @override
+  String get deleteConfirmTitle => 'Delete everything?';
+
+  @override
+  String get deleteConfirmBody =>
+      'Type DELETE to confirm. This cannot be undone.';
+
+  @override
+  String get deleteConfirmHint => 'DELETE';
+
+  @override
+  String get deleteAllDataConfirm => 'Delete all data';
+
+  @override
+  String get deleteDataFailed => 'Could not delete data. Nothing was removed.';
 }

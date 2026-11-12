@@ -373,130 +373,140 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
                 const SizedBox(height: AppSizes.paddingS),
 
                 // Refill Tracking Section
-                // Row(
-                //   children: [
-                //     Expanded(
-                //       child: Text(
-                //         'Refill Tracking',
-                //         style: Theme.of(context).textTheme.titleLarge,
-                //       ),
-                //     ),
-                //     Switch(
-                //       value: _enableRefillTracking,
-                //       onChanged: (value) {
-                //         setState(() {
-                //           _enableRefillTracking = value;
-                //           if (!value) {
-                //             _totalQuantityController.clear();
-                //             _refillRemindDaysController.clear();
-                //           } else {
-                //             // Set default values
-                //             _refillRemindDaysController.text = '7';
-                //           }
-                //         });
-                //       },
-                //     ),
-                //   ],
-                // ),
-                // const SizedBox(height: AppSizes.paddingS),
-                // Text(
-                //   'Track medicine stock and get refill reminders',
-                //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                //     color: Theme.of(
-                //       context,
-                //     ).colorScheme.onSurface.withValues(alpha: 0.7),
-                //   ),
-                // ),
-                // if (_enableRefillTracking) ...[
-                //   const SizedBox(height: AppSizes.paddingM),
-                //   Card(
-                //     child: Padding(
-                //       padding: const EdgeInsets.all(AppSizes.paddingM),
-                //       child: Column(
-                //         children: [
-                //           CustomTextField(
-                //             label: 'Total Quantity',
-                //             hint: _getQuantityHint(),
-                //             controller: _totalQuantityController,
-                //             prefixIcon: const Icon(Icons.inventory_2),
-                //             keyboardType: const TextInputType.numberWithOptions(
-                //               decimal: true,
-                //             ),
-                //             suffixText: _selectedMedicineType.unit,
-                //             validator: (value) {
-                //               if (_enableRefillTracking) {
-                //                 if (value == null || value.isEmpty) {
-                //                   return 'Please enter total quantity';
-                //                 }
-                //                 final quantity = double.tryParse(value);
-                //                 if (quantity == null || quantity <= 0) {
-                //                   return 'Please enter a valid quantity';
-                //                 }
-                //               }
-                //               return null;
-                //             },
-                //             semanticLabel: 'Total medicine quantity',
-                //           ),
-                //           const SizedBox(height: AppSizes.paddingM),
-                //           CustomTextField(
-                //             label: 'Refill Reminder (days before)',
-                //             hint: 'e.g., 7 days',
-                //             controller: _refillRemindDaysController,
-                //             prefixIcon: const Icon(Icons.notifications_active),
-                //             keyboardType: TextInputType.number,
-                //             validator: (value) {
-                //               if (_enableRefillTracking) {
-                //                 if (value == null || value.isEmpty) {
-                //                   return 'Please enter refill reminder days';
-                //                 }
-                //                 final days = int.tryParse(value);
-                //                 if (days == null || days < 1 || days > 90) {
-                //                   return 'Enter between 1-90 days';
-                //                 }
-                //               }
-                //               return null;
-                //             },
-                //             semanticLabel: 'Refill reminder days',
-                //           ),
-                //           const SizedBox(height: AppSizes.paddingS),
-                //           Container(
-                //             padding: const EdgeInsets.all(AppSizes.paddingM),
-                //             decoration: BoxDecoration(
-                //               color: Theme.of(
-                //                 context,
-                //               ).colorScheme.primary.withValues(alpha: 0.1),
-                //               borderRadius: BorderRadius.circular(
-                //                 AppSizes.radiusM,
-                //               ),
-                //             ),
-                //             child: Row(
-                //               children: [
-                //                 Icon(
-                //                   Icons.info_outline,
-                //                   size: 20,
-                //                   color: Theme.of(context).colorScheme.primary,
-                //                 ),
-                //                 const SizedBox(width: AppSizes.paddingS),
-                //                 Expanded(
-                //                   child: Text(
-                //                     'You\'ll be notified when you have this many days of medicine left',
-                //                     style: Theme.of(context).textTheme.bodySmall
-                //                         ?.copyWith(
-                //                           color: Theme.of(
-                //                             context,
-                //                           ).colorScheme.primary,
-                //                         ),
-                //                   ),
-                //                 ),
-                //               ],
-                //             ),
-                //           ),
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-                // ],
-                // const SizedBox(height: AppSizes.paddingL),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!.trackStock,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                    Switch(
+                      value: _enableRefillTracking,
+                      onChanged: (value) {
+                        setState(() {
+                          _enableRefillTracking = value;
+                          if (!value) {
+                            _totalQuantityController.clear();
+                            _refillRemindDaysController.clear();
+                          } else {
+                            // Set default values
+                            _refillRemindDaysController.text = '7';
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.paddingS),
+                Text(
+                  AppLocalizations.of(context)!.trackStockHint,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: AppSizes.paddingXS),
+                Text(
+                  AppLocalizations.of(context)!.stockTakenHelper,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (_isEditMode) ...[
+                  const SizedBox(height: AppSizes.paddingXS),
+                  Text(
+                    AppLocalizations.of(context)!.stockEditHelper,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                if (_enableRefillTracking) ...[
+                  const SizedBox(height: AppSizes.paddingM),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.paddingM),
+                      child: Column(
+                        children: [
+                          CustomTextField(
+                            label: 'Total Quantity',
+                            hint: _getQuantityHint(),
+                            controller: _totalQuantityController,
+                            prefixIcon: const Icon(Icons.inventory_2),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            suffixText: _selectedMedicineType.unit,
+                            validator: (value) {
+                              if (_enableRefillTracking) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter total quantity';
+                                }
+                                final quantity = double.tryParse(value);
+                                if (quantity == null || quantity <= 0) {
+                                  return 'Please enter a valid quantity';
+                                }
+                              }
+                              return null;
+                            },
+                            semanticLabel: 'Total medicine quantity',
+                          ),
+                          const SizedBox(height: AppSizes.paddingM),
+                          CustomTextField(
+                            label: 'Refill Reminder (days before)',
+                            hint: 'e.g., 7 days',
+                            controller: _refillRemindDaysController,
+                            prefixIcon: const Icon(Icons.notifications_active),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (_enableRefillTracking) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter refill reminder days';
+                                }
+                                final days = int.tryParse(value);
+                                if (days == null || days < 1 || days > 90) {
+                                  return 'Enter between 1-90 days';
+                                }
+                              }
+                              return null;
+                            },
+                            semanticLabel: 'Refill reminder days',
+                          ),
+                          const SizedBox(height: AppSizes.paddingS),
+                          Container(
+                            padding: const EdgeInsets.all(AppSizes.paddingM),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusM,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: AppSizes.paddingS),
+                                Expanded(
+                                  child: Text(
+                                    'You\'ll be notified when you have this many days of medicine left',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSizes.paddingL),
                 Text('Days', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: AppSizes.paddingS),
                 Wrap(
@@ -912,23 +922,23 @@ class _AddEditMedicinePageState extends State<AddEditMedicinePage> {
   }
 
   /// Get quantity hint for refill tracking based on medicine type
-  // String _getQuantityHint() {
-  //   switch (_selectedMedicineType) {
-  //     case MedicineType.tablet:
-  //     case MedicineType.capsule:
-  //       return 'e.g., 30, 60 (total ${_selectedMedicineType.unit}s)';
-  //     case MedicineType.syrup:
-  //     case MedicineType.injection:
-  //       return 'e.g., 100, 200 (total ${_selectedMedicineType.unit})';
-  //     case MedicineType.drops:
-  //       return 'e.g., 50, 100 (total ${_selectedMedicineType.unit})';
-  //     case MedicineType.inhaler:
-  //       return 'e.g., 120, 200 (total ${_selectedMedicineType.unit}s)';
-  //     case MedicineType.ointment:
-  //     case MedicineType.patch:
-  //       return 'e.g., 1, 5 (total ${_selectedMedicineType.unit}s)';
-  //     case MedicineType.other:
-  //       return 'e.g., 30 (total ${_selectedMedicineType.unit}s)';
-  //   }
-  // }
+  String _getQuantityHint() {
+    switch (_selectedMedicineType) {
+      case MedicineType.tablet:
+      case MedicineType.capsule:
+        return 'e.g., 30, 60 (total ${_selectedMedicineType.unit}s)';
+      case MedicineType.syrup:
+      case MedicineType.injection:
+        return 'e.g., 100, 200 (total ${_selectedMedicineType.unit})';
+      case MedicineType.drops:
+        return 'e.g., 50, 100 (total ${_selectedMedicineType.unit})';
+      case MedicineType.inhaler:
+        return 'e.g., 120, 200 (total ${_selectedMedicineType.unit}s)';
+      case MedicineType.ointment:
+      case MedicineType.patch:
+        return 'e.g., 1, 5 (total ${_selectedMedicineType.unit}s)';
+      case MedicineType.other:
+        return 'e.g., 30 (total ${_selectedMedicineType.unit}s)';
+    }
+  }
 }

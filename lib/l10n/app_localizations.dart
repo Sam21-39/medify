@@ -358,6 +358,18 @@ abstract class AppLocalizations {
   /// **'Add your first medicine'**
   String get addYourFirstMedicine;
 
+  /// No description provided for @firstMedicineAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a medicine'**
+  String get firstMedicineAddAction;
+
+  /// No description provided for @firstMedicineLaterAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get firstMedicineLaterAction;
+
   /// No description provided for @tapPlusToAddMedicine.
   ///
   /// In en, this message translates to:
@@ -993,6 +1005,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skipped'**
   String get skipped;
+
+  /// No description provided for @trackStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Track stock'**
+  String get trackStock;
+
+  /// No description provided for @trackStockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Track medicine stock and get refill reminders'**
+  String get trackStockHint;
+
+  /// No description provided for @stockTakenHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock goes down when you mark a dose Taken.'**
+  String get stockTakenHelper;
+
+  /// No description provided for @stockEditHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock changes only through Taken and I refilled, not here.'**
+  String get stockEditHelper;
+
+  /// No description provided for @refillButton.
+  ///
+  /// In en, this message translates to:
+  /// **'I refilled'**
+  String get refillButton;
+
+  /// No description provided for @refillDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refill stock'**
+  String get refillDialogTitle;
+
+  /// No description provided for @refillQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity in stock'**
+  String get refillQuantityLabel;
+
+  /// No description provided for @refillInvalidQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a quantity of 0 or more.'**
+  String get refillInvalidQuantity;
+
+  /// No description provided for @refillSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock updated.'**
+  String get refillSaved;
+
+  /// No description provided for @refillFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update stock.'**
+  String get refillFailed;
+
+  /// No description provided for @skipReasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why skip this dose?'**
+  String get skipReasonTitle;
+
+  /// No description provided for @skipReasonFeltUnwell.
+  ///
+  /// In en, this message translates to:
+  /// **'Felt unwell'**
+  String get skipReasonFeltUnwell;
+
+  /// No description provided for @skipReasonSideEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Side effects'**
+  String get skipReasonSideEffects;
+
+  /// No description provided for @skipReasonRanOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Ran out'**
+  String get skipReasonRanOut;
+
+  /// No description provided for @skipReasonDoctorAdvised.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor advised'**
+  String get skipReasonDoctorAdvised;
+
+  /// No description provided for @skipReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get skipReasonOther;
+
+  /// No description provided for @skipWithoutReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip without reason'**
+  String get skipWithoutReason;
+
+  /// No description provided for @pauseMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get pauseMedicine;
+
+  /// No description provided for @resumeMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get resumeMedicine;
+
+  /// No description provided for @stopMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopMedicine;
+
+  /// No description provided for @stoppedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get stoppedLabel;
+
+  /// No description provided for @stopMedicineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this medicine?'**
+  String get stopMedicineTitle;
+
+  /// No description provided for @stopMedicineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Future doses and reminders are removed. Past history is kept.'**
+  String get stopMedicineBody;
+
+  /// No description provided for @stopReasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why? (optional)'**
+  String get stopReasonTitle;
+
+  /// No description provided for @stopReasonCourseFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Course finished'**
+  String get stopReasonCourseFinished;
+
+  /// No description provided for @stopReasonDoctorStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor stopped it'**
+  String get stopReasonDoctorStopped;
+
+  /// No description provided for @stopReasonSideEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Side effects'**
+  String get stopReasonSideEffects;
+
+  /// No description provided for @stopReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get stopReasonOther;
+
+  /// No description provided for @stopMedicineButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop medicine'**
+  String get stopMedicineButton;
+
+  /// No description provided for @deleteAllData.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all data'**
+  String get deleteAllData;
+
+  /// No description provided for @deleteExportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export your history first?'**
+  String get deleteExportTitle;
+
+  /// No description provided for @deleteExportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting removes all medicines, doses, history and settings from this phone. Medify has no cloud copy, so this cannot be undone.'**
+  String get deleteExportBody;
+
+  /// No description provided for @exportHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Export history'**
+  String get exportHistory;
+
+  /// No description provided for @continueWithoutExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without export'**
+  String get continueWithoutExport;
+
+  /// No description provided for @deleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete everything?'**
+  String get deleteConfirmTitle;
+
+  /// No description provided for @deleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Type DELETE to confirm. This cannot be undone.'**
+  String get deleteConfirmBody;
+
+  /// No description provided for @deleteConfirmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteConfirmHint;
+
+  /// No description provided for @deleteAllDataConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all data'**
+  String get deleteAllDataConfirm;
+
+  /// No description provided for @deleteDataFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete data. Nothing was removed.'**
+  String get deleteDataFailed;
 }
 
 class _AppLocalizationsDelegate

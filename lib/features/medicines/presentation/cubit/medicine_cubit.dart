@@ -6,6 +6,7 @@ import 'package:medify/core/notifications/notification_service.dart';
 // COMMENTED OUT FOR UPCOMING RELEASE
 // import '../../../core/services/profile_service.dart';
 import 'package:medify/features/schedule/data/sqflite/occurrence_sqflite_generator.dart';
+import 'package:medify/features/schedule/presentation/cubit/medicine_log_cubit.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
@@ -16,8 +17,17 @@ import 'package:medify/features/medicines/presentation/cubit/medicine_state.dart
 /// Cubit for managing medicine state
 class MedicineCubit extends Cubit<MedicineState> {
   final MedicineRepository _medicineRepository;
+  final NotificationService? _injectedNotifications;
 
-  MedicineCubit(this._medicineRepository) : super(MedicineInitial());
+  /// Medicine ids with a stop or pause/resume in flight; new taps are ignored.
+  final _inFlight = <int>{};
+
+  MedicineCubit(this._medicineRepository, {NotificationService? notifications})
+    : _injectedNotifications = notifications,
+      super(MedicineInitial());
+
+  NotificationService get _notifications =>
+      _injectedNotifications ?? getIt<NotificationService>();
 
   /// Load all medicines
   Future<void> loadMedicines() async {
@@ -152,69 +162,73 @@ class MedicineCubit extends Cubit<MedicineState> {
     }
   }
 
-  /// Delete a medicine
-  Future<void> deleteMedicine(int id) async {
+  /// Stop a medicine (archived, with an optional preset reason).
+  Future<void> stopMedicine(int id, {String? reason}) async {
+    if (!_inFlight.add(id)) return;
     try {
       emit(MedicineLoading());
 
-      (await _medicineRepository.deleteMedicine(id)).unwrap();
+      // Cancel first: the cancel looks up occurrence ids that the stop deletes.
+      // If the cancel fails, this throws before the DB is touched.
+      await _cancelReminders(id);
+      (await _medicineRepository.stopMedicine(id, reason: reason)).unwrap();
+      await _refreshTodayLogs();
 
-      // Cancel notifications only once the delete succeeded
-      try {
-        final notificationService = getIt<NotificationService>();
-        await notificationService.cancelMedicineReminders(id);
-      } catch (e) {
-        // Silently handle notification errors
-      }
-
-      emit(const MedicineOperationSuccess('Medicine deleted successfully'));
-      // For delete, we can reload immediately since we're not navigating
+      emit(const MedicineOperationSuccess('Medicine stopped'));
       await loadMedicines();
     } catch (e) {
-      emit(MedicineError('Failed to delete medicine: ${e.toString()}'));
+      await _restoreReminders();
+      emit(MedicineError('Failed to stop medicine: ${e.toString()}'));
+    } finally {
+      _inFlight.remove(id);
     }
   }
 
-  /// Toggle medicine active status
+  /// Pause or resume. Pausing removes future doses; resuming regenerates them.
   Future<void> toggleMedicineStatus(int id) async {
+    if (!_inFlight.add(id)) return;
     try {
+      final stored = (await _medicineRepository.getMedicineById(id)).unwrap();
+      // Cancel first: the cancel looks up occurrence ids that the pause deletes.
+      if (stored?.isActive ?? false) await _cancelReminders(id);
+
       final medicine = (await _medicineRepository.toggleMedicineStatus(id))
           .unwrap();
+      await _refreshTodayLogs();
 
-      // Resumed: regenerate occurrences so upcoming doses exist again
+      // Resumed: regenerate occurrences and reminders
       if (medicine.isActive) {
         try {
           await _generateOccurrences();
+          await _notifications.scheduleMedicineReminders(medicine);
         } catch (e) {
-          // Silently handle occurrence generation errors
+          // Silently handle occurrence and notification errors
         }
-      }
-
-      // Update notifications based on active status
-      // COMMENTED OUT FOR UPCOMING RELEASE - profile name support
-      try {
-        final notificationService = getIt<NotificationService>();
-        if (medicine.isActive) {
-          // Schedule notifications when activated
-          // final profileService = getIt<ProfileService>();
-          // final activeProfile = await profileService.getActiveProfile();
-          await notificationService.scheduleMedicineReminders(
-            medicine,
-            // profileName: activeProfile?.name,
-          );
-        } else {
-          // Cancel notifications when deactivated
-          await notificationService.cancelMedicineReminders(id);
-        }
-      } catch (e) {
-        // Silently handle notification errors
       }
 
       await loadMedicines();
     } catch (e) {
+      await _restoreReminders();
       emit(MedicineError('Failed to toggle medicine status: ${e.toString()}'));
+    } finally {
+      _inFlight.remove(id);
     }
   }
+
+  /// Propagates failure so the caller aborts before writing to the DB.
+  Future<void> _cancelReminders(int id) =>
+      _notifications.cancelMedicineReminders(id);
+
+  /// Reschedules reminders for still-active medicines after a failed write.
+  Future<void> _restoreReminders() async {
+    try {
+      await _notifications.rescheduleUpcoming();
+    } catch (_) {
+      // Restore is best effort; the original error is what the user sees.
+    }
+  }
+
+  Future<void> _refreshTodayLogs() => getIt<MedicineLogCubit>().loadTodayLogs();
 
   /// Watch medicines stream
   void watchMedicines() {

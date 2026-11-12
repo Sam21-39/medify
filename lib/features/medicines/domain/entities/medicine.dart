@@ -41,6 +41,8 @@ class Medicine extends Equatable {
   final List<int> reminderTimes; // Stored as seconds since midnight
   final MedicineIntakeTiming intakeTiming; // When to take the medicine
   final bool isActive;
+  final bool isStopped; // Archived by Stop; `isActive` is false too
+  final String? stopReason; // Preset key (course_finished, ...) or null
   final String? notes;
 
   /// Weekdays 1–7 (Mon–Sun). Empty means every day (old rows stay daily).
@@ -69,6 +71,8 @@ class Medicine extends Equatable {
     required this.reminderTimes,
     this.intakeTiming = MedicineIntakeTiming.anytime,
     this.isActive = true,
+    this.isStopped = false,
+    this.stopReason,
     this.notes,
     this.daysOfWeek = const [],
     this.endDate,
@@ -145,9 +149,10 @@ class Medicine extends Equatable {
     if (currentQuantity == null || currentQuantity! <= 0) return null;
     if (reminderTimes.isEmpty) return null;
 
-    // Calculate daily usage (number of doses per day)
-    final dailyDoses = reminderTimes.length;
-    return (currentQuantity! / dailyDoses).floor();
+    // ponytail: ignores weekdays, so a Mon/Wed schedule counts every day. Add when weekly courses need exact days.
+    final dailyUsage = dosageAmount * reminderTimes.length;
+    if (dailyUsage <= 0) return null;
+    return (currentQuantity! / dailyUsage).floor();
   }
 
   /// Check if medicine stock is low
@@ -174,6 +179,8 @@ class Medicine extends Equatable {
     reminderTimes,
     intakeTiming,
     isActive,
+    isStopped,
+    stopReason,
     notes,
     daysOfWeek,
     endDate,

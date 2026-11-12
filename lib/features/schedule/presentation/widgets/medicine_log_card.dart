@@ -9,13 +9,16 @@ import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/schedule/domain/entities/medicine_log.dart';
+import 'package:medify/l10n/app_localizations.dart';
 
 /// Card widget to display a medicine log (scheduled reminder)
 class MedicineLogCard extends StatefulWidget {
   final Medicine medicine;
   final MedicineLog log;
   final VoidCallback? onTaken;
-  final VoidCallback? onSkip;
+
+  /// Called with a preset reason key, or null for "Skip without reason"
+  final void Function(String? reason)? onSkip;
   final Function(int minutes)? onSnooze;
 
   const MedicineLogCard({
@@ -300,7 +303,7 @@ class _MedicineLogCardState extends State<MedicineLogCard> {
                         child: OutlinedButton(
                           onPressed: () {
                             HapticFeedback.lightImpact();
-                            widget.onSkip?.call();
+                            _showSkipReasons(context);
                           },
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
@@ -384,6 +387,60 @@ class _MedicineLogCardState extends State<MedicineLogCard> {
                 Navigator.pop(context);
                 widget.onSnooze?.call(60);
               },
+            ),
+            const SizedBox(height: AppSizes.paddingS),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show skip reason presets. Stores a stable key, never free text.
+  void _showSkipReasons(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    void pick(String? reason) {
+      HapticFeedback.selectionClick();
+      Navigator.pop(context);
+      widget.onSkip?.call(reason);
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              child: Text(
+                l10n.skipReasonTitle,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            ListTile(
+              title: Text(l10n.skipReasonFeltUnwell),
+              onTap: () => pick('felt_unwell'),
+            ),
+            ListTile(
+              title: Text(l10n.skipReasonSideEffects),
+              onTap: () => pick('side_effects'),
+            ),
+            ListTile(
+              title: Text(l10n.skipReasonRanOut),
+              onTap: () => pick('ran_out'),
+            ),
+            ListTile(
+              title: Text(l10n.skipReasonDoctorAdvised),
+              onTap: () => pick('doctor_advised'),
+            ),
+            ListTile(
+              title: Text(l10n.skipReasonOther),
+              onTap: () => pick('other'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: Text(l10n.skipWithoutReason),
+              onTap: () => pick(null),
             ),
             const SizedBox(height: AppSizes.paddingS),
           ],

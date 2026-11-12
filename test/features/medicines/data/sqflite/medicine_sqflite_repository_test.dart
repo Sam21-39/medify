@@ -59,7 +59,7 @@ void main() {
     expect(read.notes, 'with food');
   });
 
-  test('add, get, update, toggle, delete', () async {
+  test('add, get, update, toggle, stop', () async {
     final added = (await repo.addMedicine(medicine())).unwrap();
     final id = added.id!;
     expect(added.reminderTimes, [28800, 72000]);
@@ -75,13 +75,13 @@ void main() {
     expect((await repo.getActiveMedicines()).unwrap(), isEmpty);
     expect((await repo.toggleMedicineStatus(id)).unwrap().isActive, isTrue);
 
-    expect((await repo.deleteMedicine(id)).isRight(), isTrue);
+    expect((await repo.stopMedicine(id)).isRight(), isTrue);
     final archived = (await repo.getAllMedicines()).unwrap().single;
     expect(archived.isActive, isFalse);
     expect((await repo.toggleMedicineStatus(id)).isLeft(), isTrue);
   });
 
-  test('delete archives and keeps occurrence history', () async {
+  test('stop archives and keeps occurrence history', () async {
     final added = (await repo.addMedicine(medicine())).unwrap();
     final scheduleId = (await schedules(added.id!)).first['id']! as int;
     await db.insert('occurrences', {
@@ -97,7 +97,7 @@ void main() {
       'updated_at': 0,
     });
 
-    await repo.deleteMedicine(added.id!);
+    await repo.stopMedicine(added.id!);
 
     final state = (await db.query(
       'medicines',
@@ -116,9 +116,121 @@ void main() {
     );
   });
 
+  group('pause and stop (N4)', () {
+    late int scheduleId;
+    late int medicineId;
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    const day = Duration.millisecondsPerDay;
+
+    /// One past and one future dose per status, on the same schedule.
+    Future<void> seedDoses() async {
+      final added = (await repo.addMedicine(medicine())).unwrap();
+      medicineId = added.id!;
+      scheduleId = (await schedules(medicineId)).first['id']! as int;
+      Future<void> dose(String status, int at) => db.insert('occurrences', {
+        'profile_id': profileId,
+        'medicine_id': medicineId,
+        'schedule_id': scheduleId,
+        'scheduled_at_utc': at,
+        'local_date': '2026-01-01',
+        'status': status,
+        'taken_at_utc': status == 'taken' ? at : null,
+        'actor_profile_id': profileId,
+        'dose_snapshot_amount': 1.0,
+        'dose_snapshot_unit': 'tablet',
+        'created_at': 0,
+        'updated_at': 0,
+      });
+      await dose('scheduled', nowMs - 2 * day);
+      await dose('taken', nowMs - 2 * day + 1);
+      await dose('scheduled', nowMs + day);
+      await dose('skipped', nowMs + day + 1);
+      await dose('missed', nowMs + day + 2);
+      await dose('scheduled', nowMs + day + 3);
+    }
+
+    Future<List<String>> statuses() async => [
+      for (final row in await db.query(
+        'occurrences',
+        columns: ['status'],
+        where: 'medicine_id = ?',
+        whereArgs: [medicineId],
+        orderBy: 'scheduled_at_utc',
+      ))
+        row['status']! as String,
+    ];
+
+    test('pause deletes only future scheduled doses', () async {
+      await seedDoses();
+      await repo.toggleMedicineStatus(medicineId);
+      expect(await statuses(), ['scheduled', 'taken', 'skipped', 'missed']);
+    });
+
+    test('stop deletes only future scheduled doses', () async {
+      await seedDoses();
+      await repo.stopMedicine(medicineId);
+      expect(await statuses(), ['scheduled', 'taken', 'skipped', 'missed']);
+    });
+
+    test('stop with and without a reason; stop_reason reads back', () async {
+      final withReason = (await repo.addMedicine(medicine())).unwrap();
+      await repo.stopMedicine(withReason.id!, reason: 'course_finished');
+      final read = (await repo.getMedicineById(withReason.id!)).unwrap()!;
+      expect(read.isStopped, isTrue);
+      expect(read.isActive, isFalse);
+      expect(read.stopReason, 'course_finished');
+
+      final withoutReason = (await repo.addMedicine(medicine())).unwrap();
+      await repo.stopMedicine(withoutReason.id!);
+      final plain = (await repo.getMedicineById(withoutReason.id!)).unwrap()!;
+      expect(plain.isStopped, isTrue);
+      expect(plain.stopReason, isNull);
+    });
+
+    test(
+      're-stop keeps the first reason and does not rewrite the row',
+      () async {
+        final added = (await repo.addMedicine(medicine())).unwrap();
+        await repo.stopMedicine(added.id!, reason: 'course_finished');
+        final first = (await db.query(
+          'medicines',
+          where: 'id = ?',
+          whereArgs: [added.id],
+        )).single;
+
+        expect((await repo.stopMedicine(added.id!)).isRight(), isTrue);
+        final again = (await db.query(
+          'medicines',
+          where: 'id = ?',
+          whereArgs: [added.id],
+        )).single;
+        expect(again['stop_reason'], 'course_finished');
+        expect(again['updated_at'], first['updated_at']);
+      },
+    );
+
+    test('stop unknown id returns Left', () async {
+      expect((await repo.stopMedicine(9999)).isLeft(), isTrue);
+    });
+
+    test('toggle on a finished medicine returns Left', () async {
+      final added = (await repo.addMedicine(medicine())).unwrap();
+      await repo.stopMedicine(added.id!);
+      expect((await repo.toggleMedicineStatus(added.id!)).isLeft(), isTrue);
+    });
+
+    test('paused medicine is not stopped and has no reason', () async {
+      final added = (await repo.addMedicine(medicine())).unwrap();
+      final paused = (await repo.toggleMedicineStatus(added.id!)).unwrap();
+      expect(paused.isActive, isFalse);
+      expect(paused.isStopped, isFalse);
+      expect(paused.stopReason, isNull);
+    });
+  });
+
   test('stale-entity update leaves stock unchanged', () async {
     final added = (await repo.addMedicine(
-      medicine().copyWith(currentQuantity: 10),
+      medicine().copyWith(totalQuantity: 10, currentQuantity: 10),
     )).unwrap();
     // Stock decremented by a dose transition.
     await db.update(
@@ -139,9 +251,62 @@ void main() {
     expect(row['current_quantity'], 7);
   });
 
+  Future<Map<String, Object?>> medicineRow(int id) async =>
+      (await db.query('medicines', where: 'id = ?', whereArgs: [id])).single;
+
+  test('edit seeds stock only when stored stock is null', () async {
+    final added = (await repo.addMedicine(medicine())).unwrap();
+    expect((await medicineRow(added.id!))['current_quantity'], isNull);
+
+    await repo.updateMedicine(
+      added.copyWith(totalQuantity: 10, currentQuantity: 5),
+    );
+    expect((await medicineRow(added.id!))['current_quantity'], 5);
+
+    // Stored stock is live now: a later edit must not overwrite it.
+    await repo.updateMedicine(
+      added.copyWith(totalQuantity: 10, currentQuantity: 9),
+    );
+    expect((await medicineRow(added.id!))['current_quantity'], 5);
+  });
+
+  test('edit with tracking off clears stock and the alert level', () async {
+    final added = (await repo.addMedicine(
+      medicine().copyWith(totalQuantity: 10, currentQuantity: 2),
+    )).unwrap();
+    await db.insert('settings', {
+      'key': 'refill_alert_${added.id}',
+      'value': 'low',
+      'value_type': 'string',
+    });
+
+    // copyWith cannot clear a field to null, so build the entity directly.
+    await repo.updateMedicine(
+      Medicine(
+        id: added.id,
+        profileId: profileId,
+        name: 'Aspirin',
+        dosage: '1 tablet',
+        reminderTimes: const [28800, 72000],
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+    );
+
+    expect((await medicineRow(added.id!))['current_quantity'], isNull);
+    expect(
+      await db.query(
+        'settings',
+        where: 'key = ?',
+        whereArgs: ['refill_alert_${added.id}'],
+      ),
+      isEmpty,
+    );
+  });
+
   test('update keeps an archived medicine archived', () async {
     final added = (await repo.addMedicine(medicine())).unwrap();
-    await repo.deleteMedicine(added.id!);
+    await repo.stopMedicine(added.id!);
     await repo.updateMedicine(added.copyWith(isActive: true));
     final state = (await db.query(
       'medicines',
@@ -219,5 +384,21 @@ void main() {
     await pumpEventQueue();
     expect(emitted.last.length, 1);
     await sub.cancel();
+  });
+
+  test('refillStock sets quantity and last refill date', () async {
+    final added = (await repo.addMedicine(
+      medicine().copyWith(currentQuantity: 2, totalQuantity: 30),
+    )).unwrap();
+
+    final refilled = (await repo.refillStock(added.id!, 30)).unwrap();
+
+    expect(refilled.currentQuantity, 30);
+    expect(
+      DateTime.now().difference(refilled.lastRefillDate!).inMinutes,
+      lessThan(1),
+    );
+    final stored = (await repo.getMedicineById(added.id!)).unwrap()!;
+    expect(stored.currentQuantity, 30);
   });
 }

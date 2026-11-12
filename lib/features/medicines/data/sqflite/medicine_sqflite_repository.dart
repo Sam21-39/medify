@@ -77,7 +77,7 @@ class SqfliteMedicineRepository implements MedicineRepository {
       ) async {
         final stored = await txn.query(
           'medicines',
-          columns: ['state'],
+          columns: ['state', 'current_quantity'],
           where: 'id = ?',
           whereArgs: [id],
         );
@@ -85,6 +85,19 @@ class SqfliteMedicineRepository implements MedicineRepository {
         final row = await MedicineRowMapper.toRow(medicine, _cipher, id: id);
         // Stock moves only through dose transitions, never from an entity.
         row.remove('current_quantity');
+        if (medicine.totalQuantity == null) {
+          // Tracking off: clear stock and the stale alert level.
+          row['current_quantity'] = null;
+          await txn.delete(
+            'settings',
+            where: 'key = ?',
+            whereArgs: ['refill_alert_$id'],
+          );
+        } else if (stored.single['current_quantity'] == null &&
+            medicine.currentQuantity != null) {
+          // Seed only when tracking starts; never overwrite live stock.
+          row['current_quantity'] = medicine.currentQuantity;
+        }
         // Archived (finished) is sticky here; nothing in this repo reactivates.
         if (stored.single['state'] == 'finished') row['state'] = 'finished';
         await txn.update('medicines', row, where: 'id = ?', whereArgs: [id]);
@@ -97,20 +110,34 @@ class SqfliteMedicineRepository implements MedicineRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteMedicine(int id) {
+  Future<Either<Failure, void>> stopMedicine(int id, {String? reason}) {
     // Archive, not delete: occurrences keep the history. Hard purge is later.
     return _write<void>(() async {
-      await _db.update(
-        'medicines',
-        {
-          'state': 'finished',
-          'updated_at': DateTime.now().millisecondsSinceEpoch,
-        },
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      final result = await _db.transaction<Either<Failure, void>>((txn) async {
+        final stored = await txn.query(
+          'medicines',
+          columns: ['state'],
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+        if (stored.isEmpty) return const Left(Failure('Medicine not found'));
+        // Already archived: first stop reason wins, nothing is rewritten.
+        if (stored.single['state'] == 'finished') return const Right(null);
+        await txn.update(
+          'medicines',
+          {
+            'state': 'finished',
+            'stop_reason': reason,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+        await _deleteFutureScheduled(txn, id);
+        return const Right(null);
+      });
       _refresh();
-      return const Right(null);
+      return result;
     });
   }
 
@@ -140,6 +167,7 @@ class SqfliteMedicineRepository implements MedicineRepository {
           where: 'id = ?',
           whereArgs: [id],
         );
+        if (current.isActive) await _deleteFutureScheduled(txn, id);
         return Right((await _byId(txn, id))!);
       });
       _refresh();
@@ -148,10 +176,43 @@ class SqfliteMedicineRepository implements MedicineRepository {
   }
 
   @override
+  Future<Either<Failure, Medicine>> refillStock(int id, double quantity) {
+    if (quantity < 0) {
+      return Future.value(const Left(Failure('Quantity cannot be negative')));
+    }
+    return _write<Medicine>(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final updated = await _db.update(
+        'medicines',
+        {
+          'current_quantity': quantity,
+          'last_refill_date': now,
+          'updated_at': now,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (updated == 0) return const Left(Failure('Medicine not found'));
+      _refresh();
+      return Right((await _byId(_db, id))!);
+    });
+  }
+
+  @override
   Stream<List<Medicine>> watchAllMedicines() => _allController.stream;
 
   @override
   Stream<List<Medicine>> watchActiveMedicines() => _activeController.stream;
+
+  /// Pause and Stop: future doses go, taken, skipped and missed rows stay.
+  Future<void> _deleteFutureScheduled(DatabaseExecutor db, int id) async {
+    await db.delete(
+      'occurrences',
+      where:
+          "medicine_id = ? AND status = 'scheduled' AND scheduled_at_utc > ?",
+      whereArgs: [id, DateTime.now().toUtc().millisecondsSinceEpoch],
+    );
+  }
 
   /// Replaces active schedules only when the reminder set changes. Old rows are
   /// deactivated, not deleted, because occurrences reference them.

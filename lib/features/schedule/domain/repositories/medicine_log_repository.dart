@@ -32,8 +32,11 @@ abstract class MedicineLogRepository {
   /// Mark log as taken
   Future<Either<Failure, MedicineLog>> markAsTaken(int id);
 
-  /// Mark log as skipped
-  Future<Either<Failure, MedicineLog>> markAsSkipped(int id);
+  /// Mark log as skipped, with an optional preset reason key
+  Future<Either<Failure, MedicineLog>> markAsSkipped(int id, {String? reason});
+
+  /// Undo taken or skipped back to scheduled (restores stock once for taken)
+  Future<Either<Failure, MedicineLog>> revertToScheduled(int id);
 
   /// Mark log as missed
   Future<MedicineLog> markAsMissed(int id);

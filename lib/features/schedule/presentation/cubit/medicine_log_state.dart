@@ -40,8 +40,11 @@ class MedicineLogError extends MedicineLogState {
 class MedicineLogOperationSuccess extends MedicineLogState {
   final String message;
 
-  const MedicineLogOperationSuccess(this.message);
+  /// Log ID that an Undo action can revert, if any
+  final int? undoId;
+
+  const MedicineLogOperationSuccess(this.message, {this.undoId});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, undoId];
 }

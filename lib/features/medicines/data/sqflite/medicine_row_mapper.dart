@@ -99,6 +99,8 @@ class MedicineRowMapper {
       ),
       // paused and finished both read back as inactive.
       isActive: state == _MedicineStateView.active,
+      isStopped: state == _MedicineStateView.finished,
+      stopReason: row['stop_reason'] as String?,
       notes: row['notes'] == null
           ? null
           : await cipher.open(

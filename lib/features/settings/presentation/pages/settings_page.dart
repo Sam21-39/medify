@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:medify/core/system/system_service.dart';
 
+import 'package:medify/app/launch.dart';
+import 'package:medify/features/history/presentation/cubit/history_cubit.dart';
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
 import 'package:medify/core/design/adaptive.dart';
@@ -109,6 +111,15 @@ class _SettingsView extends StatelessWidget {
                       ),
                       label: Text(
                         AppLocalizations.of(context)!.resetAllSettings,
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => _deleteAllData(context),
+                      child: Text(
+                        AppLocalizations.of(context)!.deleteAllData,
                         style: TextStyle(color: AppColors.error),
                       ),
                     ),
@@ -823,4 +834,99 @@ class _SettingsView extends StatelessWidget {
       ],
     );
   }
+
+  /// Step 1 (export offer), then step 2 (type DELETE), then wipe and relaunch.
+  Future<void> _deleteAllData(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    // true = export first, false = continue without export, null = cancel.
+    final exportFirst = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteExportTitle),
+        content: Text(l10n.deleteExportBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.continueWithoutExport),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.exportHistory),
+          ),
+        ],
+      ),
+    );
+    if (exportFirst == null || !context.mounted) return;
+    if (exportFirst) {
+      try {
+        await getIt<HistoryCubit>().exportAll();
+      } catch (_) {
+        // Never delete after a failed export.
+        getIt<AppMessenger>().show(l10n.errorGeneric, error: true);
+        return;
+      }
+    }
+    if (!context.mounted) return;
+
+    final confirmed = await showDeleteDataConfirmDialog(context);
+    if (confirmed != true || !context.mounted) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await wipeAllDataAndRelaunch();
+    } catch (_) {
+      // Still mounted only when the wipe failed before the relaunch.
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+      getIt<AppMessenger>().show(l10n.deleteDataFailed, error: true);
+    }
+  }
+}
+
+/// Step 2: returns true only when the field text is exactly `DELETE`.
+Future<bool?> showDeleteDataConfirmDialog(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  final controller = TextEditingController();
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (ctx, value, _) => AlertDialog(
+        title: Text(l10n.deleteConfirmTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.deleteConfirmBody),
+            const SizedBox(height: AppSizes.spacing12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(hintText: l10n.deleteConfirmHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: value.text == 'DELETE'
+                ? () => Navigator.pop(ctx, true)
+                : null,
+            child: Text(l10n.deleteAllDataConfirm),
+          ),
+        ],
+      ),
+    ),
+  ).whenComplete(controller.dispose);
 }

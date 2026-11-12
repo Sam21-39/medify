@@ -1,16 +1,36 @@
 import 'dart:developer' as developer;
 
+import 'package:medify/core/database/settings_store.dart';
 import 'package:medify/core/error/failure.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
 import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
 import 'package:medify/core/notifications/notification_service.dart';
 
+/// Stock alert level. Alerts fire only when the level goes up.
+enum RefillLevel { none, low, out }
+
+RefillLevel refillLevel(Medicine m) => m.isOutOfStock
+    ? RefillLevel.out
+    : m.isLowStock
+    ? RefillLevel.low
+    : RefillLevel.none;
+
+bool shouldAlert(RefillLevel previous, RefillLevel now) =>
+    now.index > previous.index;
+
 /// Service to manage medicine refill reminders and stock tracking
 class RefillReminderService {
   final NotificationService _notificationService;
   final MedicineRepository _medicineRepository;
+  final SettingsStore _settings;
 
-  RefillReminderService(this._notificationService, this._medicineRepository);
+  RefillReminderService(
+    this._notificationService,
+    this._medicineRepository,
+    this._settings,
+  );
+
+  static String _alertKey(int medicineId) => 'refill_alert_$medicineId';
 
   /// Check all medicines and schedule refill reminders for low stock items
   Future<void> checkAndScheduleRefillReminders() async {
@@ -49,28 +69,24 @@ class RefillReminderService {
         return;
       }
 
-      // Check if medicine is low on stock
-      if (medicine.isLowStock) {
-        final daysRemaining = medicine.daysRemaining;
-        developer.log(
-          'Low stock detected for ${medicine.name}: $daysRemaining days remaining',
-          name: 'RefillReminderService',
-        );
+      final key = _alertKey(medicine.id!);
+      final previous =
+          RefillLevel.values.asNameMap()[await _settings.getString(
+            key,
+            defaultValue: RefillLevel.none.name,
+          )] ??
+          RefillLevel.none;
+      final now = refillLevel(medicine);
 
-        // Schedule refill reminder notification
-        await _scheduleRefillNotification(medicine, daysRemaining!);
+      if (shouldAlert(previous, now)) {
+        if (now == RefillLevel.out) {
+          await _showOutOfStockNotification(medicine);
+        } else {
+          await _scheduleRefillNotification(medicine, medicine.daysRemaining!);
+        }
       }
-
-      // Check if medicine is out of stock
-      if (medicine.isOutOfStock) {
-        developer.log(
-          'Out of stock: ${medicine.name}',
-          name: 'RefillReminderService',
-        );
-
-        // Show immediate out of stock notification
-        await _showOutOfStockNotification(medicine);
-      }
+      // Always store the level: a drop (after a refill) re-arms the alert.
+      await _settings.setString(key, now.name);
     } catch (e) {
       developer.log(
         'Error checking refill status for ${medicine.name}: $e',
@@ -135,100 +151,41 @@ class RefillReminderService {
     }
   }
 
-  /// Update medicine quantity after taking a dose
-  Future<void> decrementMedicineQuantity(int medicineId) async {
+  /// Re-check one medicine after a dose changed its stock.
+  Future<void> checkMedicine(int medicineId) async {
     try {
       final medicine = (await _medicineRepository.getMedicineById(medicineId))
           .unwrap();
-      if (medicine == null) {
-        developer.log(
-          'Medicine not found: $medicineId',
-          name: 'RefillReminderService',
-        );
-        return;
-      }
-
-      // Only decrement if quantity tracking is enabled
-      if (medicine.currentQuantity == null) {
-        return;
-      }
-
-      // Decrement quantity by dosage amount (e.g., 2 tablets, 500 ml)
-      final decrementAmount = medicine.dosageAmount;
-      final newQuantity = medicine.currentQuantity! - decrementAmount;
-      final updatedMedicine = medicine.copyWith(
-        currentQuantity: newQuantity > 0 ? newQuantity : 0,
-        updatedAt: DateTime.now(),
-      );
-
-      (await _medicineRepository.updateMedicine(updatedMedicine)).unwrap();
-
-      developer.log(
-        'Decremented quantity for ${medicine.name}: ${medicine.currentQuantity} -> $newQuantity (decreased by $decrementAmount ${medicine.medicineType.unit})',
-        name: 'RefillReminderService',
-      );
-
-      // Check if we need to send refill reminder after decrement
-      await _checkMedicineRefillStatus(updatedMedicine);
+      if (medicine != null) await _checkMedicineRefillStatus(medicine);
     } catch (e) {
       developer.log(
-        'Error decrementing medicine quantity: $e',
+        'Error checking medicine $medicineId: $e',
         name: 'RefillReminderService',
         error: e,
       );
     }
   }
 
-  /// Refill medicine stock
-  Future<void> refillMedicine(int medicineId, {double? newQuantity}) async {
+  /// Set stock to [newQuantity] after a refill. Returns false on failure.
+  Future<bool> refillMedicine(
+    int medicineId, {
+    required double newQuantity,
+  }) async {
     try {
-      final medicine = (await _medicineRepository.getMedicineById(medicineId))
-          .unwrap();
-      if (medicine == null) {
-        developer.log(
-          'Medicine not found: $medicineId',
-          name: 'RefillReminderService',
-        );
-        return;
-      }
-
-      // Use provided quantity or reset to total quantity
-      final refillAmount = newQuantity ?? medicine.totalQuantity ?? 0.0;
-
-      final updatedMedicine = medicine.copyWith(
-        currentQuantity: refillAmount,
-        lastRefillDate: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      (await _medicineRepository.updateMedicine(updatedMedicine)).unwrap();
-
+      (await _medicineRepository.refillStock(medicineId, newQuantity)).unwrap();
+      await _settings.setString(_alertKey(medicineId), RefillLevel.none.name);
       developer.log(
-        'Refilled ${medicine.name}: currentQuantity = $refillAmount ${medicine.medicineType.unit}',
+        'Refilled medicine $medicineId: currentQuantity = $newQuantity',
         name: 'RefillReminderService',
       );
-
-      // Format quantity string for notification
-      String quantityStr;
-      if (refillAmount == refillAmount.toInt()) {
-        quantityStr = '${refillAmount.toInt()} ${medicine.medicineType.unit}';
-      } else {
-        quantityStr = '$refillAmount ${medicine.medicineType.unit}';
-      }
-
-      // Show success notification
-      await _notificationService.showImmediateNotification(
-        title: '✅ Medicine Refilled',
-        body:
-            '${medicine.name} has been refilled successfully. Current stock: $quantityStr.',
-        payload: 'refilled_${medicine.id}',
-      );
+      return true;
     } catch (e) {
       developer.log(
         'Error refilling medicine: $e',
         name: 'RefillReminderService',
         error: e,
       );
+      return false;
     }
   }
 

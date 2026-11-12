@@ -3,6 +3,7 @@ import 'package:medify/core/design/medify_theme_extension.dart';
 import 'package:medify/core/di/injection_container.dart';
 import 'package:medify/core/preferences/preferences_service.dart';
 import 'package:medify/core/ui/app_messenger.dart';
+import 'package:medify/features/medicines/domain/repositories/medicine_repository.dart';
 import 'package:medify/features/profiles/data/sqflite/care_link_sqflite_repository.dart';
 import 'package:medify/features/profiles/data/sqflite/profile_exceptions.dart';
 import 'package:medify/features/profiles/data/services/profile_service.dart';
@@ -15,6 +16,9 @@ class RolePage extends StatefulWidget {
   @override
   State<RolePage> createState() => _RolePageState();
 }
+
+/// Settings flag: the first-medicine offer has been shown (or was not needed).
+const _keyFirstMedicineOffer = 'first_medicine_offer_shown';
 
 class _RolePageState extends State<RolePage> {
   bool _busy = false;
@@ -67,10 +71,53 @@ class _RolePageState extends State<RolePage> {
           _showError();
         }
       }
+      var addFirst = false;
+      if (role == 0) {
+        try {
+          addFirst = await _offerFirstMedicine();
+        } catch (_) {
+          addFirst = false; // any failure here means no offer
+        }
+      }
       getIt<AppMessenger>().go('/today');
+      if (addFirst) await getIt<AppMessenger>().push<bool>('/medicine/add');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Shows once. Returns true when the user picked "Add a medicine".
+  Future<bool> _offerFirstMedicine() async {
+    final prefs = getIt<PreferencesService>();
+    if (await prefs.getInt(_keyFirstMedicineOffer) != null) return false;
+    final result = await getIt<MedicineRepository>().getActiveMedicines();
+    // Read failed: no offer, and leave the flag unset so it can be retried.
+    if (result.isLeft()) return false;
+    final hasMedicine = result.getOrElse(() => const []).isNotEmpty;
+    if (hasMedicine) {
+      await prefs.setInt(_keyFirstMedicineOffer, 1);
+      return false;
+    }
+    if (!mounted) return false;
+    final l10n = AppLocalizations.of(context)!;
+    final add = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.addYourFirstMedicine),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.firstMedicineLaterAction),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.firstMedicineAddAction),
+          ),
+        ],
+      ),
+    );
+    await prefs.setInt(_keyFirstMedicineOffer, 1);
+    return add ?? false;
   }
 
   Future<void> _pickPatient(BuildContext context, UserProfile caregiver) async {

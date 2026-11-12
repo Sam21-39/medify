@@ -126,23 +126,8 @@ class HistoryCubit extends Cubit<HistoryState> {
         return;
       }
 
-      // Create CSV content
-      final csvData = _generateCSVData(logs, currentState.medicines);
-
-      // Save to file
-      final directory = await MedifyPaths.temporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = '$directory/medicine_history_$timestamp.csv';
-      final file = File(filePath);
-      await file.writeAsString(csvData);
-
-      // Share file
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(filePath)],
-          subject: 'Medicine History',
-          text: 'My medicine tracking history',
-        ),
+      final filePath = await _saveAndShareCsv(
+        _generateCSVData(logs, currentState.medicines),
       );
 
       emit(HistoryExportSuccess(filePath));
@@ -155,7 +140,34 @@ class HistoryCubit extends Cubit<HistoryState> {
     }
   }
 
+  /// Export the full history (all logs and medicines), whatever is loaded.
+  /// Returns true when a file was shared. Errors propagate to the caller.
+  Future<bool> exportAll() async {
+    final logs = await _medicineLogRepository.getAllLogs();
+    if (logs.isEmpty) return false;
+    final medicines = (await _medicineRepository.getAllMedicines()).unwrap();
+    await _saveAndShareCsv(_generateCSVData(logs, medicines));
+    return true;
+  }
+
   // ==================== Helper Methods ====================
+
+  /// Write the CSV to the temp dir and open the share sheet. Returns the path.
+  Future<String> _saveAndShareCsv(String csvData) async {
+    final directory = await MedifyPaths.temporaryDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final filePath = '$directory/medicine_history_$timestamp.csv';
+    await File(filePath).writeAsString(csvData);
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(filePath)],
+        subject: 'Medicine History',
+        text: 'My medicine tracking history',
+      ),
+    );
+    return filePath;
+  }
 
   /// Load calendar logs for date range
   Future<Map<DateTime, List<MedicineLog>>> _loadCalendarLogs(

@@ -17,6 +17,7 @@ dependencies:
   cupertino_icons: ^2.0.0
   adaptive_platform_ui: ^1.0.2
   flutter_svg: ^2.0.0
+  collection: ^1.19.1
 
   # State Management
   flutter_bloc: ^9.1.1

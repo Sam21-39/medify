@@ -1,10 +1,132 @@
 import 'package:flutter/material.dart';
 import 'package:medify/core/constants/app_colors.dart';
 import 'package:medify/core/constants/app_sizes.dart';
+import 'package:medify/core/di/injection_container.dart';
+import 'package:medify/core/ui/app_messenger.dart';
 import 'package:medify/core/utils/date_time_utils.dart';
 import 'package:medify/core/widgets/medify_icon.dart';
 import 'package:medify/features/medicines/domain/entities/medicine.dart';
+import 'package:medify/features/medicines/presentation/cubit/medicine_cubit.dart';
+import 'package:medify/features/schedule/data/services/refill_reminder_service.dart';
 import 'package:medify/gen/assets.gen.dart';
+import 'package:medify/l10n/app_localizations.dart';
+
+/// Asks for the quantity now in stock and saves it as a refill.
+Future<void> showRefillDialog(BuildContext context, Medicine medicine) async {
+  final l10n = AppLocalizations.of(context)!;
+  final total = medicine.totalQuantity;
+  final controller = TextEditingController(
+    text: total == null
+        ? ''
+        : total == total.toInt()
+        ? total.toInt().toString()
+        : total.toString(),
+  );
+  String? error;
+  final quantity = await showDialog<double>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setDialogState) => AlertDialog(
+        title: Text(l10n.refillDialogTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: l10n.refillQuantityLabel,
+            suffixText: medicine.medicineType.unit,
+            errorText: error,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              final value = double.tryParse(controller.text.trim());
+              if (value == null || value < 0) {
+                setDialogState(() => error = l10n.refillInvalidQuantity);
+                return;
+              }
+              Navigator.pop(dialogContext, value);
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    ),
+  );
+  controller.dispose();
+  if (quantity == null) return;
+
+  final ok = await getIt<RefillReminderService>().refillMedicine(
+    medicine.id!,
+    newQuantity: quantity,
+  );
+  await getIt<MedicineCubit>().loadMedicines();
+  getIt<AppMessenger>().show(
+    ok ? l10n.refillSaved : l10n.refillFailed,
+    error: !ok,
+  );
+}
+
+/// Asks why the medicine is stopped (optional). Null when cancelled.
+Future<({String? reason})?> showStopMedicineDialog(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  final reasons = {
+    'course_finished': l10n.stopReasonCourseFinished,
+    'doctor_stopped': l10n.stopReasonDoctorStopped,
+    'side_effects': l10n.stopReasonSideEffects,
+    'other': l10n.stopReasonOther,
+  };
+  return showDialog<({String? reason})>(
+    context: context,
+    builder: (dialogContext) {
+      String? selected;
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(l10n.stopMedicineTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.stopMedicineBody),
+              const SizedBox(height: AppSizes.paddingM),
+              Text(l10n.stopReasonTitle),
+              const SizedBox(height: AppSizes.paddingS),
+              Wrap(
+                spacing: AppSizes.paddingS,
+                runSpacing: AppSizes.paddingS,
+                children: [
+                  for (final entry in reasons.entries)
+                    ChoiceChip(
+                      label: Text(entry.value),
+                      selected: selected == entry.key,
+                      onSelected: (_) =>
+                          setDialogState(() => selected = entry.key),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, (reason: selected)),
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: Text(l10n.stopMedicineButton),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
 /// Bundled icon for each medicine type.
 extension MedicineTypeIcon on MedicineType {
@@ -25,15 +147,15 @@ extension MedicineTypeIcon on MedicineType {
 class MedicineCard extends StatelessWidget {
   final Medicine medicine;
   final VoidCallback? onTap;
-  final VoidCallback? onToggleActive;
-  final VoidCallback? onDelete;
+  final VoidCallback onToggleActive;
+  final VoidCallback onStop;
 
   const MedicineCard({
     super.key,
     required this.medicine,
     this.onTap,
-    this.onToggleActive,
-    this.onDelete,
+    required this.onToggleActive,
+    required this.onStop,
   });
 
   @override
@@ -131,24 +253,50 @@ class MedicineCard extends StatelessWidget {
                         // Stock level indicator
                         if (medicine.currentQuantity != null) ...[
                           const SizedBox(height: 4),
-                          _buildStockIndicator(context),
+                          Row(
+                            children: [
+                              Expanded(child: _buildStockIndicator(context)),
+                              TextButton(
+                                onPressed: () =>
+                                    showRefillDialog(context, medicine),
+                                child: Text(
+                                  AppLocalizations.of(context)!.refillButton,
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ],
                     ),
                   ),
 
-                  // Active/Inactive toggle
-                  if (onToggleActive != null)
-                    IconButton(
-                      icon: Icon(
-                        medicine.isActive ? Icons.toggle_on : Icons.toggle_off,
-                        size: AppSizes.iconL,
-                      ),
-                      color: medicine.isActive
-                          ? AppColors.success
-                          : AppColors.textDisabledLight,
-                      onPressed: onToggleActive,
-                      tooltip: medicine.isActive ? 'Deactivate' : 'Activate',
+                  // Stopped label, or the pause / stop menu
+                  if (medicine.isStopped)
+                    Chip(
+                      label: Text(AppLocalizations.of(context)!.stoppedLabel),
+                      visualDensity: VisualDensity.compact,
+                    )
+                  else
+                    PopupMenuButton<String>(
+                      onSelected: (value) =>
+                          value == 'stop' ? onStop() : onToggleActive(),
+                      itemBuilder: (context) {
+                        final l10n = AppLocalizations.of(context)!;
+                        return [
+                          PopupMenuItem(
+                            value: 'toggle',
+                            child: Text(
+                              medicine.isActive
+                                  ? l10n.pauseMedicine
+                                  : l10n.resumeMedicine,
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'stop',
+                            child: Text(l10n.stopMedicine),
+                          ),
+                        ];
+                      },
                     ),
                 ],
               ),
